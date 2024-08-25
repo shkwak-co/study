@@ -1,7 +1,11 @@
 # Study folder
 shkwak
 
-blog: https://missssu.tistory.com/
+software
+embedded software
+
+blog  : https://missssu.tistory.com/
+email : kwaksangha@gmail.com
 
 - code test
 - code study

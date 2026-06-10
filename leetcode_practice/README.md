@@ -40,35 +40,33 @@ LeetCode 문제를 C, C++, Python 세 언어로 직접 풀어보며 학습하는
 
 > 문제를 풀면 위 표의 ⬜ 를 ✅ 로 바꿔주세요.
 
-## 컴파일 / 실행 방법 (Windows)
+## 컴파일 / 실행 방법 (Linux / WSL)
 
 각 문제 폴더로 이동한 뒤:
 
-**Python** — 현재 PC에서 바로 실행 가능 (Python 3.14)
-```powershell
-py solution.py
+**Python** — 바로 실행 가능 (Python 3.12)
+```bash
+python3 solution.py
 ```
-> 참고: 이 PC에서는 `python` 명령 대신 **`py`** 를 사용하세요. (`python` 은 Microsoft Store 스텁이라 동작하지 않습니다.)
 
-**C** — 컴파일러 필요 (아래 설치 안내 참고)
-```powershell
-gcc solution.c -o sol.exe ; .\sol.exe
+**C**
+```bash
+gcc solution.c -o sol && ./sol
 ```
 
 **C++**
-```powershell
-g++ solution.cpp -o sol.exe ; .\sol.exe
+```bash
+g++ solution.cpp -o sol && ./sol
 ```
 
-### ⚠️ C/C++ 컴파일러 설치 안내
-현재 이 PC에는 C/C++ 컴파일러(gcc/g++/clang/cl)가 **설치되어 있지 않습니다**.
-C/C++ 풀이를 실제로 컴파일·실행하려면 아래 중 하나를 설치하세요:
+### ✅ 실행 환경 안내
+현재 환경(Linux / WSL)에는 다음 도구가 모두 설치되어 있어 **세 언어 모두 실제로 컴파일·실행·검증이 가능**합니다:
 
-- **MSYS2 + MinGW-w64** (gcc/g++ 제공) — https://www.msys2.org/
-  설치 후 `pacman -S mingw-w64-ucrt-x86_64-gcc` 로 gcc/g++ 설치
-- **Visual Studio Build Tools** (cl.exe 제공) — https://visualstudio.microsoft.com/downloads/
+- **Python** 3.12.3 — `python3`
+- **gcc** 13.3.0 (C)
+- **g++** 13.3.0 (C++)
 
-> 컴파일러가 없어도 Claude가 코드를 **눈으로 검토(채점·해설)** 할 수 있습니다. 실제 실행 검증은 Python만 가능합니다.
+> Claude가 코드를 **눈으로 검토(채점·해설)** 하는 것은 물론, Python·C·C++ 모두 **실제로 돌려서** 정확성을 확인해 드립니다.
 
 ## 채점 요청 방법
 

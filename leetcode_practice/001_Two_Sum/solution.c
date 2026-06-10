@@ -8,7 +8,7 @@
 int* twoSum(int* nums, int numsSize, int target, int* returnSize) {
     // TODO: 여기에 작성하세요
     *returnSize = 2;
-    int* output = malloc(sizeof(int)*returnSize);
+    int* output = malloc(sizeof(int) * (*returnSize));
 
     for(int i = 0; i < numsSize-1; i++)
     {

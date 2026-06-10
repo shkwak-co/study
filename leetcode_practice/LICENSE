@@ -1,0 +1,41 @@
+MIT License
+
+Copyright (c) 2026 sk
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---------------------------------------------------------------------------
+NOTICE / 적용 범위 안내
+
+This MIT License applies ONLY to the original content authored by the
+repository owner — namely the solution code and the study notes
+(problem overviews, hints, function-signature guides) written in this
+repository.
+
+이 MIT 라이선스는 저장소 소유자가 직접 작성한 콘텐츠, 즉 풀이 코드와
+학습 노트(문제 개요·힌트·함수 시그니처 안내)에만 적용됩니다.
+
+It does NOT cover, and grants no rights to, the LeetCode problems
+themselves. LeetCode problem statements, examples, and constraints are the
+property of LeetCode and are NOT reproduced in this repository; they are
+referenced only by links to the official problem pages.
+
+LeetCode 문제 자체(문제 설명·예제·제약 조건)는 LeetCode의 자산이며 본
+라이선스의 적용 대상이 아닙니다. 해당 내용은 이 저장소에 포함되어 있지
+않으며, 공식 문제 페이지 링크로만 연결됩니다.

@@ -1,0 +1,15 @@
+# 컴파일 산출물
+*.o
+*.obj
+*.exe
+sol
+a.out
+
+# Python 캐시
+__pycache__/
+*.pyc
+
+# 에디터/OS
+.vscode/
+.DS_Store
+Thumbs.db

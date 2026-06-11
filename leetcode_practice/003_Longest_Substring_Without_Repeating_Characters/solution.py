@@ -4,21 +4,32 @@
 
 class Solution:
     def lengthOfLongestSubstring(self, s: str) -> int:
-        # TODO: 여기에 작성하세요
-        output = 0
-        # temp = 0
-        for i in range(len(s)):
-            seen = set()
-            count = 0
-            for j in range(i, len(s)):
-                if s[j] in seen:
-                    break
-                seen.add(s[j])
-                count += 1
-                # temp = count
-            if output <= count:
-                output = count
+        # # TODO: 여기에 작성하세요
+        # output = 0
+        # # temp = 0
+        # for i in range(len(s)):
+        #     seen = set()
+        #     count = 0
+        #     for j in range(i, len(s)):
+        #         if s[j] in seen:
+        #             break
+        #         seen.add(s[j])
+        #         count += 1
+        #         # temp = count
+        #     if output <= count:
+        #         output = count
 
+        # return output
+
+        output = 0
+        window = {}
+        begin = 0
+        
+        for end, current_char in enumerate(s):
+            if current_char in window and window[current_char] >= begin:
+                begin = window[current_char] + 1
+            window[current_char] = end
+            output = max(output, end - begin + 1)
         return output
 
         # pass

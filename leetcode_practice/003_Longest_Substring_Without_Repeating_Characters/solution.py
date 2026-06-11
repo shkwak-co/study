@@ -5,7 +5,23 @@
 class Solution:
     def lengthOfLongestSubstring(self, s: str) -> int:
         # TODO: 여기에 작성하세요
-        pass
+        output = 0
+        # temp = 0
+        for i in range(len(s)):
+            seen = set()
+            count = 0
+            for j in range(i, len(s)):
+                if s[j] in seen:
+                    break
+                seen.add(s[j])
+                count += 1
+                # temp = count
+            if output <= count:
+                output = count
+
+        return output
+
+        # pass
 
 
 if __name__ == "__main__":

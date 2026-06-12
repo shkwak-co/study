@@ -79,3 +79,9 @@ Thumbs.db
 *.out
 *.a
 *.so
+
+# =========================
+# LeetCode Compiled Binaries
+# =========================
+leetcode_practice/**/solution
+leetcode_practice/**/a.out

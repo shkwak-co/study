@@ -4,7 +4,7 @@
 
 class Solution:
     def lengthOfLongestSubstring(self, s: str) -> int:
-        # # TODO: 여기에 작성하세요
+        # TODO: 여기에 작성하세요
         # output = 0
         # # temp = 0
         # for i in range(len(s)):
@@ -21,18 +21,31 @@ class Solution:
 
         # return output
 
+        # ASCII 128자를 배열로 관리 — dict 해시 연산 없이 O(1) 접근
+        char_index = [-1] * 128
+        output = 0
+        left = 0
+
+        for right, c in enumerate(s):
+            idx = ord(c)
+            if char_index[idx] >= left:
+                left = char_index[idx] + 1
+            char_index[idx] = right
+            if right - left + 1 > output:
+                output = right - left + 1
+
+        # return output
+
         output = 0
         window = {}
         begin = 0
-        
+
         for end, current_char in enumerate(s):
             if current_char in window and window[current_char] >= begin:
                 begin = window[current_char] + 1
             window[current_char] = end
             output = max(output, end - begin + 1)
         return output
-
-        # pass
 
 
 if __name__ == "__main__":

@@ -6,13 +6,59 @@
 #include <string.h>
 
 char* longestPalindrome(char* s) {
-    // TODO: 여기에 작성하세요 (반환 문자열은 malloc 으로 할당하고 끝에 '\0')
-    return NULL;
+    if (s == NULL) return NULL;
+
+    int n = (int)strlen(s);
+    int bestStart = 0;
+    int bestLen = 0;
+
+    for (int center = 0; center < n; center++) {
+        int left = center;
+        int right = center;
+
+        while (left >= 0 && right < n && s[left] == s[right]) {
+            left--;
+            right++;
+        }
+
+        int len = right - left - 1;
+        if (len > bestLen) {
+            bestStart = left + 1;
+            bestLen = len;
+        }
+
+        left = center;
+        right = center + 1;
+
+        while (left >= 0 && right < n && s[left] == s[right]) {
+            left--;
+            right++;
+        }
+
+        len = right - left - 1;
+        if (len > bestLen) {
+            bestStart = left + 1;
+            bestLen = len;
+        }
+    }
+
+    char* result = (char*)malloc((size_t)bestLen + 1);
+    if (result == NULL) return NULL;
+
+    memcpy(result, s + bestStart, (size_t)bestLen);
+    result[bestLen] = '\0';
+    return result;
 }
 
 int main(void) {
     /* 직접 만든 입력 */
-    printf("%s\n", longestPalindrome("abacd"));    /* 기대값: aba */
-    printf("%s\n", longestPalindrome("racecar"));  /* 기대값: racecar */
+    char* ans1 = longestPalindrome("abacd");
+    char* ans2 = longestPalindrome("racecar");
+
+    printf("%s\n", ans1);  /* 기대값: aba */
+    printf("%s\n", ans2);  /* 기대값: racecar */
+
+    free(ans1);
+    free(ans2);
     return 0;
 }

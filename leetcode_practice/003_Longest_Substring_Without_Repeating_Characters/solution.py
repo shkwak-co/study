@@ -34,18 +34,18 @@ class Solution:
             if right - left + 1 > output:
                 output = right - left + 1
 
-        # return output
-
-        output = 0
-        window = {}
-        begin = 0
-
-        for end, current_char in enumerate(s):
-            if current_char in window and window[current_char] >= begin:
-                begin = window[current_char] + 1
-            window[current_char] = end
-            output = max(output, end - begin + 1)
         return output
+
+        # output = 0
+        # window = {}
+        # begin = 0
+
+        # for end, current_char in enumerate(s):
+        #     if current_char in window and window[current_char] >= begin:
+        #         begin = window[current_char] + 1
+        #     window[current_char] = end
+        #     output = max(output, end - begin + 1)
+        # return output
 
 
 if __name__ == "__main__":

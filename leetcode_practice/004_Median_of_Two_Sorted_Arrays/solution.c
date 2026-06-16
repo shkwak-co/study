@@ -4,9 +4,44 @@
 #include <stdio.h>
 
 double findMedianSortedArrays(int* nums1, int nums1Size, int* nums2, int nums2Size) {
-    // TODO: 여기에 작성하세요
+    int m = nums1Size;
+    int n = nums2Size;
+
+    if(m > n)
+        return findMedianSortedArrays(nums2, n, nums1, m);
+
+    int low = 0, high = m;
+
+    while(low <= high) {
+        int cut1 = (low + high) / 2;
+        int cut2 = (m + n + 1) / 2 - cut1;
+
+        int l1 = (cut1 == 0) ? -1000001 : nums1[cut1 - 1];
+        int l2 = (cut2 == 0) ? -1000001 : nums2[cut2 - 1];
+
+        int r1 = (cut1 == m) ? 1000001 : nums1[cut1];
+        int r2 = (cut2 == n) ? 1000001 : nums2[cut2];
+
+        if(l1 <= r2 && l2 <= r1) {
+            if((m + n) % 2 == 0) {
+                int leftMax = (l1 > l2) ? l1 : l2;
+                int rightMin = (r1 < r2) ? r1 : r2;
+                return (leftMax + rightMin) / 2.0;
+            } else {
+                return (l1 > l2) ? l1 : l2;
+            }
+        }
+        else if(l1 > r2) {
+            high = cut1 - 1;
+        }
+        else {
+            low = cut1 + 1;
+        }
+    }
+
     return 0.0;
 }
+
 
 int main(void) {
     int a1[] = {1, 4, 7}, b1[] = {2, 3};   /* 직접 만든 입력 */

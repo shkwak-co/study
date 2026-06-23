@@ -24,6 +24,11 @@ LeetCode 문제를 C, C++, Python 세 언어로 직접 풀어보며 학습하는
   003_Longest_Substring_Without_Repeating_Characters/
   004_Median_of_Two_Sorted_Arrays/
   005_Longest_Palindromic_Substring/
+  006_Zigzag_Conversion/
+  007_Reverse_Integer/
+  008_String_to_Integer_atoi/
+  009_Palindrome_Number/
+  010_Regular_Expression_Matching/
   ...
 ```
 
@@ -36,7 +41,12 @@ LeetCode 문제를 C, C++, Python 세 언어로 직접 풀어보며 학습하는
 | 3  | Longest Substring Without Repeating Characters | Medium | 슬라이딩 윈도우 | ⬜ |
 | 4  | Median of Two Sorted Arrays | Hard | 이분 탐색 | ⬜ |
 | 5  | Longest Palindromic Substring | Medium | 문자열 / DP | ⬜ |
-| 6~20 | (1~5 확인 후 생성 예정) | | | ⬜ |
+| 6  | Zigzag Conversion | Medium | 문자열 / 시뮬레이션 | ⬜ |
+| 7  | Reverse Integer | Medium | 수학 / 오버플로 | ⬜ |
+| 8  | String to Integer (atoi) | Medium | 문자열 / 파싱 | ⬜ |
+| 9  | Palindrome Number | Easy | 수학 | ⬜ |
+| 10 | Regular Expression Matching | Hard | 문자열 / DP | ⬜ |
+| 11~20 | (추가 예정) | | | ⬜ |
 
 > 문제를 풀면 위 표의 ⬜ 를 ✅ 로 바꿔주세요.
 

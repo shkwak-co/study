@@ -27,6 +27,8 @@ FPGA 구현           ASIC 물리설계
 
 좋은 하드웨어 설계는 코드를 빨리 쓰는 것이 아니라, **요구사항, 데이터 흐름, 클럭, 메모리, 인터페이스, 검증 전략을 먼저 정리하는 것**에서 시작합니다.
 
+제품 기획부터 출시/양산까지의 더 넓은 흐름은 [07_Product_Lifecycle_From_Idea_to_Launch.md](./07_Product_Lifecycle_From_Idea_to_Launch.md)를 함께 보면 좋습니다.
+
 ## 1단계: 요구사항 정의
 
 먼저 다음 질문에 답해야 합니다.
@@ -271,4 +273,3 @@ CDC는 시뮬레이션에서 잘 안 보이다가 실제 칩이나 보드에서 
 - FIFO overflow/underflow를 검증했는가
 - corner case가 coverage에 포함되는가
 - timing report의 critical path를 이해했는가
-

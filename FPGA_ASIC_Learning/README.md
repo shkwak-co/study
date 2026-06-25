@@ -12,6 +12,8 @@
 | 4 | [04_Design_Flow_FPGA_ASIC.md](./04_Design_Flow_FPGA_ASIC.md) | FPGA와 ASIC을 실제로 설계하는 절차 |
 | 5 | [05_C_and_Hardware_Design.md](./05_C_and_Hardware_Design.md) | C/C++를 하드웨어 설계와 연결하는 방법 |
 | 6 | [06_Industry_Ecosystem.md](./06_Industry_Ecosystem.md) | 직무, 회사 유형, 툴, IP, 파운드리, 생태계 |
+| 7 | [07_Product_Lifecycle_From_Idea_to_Launch.md](./07_Product_Lifecycle_From_Idea_to_Launch.md) | 기획부터 설계, 테스트, 출시/양산까지의 전체 흐름 |
+| 8 | [examples/README.md](./examples/README.md) | FPGA/ASIC 예시 RTL 코드와 설명 |
 
 ## 큰 그림
 
@@ -35,6 +37,14 @@ FPGA 구현                         ASIC 구현
         |                               |
         v                               v
 보드에서 동작                     실리콘 칩 제작, 패키징, 테스트
+        |                               |
+        v                               v
+제품 검증 / 인증 / 양산 준비       Silicon validation / production test
+        |                               |
+        +---------------+---------------+
+                        |
+                        v
+                  출시 / 운영 / 개선
 ```
 
 ## FPGA와 ASIC의 핵심 차이
@@ -83,4 +93,9 @@ HDL은 C/Python 같은 일반 소프트웨어 언어와 다릅니다. HDL은 "�
 6. ASIC 흐름 이해
    - synthesis, STA, DFT, floorplan, place and route
    - PPA와 signoff 개념
-
+7. 제품 라이프사이클 이해
+   - 기획, 요구사항, 검증, bring-up, 인증, 양산
+   - FPGA 제품과 ASIC 제품의 출시 흐름 차이
+8. 예시 코드 읽기
+   - FPGA: LED blink, UART transmitter
+   - ASIC: APB register block, synchronous FIFO

@@ -181,4 +181,3 @@ ASIC은 제조 후 실제 칩이 정상인지 검사해야 합니다. 이를 위
 - LVS: Layout Versus Schematic
 - GDSII/OASIS: 제조에 넘기는 최종 레이아웃 데이터
 - Tape-out: 제조용 최종 데이터를 파운드리에 전달하는 단계
-

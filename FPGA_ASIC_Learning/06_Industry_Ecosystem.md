@@ -58,6 +58,55 @@ FPGA는 특히 다음 상황에서 많이 쓰입니다.
 - 현장에서 업데이트가 필요한 제품
 - 특수 I/O와 저지연 처리가 중요한 시스템
 
+## 어떤 분야에서 쓰이는가
+
+FPGA와 ASIC은 "컴퓨터 부품" 한 분야에만 쓰이지 않습니다. 데이터를 빠르게 처리해야 하거나, 전력/면적/지연시간을 강하게 최적화해야 하거나, 외부 장비와 특수한 방식으로 연결해야 하는 거의 모든 산업에 들어갑니다.
+
+| 분야 | FPGA가 쓰이는 방식 | ASIC이 쓰이는 방식 | 필요한 역량 |
+|------|-------------------|-------------------|-------------|
+| 통신/네트워크 | 패킷 처리, 기지국, 프로토콜 변환, 저지연 스위칭 | 네트워크 스위치 칩, 5G/6G 모뎀, SerDes | 고속 I/O, Ethernet, DSP, timing |
+| 데이터센터/AI | inference accelerator prototype, SmartNIC, 압축/암호화 가속 | GPU/NPU/TPU류 AI accelerator, DPU, NIC ASIC | 병렬 아키텍처, 메모리 대역폭, PCIe, HBM |
+| 자동차 | 센서 인터페이스, prototype, 실시간 제어 | ADAS SoC, radar processor, zonal controller | 안전, 실시간성, ISO 26262 관점, 검증 |
+| 항공/우주/국방 | 레이더, 위성 통신, 신호처리, 장기 운용 장비 | 특수 목적 보안/통신/센서 칩 | 신뢰성, radiation, DSP, 엄격한 검증 |
+| 산업 자동화 | 모터 제어, vision inspection, PLC I/O 확장 | 산업용 제어 ASIC, 센서 처리 칩 | 실시간 제어, ADC/DAC, 인터페이스 |
+| 의료기기 | 초음파, 영상 장비, 센서 처리 | 저전력 센서/영상 처리 ASIC | 신호처리, 안전성, 품질 문서 |
+| 금융/거래 시스템 | 초저지연 네트워크 처리, order matching 일부 | 매우 특화된 저지연 가속 칩 | latency 최적화, networking, FPGA |
+| 스토리지 | NVMe prototype, 압축/암호화, controller 검증 | SSD controller, storage accelerator | PCIe, NVMe, ECC, DMA |
+| 보안/암호 | 암호 알고리즘 가속, key handling prototype | secure element, crypto engine, HSM 칩 | 암호 알고리즘, side-channel 고려 |
+| 소비자 전자 | 카메라/디스플레이 prototype, 제품 전 검증 | 스마트폰 SoC, ISP, display controller | 영상처리, 저전력, SoC integration |
+| 반도체 개발 자체 | ASIC prototype, emulation, IP 검증 | 최종 제품 칩 | RTL, verification, FPGA bring-up |
+| 계측/과학 장비 | 고속 데이터 수집, DAQ, 실험 장비 제어 | 특수 센서 readout ASIC | 고속 ADC/DAC, clocking, 데이터 수집 |
+
+### 분야별로 FPGA와 ASIC을 선택하는 이유
+
+```text
+FPGA가 강한 상황:
+- 빠르게 만들어서 검증해야 함
+- 표준이나 알고리즘이 자주 바뀜
+- 수량이 많지 않음
+- 현장 업데이트가 필요함
+- 여러 I/O와 프로토콜을 유연하게 붙여야 함
+
+ASIC이 강한 상황:
+- 대량 생산으로 개당 단가를 낮춰야 함
+- 전력 효율이 매우 중요함
+- 최고 성능이나 작은 면적이 필요함
+- 제품 차별화를 칩 수준에서 만들고 싶음
+- 기능이 충분히 안정되어 재구성이 덜 필요함
+```
+
+### 도메인별 대표 설계 블록
+
+| 도메인 | 자주 나오는 하드웨어 블록 |
+|--------|---------------------------|
+| 통신 | FIR filter, FFT, FEC, packet parser, MAC, SerDes interface |
+| AI | matrix multiply, systolic array, vector unit, DMA, cache, scratchpad memory |
+| 영상 | ISP pipeline, scaler, color conversion, convolution, frame buffer |
+| 자동차 | sensor fusion, radar FFT, safety monitor, lockstep CPU, watchdog |
+| 스토리지 | ECC, encryption, compression, Flash controller, PCIe/NVMe |
+| 보안 | AES, SHA, RSA/ECC accelerator, TRNG, secure boot controller |
+| 산업제어 | PWM, encoder interface, motor control loop, ADC sampling logic |
+
 ## ASIC 생태계
 
 ASIC은 훨씬 많은 이해관계자가 참여합니다.
@@ -222,6 +271,28 @@ FPGA에서 잘 동작하던 RTL도 ASIC으로 갈 때는 다음을 다시 봐야
 
 ## 커리어 학습 방향
 
+FPGA/ASIC 진로는 하나의 길만 있는 분야가 아닙니다. 크게 보면 **설계**, **검증**, **물리 구현**, **시스템/펌웨어**, **아키텍처**, **EDA/자동화**로 나뉩니다.
+
+```text
+디지털 논리 기본
+        |
+        v
+HDL / C / 컴퓨터 구조 기본
+        |
+        +---------------------------+
+        |                           |
+        v                           v
+RTL/FPGA 설계                 Verification
+        |                           |
+        v                           v
+ASIC 설계 / 아키텍처          UVM / Formal / Coverage
+        |
+        +---------------------------+
+        |                           |
+        v                           v
+Physical Design / STA         Firmware / Driver / Bring-up
+```
+
 ### RTL / FPGA 지향
 
 1. 디지털 논리
@@ -262,6 +333,194 @@ FPGA에서 잘 동작하던 RTL도 ASIC으로 갈 때는 다음을 다시 봐야
 6. hardware register spec 작성
 7. FPGA/ASIC bring-up
 
+### Architecture 지향
+
+1. 컴퓨터 구조
+2. cache, memory hierarchy, interconnect
+3. performance modeling
+4. workload 분석
+5. PPA trade-off
+6. system-level simulation
+7. RTL/검증/소프트웨어 팀과 요구사항 조율
+
+### EDA / CAD 지향
+
+1. Python, Tcl, Make/CMake
+2. Linux와 shell scripting
+3. synthesis, simulation, regression flow
+4. timing report와 로그 자동 분석
+5. CI 환경 구성
+6. tool wrapper와 설계 자동화
+7. 대규모 RTL 빌드/검증 인프라 관리
+
+## 배경별 진입 전략
+
+### 전자공학/반도체 배경
+
+강점:
+
+- 디지털 논리, 회로, 신호, 반도체 물성에 익숙할 가능성이 높습니다.
+- ASIC physical design, analog/mixed-signal, DFT, STA 쪽으로 확장하기 좋습니다.
+
+추천 경로:
+
+1. Verilog/SystemVerilog로 조합논리와 순차논리 구현
+2. FSM, FIFO, UART, SPI 같은 기본 블록 설계
+3. testbench와 waveform 디버깅
+4. FPGA 보드에서 실제 동작 확인
+5. synthesis/timing report 읽기
+6. 관심에 따라 RTL, verification, physical design 중 선택
+
+### 컴퓨터공학/소프트웨어 배경
+
+강점:
+
+- C/C++, Python, 알고리즘, OS, 컴퓨터 구조에 익숙할 가능성이 높습니다.
+- hardware-software co-design, firmware, driver, accelerator architecture, verification automation에 강점이 생기기 쉽습니다.
+
+추천 경로:
+
+1. 디지털 논리와 클럭 기반 사고 익히기
+2. C 코드와 RTL의 차이 이해
+3. SystemVerilog 또는 Verilog 기본 작성
+4. memory-mapped register, interrupt, DMA 이해
+5. 작은 accelerator를 만들고 C driver로 제어
+6. cocotb, Verilator, Python 기반 검증 자동화 실습
+
+### 임베디드/펌웨어 배경
+
+강점:
+
+- 보드, register, interrupt, peripheral, driver에 익숙합니다.
+- FPGA bring-up, SoC integration, validation, firmware 직무로 연결하기 좋습니다.
+
+추천 경로:
+
+1. HDL로 peripheral 하나 직접 구현
+2. AXI-lite register interface 이해
+3. C firmware로 RTL block 제어
+4. logic analyzer로 보드 디버깅
+5. boot sequence, clock/reset, power sequence 학습
+6. validation 또는 hardware-software integration 역할로 확장
+
+### 수학/물리/신호처리 배경
+
+강점:
+
+- 알고리즘, 모델링, DSP, 통계, 최적화에 강할 수 있습니다.
+- 통신, radar, 영상, AI accelerator, scientific instrument 쪽과 잘 맞습니다.
+
+추천 경로:
+
+1. 알고리즘을 fixed-point로 변환하는 법 학습
+2. Python/C 모델 작성
+3. RTL 또는 HLS로 datapath 구현
+4. golden model과 RTL 결과 비교
+5. pipeline, throughput, latency 최적화
+6. DSP/AI/통신 accelerator 분야로 확장
+
+## 직무별 포트폴리오 아이디어
+
+| 목표 직무 | 추천 프로젝트 |
+|-----------|---------------|
+| FPGA Engineer | FPGA 보드에서 UART, SPI, PWM, FIFO, AXI-lite register, ILA 디버깅까지 구현 |
+| RTL Design Engineer | pipelined multiplier, packet parser, DMA-like engine, small RISC-V peripheral |
+| Verification Engineer | SystemVerilog testbench, assertion, coverage, random packet generator |
+| Firmware/Validation | C driver로 FPGA register 제어, interrupt/DMA 테스트, bring-up log 작성 |
+| Physical Design 입문 | 작은 RTL을 합성하고 timing report, area report, critical path 분석 |
+| Architecture | matrix multiply accelerator 모델링, throughput/latency/memory bandwidth 분석 |
+| EDA/CAD | Verilator 기반 regression script, waveform 자동 저장, lint/sim CI 구축 |
+
+좋은 포트폴리오는 단순히 "동작했다"가 아니라 다음을 보여줘야 합니다.
+
+- 요구사항
+- 블록 다이어그램
+- RTL 구조
+- testbench 구조
+- 검증 결과
+- timing/resource report
+- 디버깅 기록
+- 한계와 개선 방향
+
+## 취업 준비에서 중요한 역량
+
+| 역량 | 왜 중요한가 | 확인 방법 |
+|------|-------------|-----------|
+| 디지털 논리 | 모든 RTL/FPGA/ASIC의 기본입니다. | FSM, counter, mux, register 문제 |
+| HDL 감각 | 코드가 어떤 회로로 합성되는지 알아야 합니다. | Verilog/SystemVerilog coding test |
+| 타이밍 이해 | 실제 칩은 클럭과 타이밍 제약 안에서 동작합니다. | setup/hold, critical path 설명 |
+| 검증 사고 | 하드웨어 오류는 수정 비용이 큽니다. | testbench, corner case 질문 |
+| 시스템 이해 | 칩은 단독으로 동작하지 않습니다. | CPU, bus, memory, DMA 설명 |
+| 디버깅 능력 | 실무 대부분은 원인 추적입니다. | waveform, log, board issue 분석 |
+| 문서화 | 여러 팀이 같은 spec을 보고 일합니다. | register spec, timing diagram 작성 |
+
+## 입문자가 자주 헷갈리는 진로 선택
+
+| 고민 | 판단 기준 |
+|------|-----------|
+| FPGA와 ASIC 중 무엇부터 할까? | 처음에는 FPGA가 결과를 눈으로 보기 쉬워 입문에 좋습니다. 이후 ASIC 흐름을 확장하면 됩니다. |
+| Verilog와 VHDL 중 무엇을 배울까? | 국내외 디지털 ASIC/검증 쪽은 Verilog/SystemVerilog가 넓게 쓰입니다. 특정 회사/방산/항공 프로젝트는 VHDL도 중요합니다. |
+| 설계와 검증 중 무엇이 좋을까? | 회로 구조를 만드는 데 끌리면 설계, 오류를 체계적으로 찾고 자동화하는 데 끌리면 검증이 맞습니다. |
+| C/C++도 해야 할까? | 해야 합니다. firmware, driver, golden model, HLS, 검증 자동화에서 계속 등장합니다. |
+| Python도 필요한가? | 필요합니다. 로그 분석, 테스트 자동화, 데이터 생성, 모델링에 매우 유용합니다. |
+| 수학이 많이 필요한가? | 직무에 따라 다릅니다. DSP/AI/통신은 많이 쓰고, bus/peripheral/검증은 상대적으로 덜 씁니다. |
+
+## 6개월 입문 로드맵
+
+### 1개월차: 디지털 논리와 HDL 기본
+
+- 조합논리, 순차논리, FSM
+- Verilog/SystemVerilog module 작성
+- testbench와 waveform 보기
+
+### 2개월차: 작은 블록 설계
+
+- counter, PWM, UART TX/RX
+- FIFO, debounce, simple timer
+- self-checking testbench 작성
+
+### 3개월차: FPGA 보드 실습
+
+- clock/reset constraints
+- LED, button, UART bring-up
+- ILA 또는 SignalTap으로 내부 신호 보기
+- timing report 읽기
+
+### 4개월차: 시스템 연결
+
+- AXI-lite 또는 memory-mapped register
+- C firmware로 register read/write
+- interrupt 또는 polling 방식 제어
+- 간단한 데이터 처리 accelerator
+
+### 5개월차: 검증과 자동화
+
+- random test
+- assertion 기본
+- Python/cocotb 또는 Verilator regression
+- coverage 관점 정리
+
+### 6개월차: 포트폴리오 정리
+
+- 프로젝트 README 작성
+- architecture diagram
+- waveform 캡처
+- timing/resource report
+- 발생한 버그와 해결 과정 정리
+- 다음 개선 방향 명시
+
+## 분야별 추천 진로 조합
+
+| 관심사 | 잘 맞는 방향 |
+|--------|--------------|
+| 하드웨어 구조 자체가 재미있다 | RTL Design, FPGA Design |
+| 버그를 찾고 검증 체계를 만드는 게 좋다 | Verification, Formal, UVM |
+| 실제 보드와 장비를 만지는 게 좋다 | FPGA Bring-up, Validation, Embedded |
+| 물리적인 칩 구현과 타이밍 최적화가 좋다 | Physical Design, STA |
+| C와 하드웨어 경계가 좋다 | Firmware, Driver, Hardware-Software Co-design |
+| 알고리즘을 빠르게 만들고 싶다 | DSP/AI Accelerator Architecture |
+| 툴과 자동화가 좋다 | CAD/EDA, Verification Infrastructure |
+
 ## 산업에서 자주 쓰는 지표
 
 | 지표 | 의미 |
@@ -296,4 +555,3 @@ FPGA와 ASIC 산업은 단순히 HDL 코드를 쓰는 일이 아닙니다.
 - 비용과 일정
 
 좋은 하드웨어 엔지니어는 "코드를 짜는 사람"을 넘어, **물리적인 칩 위에서 데이터가 언제, 어디로, 얼마나 빠르게, 얼마나 적은 전력으로 이동하는지 설계하는 사람**입니다.
-

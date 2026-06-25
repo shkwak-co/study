@@ -176,4 +176,3 @@ Timing closure는 FPGA 실무에서 매우 중요한 능력입니다.
 8. AXI-lite register
 9. DMA 기반 데이터 이동
 10. C 코드가 동작하는 embedded processor와 RTL accelerator 연결
-

@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Verilog / SystemVerilog Interactive Study</title>
+    <link rel="stylesheet" href="./verilog_sv_study.css">
+</head>
+<body>
+    <header class="topbar">
+        <a class="brand" href="../08_Verilog_SystemVerilog_Deep_Dive.md">08 Verilog/SystemVerilog</a>
+        <nav class="topnav" aria-label="주요 학습 섹션">
+            <a href="#mindset">관점</a>
+            <a href="#synth">합성</a>
+            <a href="#logic">타입</a>
+            <a href="#blocks">블록</a>
+            <a href="#fsm">FSM</a>
+            <a href="#verify">검증</a>
+            <a href="#circuit-lab">회로</a>
+            <a href="#practice">실습</a>
+        </nav>
+        <button class="icon-button" id="themeToggle" type="button" aria-label="테마 전환" title="테마 전환">
+            <span aria-hidden="true">◐</span>
+        </button>
+    </header>
+
+    <main>
+        <section class="hero" id="top">
+            <div class="hero-copy">
+                <p class="eyebrow">FPGA / ASIC RTL 학습 페이지</p>
+                <h1>Verilog와 SystemVerilog를 회로처럼 보기</h1>
+                <p>
+                    문법을 외우는 대신, 코드가 어떤 mux, register, memory, timing path로 바뀌는지
+                    눈으로 따라가며 학습합니다.
+                </p>
+                <div class="hero-actions">
+                    <a class="primary-action" href="#mindset">시작</a>
+                    <a class="secondary-action" href="../08_Verilog_SystemVerilog_Deep_Dive.md">원문 MD</a>
+                </div>
+            </div>
+            <div class="signal-stage" aria-label="RTL이 회로가 되는 흐름">
+                <div class="chip-card">
+                    <div class="chip-title">RTL</div>
+                    <code>always_ff @(posedge clk)</code>
+                    <div class="trace-row">
+                        <span class="trace-dot"></span>
+                        <span class="trace-line"></span>
+                        <span class="trace-dot delay"></span>
+                    </div>
+                    <div class="chip-grid" aria-hidden="true">
+                        <span></span><span></span><span></span><span></span>
+                        <span></span><span></span><span></span><span></span>
+                        <span></span><span></span><span></span><span></span>
+                    </div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="chip-card accent">
+                    <div class="chip-title">Hardware</div>
+                    <code>DFF + mux + adder</code>
+                    <div class="wave">
+                        <span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                    <div class="pins" aria-hidden="true">
+                        <i></i><i></i><i></i><i></i><i></i><i></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="progress-panel" aria-label="학습 진행률">
+            <div>
+                <strong id="progressText">0%</strong>
+                <span>완료한 학습 카드</span>
+            </div>
+            <div class="progress-track">
+                <span id="progressBar"></span>
+            </div>
+        </section>
+
+        <section class="section" id="mindset">
+            <div class="section-head">
+                <p class="eyebrow">01 Mindset</p>
+                <h2>HDL은 실행 순서가 아니라 동시에 존재하는 회로입니다</h2>
+            </div>
+            <div class="compare-grid">
+                <article class="study-card reveal">
+                    <h3>소프트웨어 사고</h3>
+                    <div class="step-stack">
+                        <span>1. 명령 실행</span>
+                        <span>2. 다음 줄 실행</span>
+                        <span>3. 결과 저장</span>
+                    </div>
+                </article>
+                <article class="study-card reveal">
+                    <h3>RTL 사고</h3>
+                    <div class="parallel-lines">
+                        <span>register</span>
+                        <span>comb logic</span>
+                        <span>memory</span>
+                        <span>clock</span>
+                    </div>
+                </article>
+            </div>
+            <button class="complete-btn" data-complete="mindset" type="button">관점 이해 완료</button>
+        </section>
+
+        <section class="section" id="synth">
+            <div class="section-head">
+                <p class="eyebrow">02 Synthesizable RTL</p>
+                <h2>합성 가능한 코드와 testbench 전용 코드를 구분합니다</h2>
+            </div>
+            <div class="table-wrap reveal">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>코드/기능</th>
+                            <th>RTL 합성</th>
+                            <th>해석</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>assign</code></td><td><span class="pill ok">가능</span></td><td>연속 할당, 조합논리</td></tr>
+                        <tr><td><code>always_comb</code></td><td><span class="pill ok">가능</span></td><td>입력 변화에 반응하는 조합논리</td></tr>
+                        <tr><td><code>always_ff</code></td><td><span class="pill ok">가능</span></td><td>clock edge에서 갱신되는 register</td></tr>
+                        <tr><td><code>#10</code></td><td><span class="pill no">불가</span></td><td>시뮬레이션 시간 지연</td></tr>
+                        <tr><td><code>$display</code></td><td><span class="pill no">불가</span></td><td>testbench 출력</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="code-switcher reveal">
+                <div class="tabs" role="tablist" aria-label="합성 예시 코드">
+                    <button class="tab active" data-tab="comb" type="button">조합논리</button>
+                    <button class="tab" data-tab="seq" type="button">순차논리</button>
+                    <button class="tab" data-tab="tb" type="button">Testbench</button>
+                </div>
+                <pre class="code-panel active" data-panel="comb"><code>always_comb begin
+    y = 1'b0;
+    if (en)
+        y = a & b;
+end</code></pre>
+                <pre class="code-panel" data-panel="seq"><code>always_ff @(posedge clk or negedge rst_n) begin
+    if (!rst_n)
+        q <= '0;
+    else
+        q <= d;
+end</code></pre>
+                <pre class="code-panel" data-panel="tb"><code>initial begin
+    rst_n = 1'b0;
+    repeat (3) @(posedge clk);
+    rst_n = 1'b1;
+    $finish;
+end</code></pre>
+            </div>
+            <button class="complete-btn" data-complete="synth" type="button">합성 구분 완료</button>
+        </section>
+
+        <section class="section" id="logic">
+            <div class="section-head">
+                <p class="eyebrow">03 Signal Types</p>
+                <h2>타입 이름보다 어떤 블록에서 drive되는지가 더 중요합니다</h2>
+            </div>
+            <div class="type-grid">
+                <article class="study-card reveal">
+                    <h3><code>wire</code></h3>
+                    <p>연결선에 가까운 net입니다. `assign` 출력이나 module 간 연결에서 자주 사용합니다.</p>
+                </article>
+                <article class="study-card reveal">
+                    <h3><code>reg</code></h3>
+                    <p>Verilog procedural block에서 값을 담는 변수입니다. 이름과 달리 항상 flip-flop은 아닙니다.</p>
+                </article>
+                <article class="study-card reveal">
+                    <h3><code>logic</code></h3>
+                    <p>SystemVerilog RTL의 기본 선택지입니다. 0, 1, X, Z를 표현할 수 있습니다.</p>
+                </article>
+            </div>
+            <div class="x-demo reveal">
+                <div>
+                    <h3>X 전파 체험</h3>
+                    <p>입력 중 하나가 X이면 출력도 모호해질 수 있습니다. reset 누락이나 초기화 문제를 찾는 데 도움이 됩니다.</p>
+                </div>
+                <div class="x-controls">
+                    <button class="mini-btn" data-x="0" type="button">a = 0</button>
+                    <button class="mini-btn" data-x="1" type="button">a = 1</button>
+                    <button class="mini-btn active" data-x="X" type="button">a = X</button>
+                </div>
+                <div class="gate-demo" aria-label="AND gate 결과">
+                    <span id="inputA">X</span>
+                    <span class="gate">AND</span>
+                    <span>1</span>
+                    <span class="equals">=</span>
+                    <strong id="xResult">X</strong>
+                </div>
+            </div>
+            <button class="complete-btn" data-complete="logic" type="button">타입 이해 완료</button>
+        </section>
+
+        <section class="section" id="blocks">
+            <div class="section-head">
+                <p class="eyebrow">04 always_comb / always_ff</p>
+                <h2>조합논리와 순차논리를 다른 모양으로 작성합니다</h2>
+            </div>
+            <div class="circuit-board reveal">
+                <div class="node input">d</div>
+                <div class="wire-line"></div>
+                <div class="mux">
+                    <span>mux</span>
+                    <small>en</small>
+                </div>
+                <div class="wire-line pulse"></div>
+                <div class="dff">
+                    <span>DFF</span>
+                    <small>clk</small>
+                </div>
+                <div class="wire-line"></div>
+                <div class="node output">q</div>
+            </div>
+            <div class="rule-grid">
+                <article class="study-card reveal">
+                    <h3>조합논리</h3>
+                    <p><code>always_comb</code>에서는 blocking assignment <code>=</code>를 사용하고, 모든 출력에 기본값을 줍니다.</p>
+                </article>
+                <article class="study-card reveal">
+                    <h3>순차논리</h3>
+                    <p><code>always_ff</code>에서는 non-blocking assignment <code>&lt;=</code>를 사용하고, register를 한 곳에서만 drive합니다.</p>
+                </article>
+            </div>
+            <button class="complete-btn" data-complete="blocks" type="button">블록 규칙 완료</button>
+        </section>
+
+        <section class="section" id="fsm">
+            <div class="section-head">
+                <p class="eyebrow">05 FSM</p>
+                <h2>상태는 register, 전이는 조합논리입니다</h2>
+            </div>
+            <div class="fsm-lab reveal">
+                <div class="state-ring" aria-label="FSM 상태 다이어그램">
+                    <button class="state active" data-state="IDLE" type="button">IDLE</button>
+                    <button class="state" data-state="LOAD" type="button">LOAD</button>
+                    <button class="state" data-state="RUN" type="button">RUN</button>
+                    <button class="state" data-state="DONE" type="button">DONE</button>
+                </div>
+                <div class="state-info">
+                    <p class="eyebrow">현재 상태</p>
+                    <h3 id="stateName">ST_IDLE</h3>
+                    <p id="stateText">start가 들어올 때까지 대기합니다. 출력은 대부분 비활성 상태입니다.</p>
+                    <button class="primary-action compact" id="nextState" type="button">다음 상태</button>
+                </div>
+            </div>
+            <button class="complete-btn" data-complete="fsm" type="button">FSM 이해 완료</button>
+        </section>
+
+        <section class="section" id="verify">
+            <div class="section-head">
+                <p class="eyebrow">06 Verification</p>
+                <h2>좋은 testbench는 waveform 관찰을 pass/fail 판단으로 바꿉니다</h2>
+            </div>
+            <div class="verify-grid">
+                <article class="study-card reveal">
+                    <h3>Self-checking TB</h3>
+                    <p>stimulus, monitor, expected model, scoreboard, timeout을 갖추고 자동으로 실패를 보고합니다.</p>
+                </article>
+                <article class="study-card reveal">
+                    <h3>Assertion</h3>
+                    <p>FIFO overflow 금지, ready/valid 안정성, reset 후 초기값처럼 반드시 지킬 규칙을 코드로 적습니다.</p>
+                </article>
+                <article class="study-card reveal">
+                    <h3>Lint / CDC</h3>
+                    <p>width mismatch, latch 추론, multiple driver, CDC 구조 오류를 시뮬레이션 전후로 잡습니다.</p>
+                </article>
+            </div>
+            <div class="quiz reveal" aria-label="짧은 퀴즈">
+                <h3>짧은 확인</h3>
+                <p>clock edge에서 register 값을 갱신할 때 일반적으로 사용하는 assignment는?</p>
+                <div class="quiz-actions">
+                    <button class="quiz-btn" data-answer="wrong" type="button">=</button>
+                    <button class="quiz-btn" data-answer="right" type="button">&lt;=</button>
+                    <button class="quiz-btn" data-answer="wrong" type="button">assign</button>
+                </div>
+                <p class="quiz-result" id="quizResult" aria-live="polite"></p>
+            </div>
+            <button class="complete-btn" data-complete="verify" type="button">검증 이해 완료</button>
+        </section>
+
+        <section class="section" id="circuit-lab">
+            <div class="section-head">
+                <p class="eyebrow">07 Circuit Lab</p>
+                <h2>게이트를 직접 그리고 RTL 신호 전파를 확인합니다</h2>
+            </div>
+            <div class="circuit-lab reveal" aria-label="FPGA ASIC 학습용 디지털 회로 실습">
+                <aside class="lab-panel">
+                    <h3>부품</h3>
+                    <div class="part-grid" aria-label="회로 부품 팔레트">
+                        <button class="part-btn" data-add-part="input" type="button">입력</button>
+                        <button class="part-btn" data-add-part="output" type="button">LED</button>
+                        <button class="part-btn" data-add-part="and" type="button">AND</button>
+                        <button class="part-btn" data-add-part="or" type="button">OR</button>
+                        <button class="part-btn" data-add-part="not" type="button">NOT</button>
+                        <button class="part-btn" data-add-part="xor" type="button">XOR</button>
+                        <button class="part-btn wide" data-add-part="mux" type="button">2:1 MUX</button>
+                    </div>
+
+                    <h3>제어</h3>
+                    <div class="lab-actions">
+                        <button class="mini-btn" id="loadCircuitExample" type="button">예제</button>
+                        <button class="mini-btn" id="deleteCircuitSelection" type="button">삭제</button>
+                        <button class="mini-btn" id="clearCircuit" type="button">초기화</button>
+                    </div>
+                </aside>
+
+                <div class="lab-workspace">
+                    <div class="board-toolbar">
+                        <span id="circuitHint">출력 포트에서 입력 포트로 클릭해 연결합니다.</span>
+                        <span class="signal-legend" aria-label="신호 색상 범례">
+                            <i class="sig-1"></i>1
+                            <i class="sig-0"></i>0
+                            <i class="sig-x"></i>X
+                        </span>
+                    </div>
+                    <div class="logic-board" id="logicBoard" role="application" aria-label="논리 회로 보드">
+                        <svg class="wire-layer" id="wireLayer" aria-hidden="true"></svg>
+                        <div class="component-layer" id="componentLayer"></div>
+                    </div>
+                </div>
+
+                <aside class="lab-panel status-panel">
+                    <h3>상태</h3>
+                    <div class="status-list" id="signalList"></div>
+                    <div class="lab-message" id="circuitMessage" aria-live="polite"></div>
+                </aside>
+            </div>
+            <div class="lab-notes reveal">
+                <article>
+                    <h3>MUX</h3>
+                    <p><code>if</code>나 <code>case</code>가 합성되면 선택 신호가 data path를 고르는 mux 구조가 됩니다.</p>
+                </article>
+                <article>
+                    <h3>조합논리</h3>
+                    <p><code>assign</code>과 <code>always_comb</code>는 입력 변화가 곧 출력 변화로 이어지는 회로를 표현합니다.</p>
+                </article>
+                <article>
+                    <h3>X 전파</h3>
+                    <p>연결 누락, 초기화 누락, 루프 같은 문제는 시뮬레이션에서 X로 드러나는 경우가 많습니다.</p>
+                </article>
+            </div>
+            <button class="complete-btn" data-complete="circuit" type="button">회로 실습 완료</button>
+        </section>
+
+        <section class="section" id="practice">
+            <div class="section-head">
+                <p class="eyebrow">08 Practice Path</p>
+                <h2>작은 회로에서 실무 패턴으로 올라갑니다</h2>
+            </div>
+            <ol class="practice-list reveal">
+                <li><span>2:1, 4:1 mux</span><small>조합논리, case</small></li>
+                <li><span>parameterized counter</span><small>parameter, reset, enable</small></li>
+                <li><span>edge detector</span><small>이전 상태 저장, pulse 생성</small></li>
+                <li><span>traffic light FSM</span><small>enum FSM, timer</small></li>
+                <li><span>ready/valid pipeline</span><small>backpressure</small></li>
+                <li><span>synchronous FIFO</span><small>pointer, full/empty</small></li>
+                <li><span>UART transmitter</span><small>baud counter, FSM</small></li>
+                <li><span>assertion 추가</span><small>protocol checking</small></li>
+            </ol>
+            <button class="complete-btn" data-complete="practice" type="button">실습 계획 완료</button>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <span>원문: <a href="../08_Verilog_SystemVerilog_Deep_Dive.md">08_Verilog_SystemVerilog_Deep_Dive.md</a></span>
+        <a href="#top">맨 위로</a>
+    </footer>
+
+    <script src="./verilog_sv_study.js"></script>
+</body>
+</html>

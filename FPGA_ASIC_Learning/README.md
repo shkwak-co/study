@@ -13,7 +13,8 @@
 | 5 | [05_C_and_Hardware_Design.md](./05_C_and_Hardware_Design.md) | C/C++를 하드웨어 설계와 연결하는 방법 |
 | 6 | [06_Industry_Ecosystem.md](./06_Industry_Ecosystem.md) | 직무, 회사 유형, 툴, IP, 파운드리, 생태계 |
 | 7 | [07_Product_Lifecycle_From_Idea_to_Launch.md](./07_Product_Lifecycle_From_Idea_to_Launch.md) | 기획부터 설계, 테스트, 출시/양산까지의 전체 흐름 |
-| 8 | [examples/README.md](./examples/README.md) | FPGA/ASIC 예시 RTL 코드와 설명 |
+| 8 | [08_Verilog_SystemVerilog_Deep_Dive.md](./08_Verilog_SystemVerilog_Deep_Dive.md) / [interactive page](./interactive/08_verilog_systemverilog.html) | Verilog/SystemVerilog RTL, 검증, timing 심화 |
+| 9 | [examples/README.md](./examples/README.md) | FPGA/ASIC 예시 RTL 코드와 설명 |
 
 ## 큰 그림
 
@@ -81,6 +82,7 @@ HDL은 C/Python 같은 일반 소프트웨어 언어와 다릅니다. HDL은 "�
 2. HDL 기본
    - Verilog 또는 SystemVerilog로 작은 회로 작성
    - testbench로 시뮬레이션
+   - [Verilog/SystemVerilog 심화](./08_Verilog_SystemVerilog_Deep_Dive.md)에서 합성 가능한 RTL 스타일 학습
 3. FPGA 실습
    - LED blink, UART, PWM, SPI, FIFO, BRAM
    - constraints와 timing report 읽기

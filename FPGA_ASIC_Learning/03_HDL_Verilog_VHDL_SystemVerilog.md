@@ -246,3 +246,14 @@ FPGA LUT/FF mapping   ASIC standard-cell mapping
 - 기존 VHDL 프로젝트나 특정 산업 도메인에서는 VHDL을 배워야 할 수 있습니다.
 - 검증까지 진지하게 하려면 SystemVerilog assertion, UVM, cocotb, Verilator 같은 도구를 함께 익히면 좋습니다.
 - HDL 학습은 문법보다 **어떤 회로가 만들어지는지 상상하는 능력**이 훨씬 중요합니다.
+
+## 다음 단계
+
+Verilog/SystemVerilog를 더 깊게 학습하려면 [08_Verilog_SystemVerilog_Deep_Dive.md](./08_Verilog_SystemVerilog_Deep_Dive.md)를 이어서 보세요.
+
+그 문서에서는 다음을 더 전문적으로 다룹니다.
+
+- `logic`, `wire`, packed/unpacked array, signed/unsigned
+- `always_comb`, `always_ff`, blocking/non-blocking coding style
+- FSM, ready/valid handshake, FIFO, memory 추론
+- reset, CDC, timing, lint, assertion, self-checking testbench

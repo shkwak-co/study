@@ -156,14 +156,67 @@ for (const t of LAB.list()) {
         if ((l.quiz || []).length < 3) err(w, "quiz < 3");
         (l.quiz || []).forEach((q, i) => {
             nQuiz++;
+            const ty = q.type || "mc";
+            if (!LAB.Q_TYPES.includes(ty)) return err(w, `quiz ${i} type "${ty}" (have: ${LAB.Q_TYPES.join(", ")})`);
             if (!str(q.q) || !str(q.why)) err(w, `quiz ${i} q/why`);
-            if (!Array.isArray(q.options) || q.options.length < 2) err(w, `quiz ${i} options`);
-            else {
-                if (!(Number.isInteger(q.a) && q.a >= 0 && q.a < q.options.length)) err(w, `quiz ${i} answer index ${q.a} out of range`);
-                if (new Set(q.options).size !== q.options.length) err(w, `quiz ${i} duplicate options`);
+            if (q.code && (!str(q.code.lang) || !str(q.code.src))) err(w, `quiz ${i} code needs lang + src`);
+            if (ty === "mc") {
+                if (!Array.isArray(q.options) || q.options.length < 2) err(w, `quiz ${i} options`);
+                else {
+                    if (!(Number.isInteger(q.a) && q.a >= 0 && q.a < q.options.length)) err(w, `quiz ${i} answer index ${q.a} out of range`);
+                    if (new Set(q.options).size !== q.options.length) err(w, `quiz ${i} duplicate options`);
+                }
+            } else if (ty === "num") {
+                if (typeof q.answer !== "number" || !Number.isFinite(q.answer)) err(w, `quiz ${i} num answer must be a number`);
+                if (q.tol != null && !(q.tol >= 0)) err(w, `quiz ${i} tol must be ≥ 0`);
+                if (!LAB.grade(q, String(q.answer))) err(w, `quiz ${i} own answer does not grade as correct`);
+            } else if (ty === "text") {
+                const a = [].concat(q.answer ?? []);
+                if (!a.length || !a.every(str)) err(w, `quiz ${i} text answer: string or string[]`);
+            } else if (ty === "order") {
+                if (!Array.isArray(q.items) || q.items.length < 3 || !q.items.every(str)) err(w, `quiz ${i} order needs ≥3 items`);
+                else if (new Set(q.items).size !== q.items.length) err(w, `quiz ${i} order items must be unique`);
             }
         });
+        if (l.checked != null && !(/^\d{4}-\d{2}-\d{2}$/.test(l.checked) && l.checked <= new Date().toISOString().slice(0, 10))) err(w, `checked "${l.checked}" must be YYYY-MM-DD, not in the future`);
+        if (l.pre != null && !(Array.isArray(l.pre) && l.pre.every(str))) err(w, "pre must be [\"track/lesson\", ...]");
     }
+}
+
+// categories: every track (and external page) in exactly one group
+if (!only) [...ids, ...LAB.EXTRA_IDS].forEach((id) => { const n = LAB.CATEGORIES.filter((c) => c.tracks.includes(id)).length; if (n !== 1) err("CATEGORIES", `"${id}" is in ${n} groups (need 1)`); });
+
+// prerequisites: known lessons (when that track is loaded), no cycles
+const lessonById = new Map();
+LAB.list().forEach((t) => t.lessons.forEach((l) => lessonById.set(`${t.id}/${l.id}`, l)));
+for (const [k, l] of lessonById) {
+    (l.pre || []).forEach((p) => {
+        if (p === k) err(k, "pre refers to itself");
+        else if (!lessonById.has(p) && LAB.tracks[p.split("/")[0]]) err(k, `pre "${p}" is not a lesson`);
+        else if (!lessonById.has(p) && !only) err(k, `pre "${p}" is not a lesson`);
+    });
+}
+{
+    const state = new Map(); // 1 visiting, 2 done
+    const visit = (k, trail) => {
+        if (state.get(k) === 2) return;
+        if (state.get(k) === 1) { err(k, `pre cycle: ${[...trail, k].join(" → ")}`); return; }
+        state.set(k, 1);
+        (lessonById.get(k)?.pre || []).filter((p) => lessonById.has(p)).forEach((p) => visit(p, [...trail, k]));
+        state.set(k, 2);
+    };
+    [...lessonById.keys()].forEach((k) => visit(k, []));
+}
+
+// learning paths (content/paths.js): every step is a lesson
+if (!only && fs.existsSync(path.join(dir, "content/paths.js"))) {
+    try { run("content/paths.js"); } catch (e) { errors.push(`content/paths.js: ${e.message}`); }
+    (LAB.paths || []).forEach((p) => {
+        const w = `path ${p.id}`;
+        if (!str(p.id) || !str(p.name) || !(p.lessons || []).length) err(w, "needs id, name, lessons");
+        (p.lessons || []).forEach((k) => { if (!lessonById.has(k)) err(w, `"${k}" is not a lesson`); });
+        if (new Set(p.lessons).size !== (p.lessons || []).length) err(w, "duplicate lesson");
+    });
 }
 
 // articles (content/deep/<track>.js): known lesson, intro, non-empty sections, valid tables/code/demos
@@ -227,6 +280,17 @@ LAB.SIM_NAMES.forEach((n) => { if (!(LAB.SIM_INFO || {})[n]) err("anim.js", `SIM
     assert.equal(crc("123456789", "100000111"), 0xf4, "CRC-8/SMBUS check value");
     assert.equal(crc("123456789", "10001000000100001"), 0x31c3, "CRC-16/XMODEM check value");
     assert.equal(N.crcDiv([..."11010011101100"].map(Number), [1, 0, 1, 1]).rem.join(""), "100", "CRC-3 textbook example");
+}
+
+// quiz grading: numbers (hex, tolerance), text answers, order
+{
+    const g = LAB.grade;
+    assert.ok(g({ type: "num", answer: 255 }, "0xFF") && g({ type: "num", answer: 255 }, "0b11111111") && g({ type: "num", answer: 1999000 }, "1,999,000"), "num accepts hex / bin / grouped digits");
+    assert.ok(g({ type: "num", answer: 2.12, tol: 0.05 }, "2.1") && !g({ type: "num", answer: 2.12, tol: 0.05 }, "2.0"), "num tolerance");
+    assert.ok(!g({ type: "num", answer: 3 }, "abc") && !g({ type: "num", answer: 3 }, ""), "num rejects junk");
+    assert.ok(g({ type: "text", answer: ["0x1234FF78", "305463160"] }, " 0x1234ff78 ") && !g({ type: "text", answer: "a" }, ""), "text answers: case / space insensitive");
+    assert.ok(g({ type: "order", items: ["a", "b", "c"] }, ["a", "b", "c"]) && !g({ type: "order", items: ["a", "b", "c"] }, ["b", "a", "c"]), "order");
+    assert.ok(g({ options: ["x", "y"], a: 1 }, 1) && !g({ options: ["x", "y"], a: 1 }, 0), "mc");
 }
 
 // cpu lab: loops, calls + stack, flags, bytes, faults
@@ -302,6 +366,31 @@ if (links) {
         try { s = await get(url, "HEAD"); if (s >= 400) s = await get(url, "GET"); } catch (e) { s = e.name; }
         if (!(s >= 200 && s < 400)) warn(where, `link ${s}: ${url}`);
     }));
+}
+
+// --report: quality scorecard per track / lesson (prints only; round targets in README)
+if (args.includes("--report")) {
+    const T = { quiz: 8, newTypes: 3, longest: 0.35 };
+    const year = new Date().getFullYear();
+    const longestRight = (q) => { const len = q.options.map((o) => o.length); const mx = Math.max(...len); return len[q.a] === mx && len.filter((x) => x === mx).length === 1; };
+    console.log(`\nREPORT · targets: quiz ≥ ${T.quiz} (≥ ${T.newTypes} non-choice), longest-option answers ≤ ${T.longest * 100}%, checked date, trends ending ≥ ${year}`);
+    for (const t of LAB.list()) {
+        const mc = t.lessons.flatMap((l) => l.quiz.filter((q) => !q.type || q.type === "mc"));
+        const ratio = mc.length ? mc.filter(longestRight).length / mc.length : 0;
+        const stale = (t.trends || []).filter((x) => Math.max(...(String(x.when).match(/\d{4}/g) || [0]).map(Number)) < year).length;
+        const rows = t.lessons.map((l) => {
+            const by = {};
+            l.quiz.forEach((q) => { by[q.type || "mc"] = (by[q.type || "mc"] || 0) + 1; });
+            const fresh = l.quiz.length - (by.mc || 0);
+            const flags = [l.quiz.length < T.quiz && `문제 ${l.quiz.length}`, fresh < T.newTypes && `새유형 ${fresh}`, !l.checked && "미검증", !(LAB.articles[t.id] || {})[l.id] && "상세없음"].filter(Boolean);
+            return { l, by, flags };
+        });
+        const ok = rows.filter((r) => !r.flags.length).length;
+        console.log(`\n${t.icon} ${t.id}  ${ok}/${t.lessons.length} 강 통과 · 객관식 정답=최장 ${(ratio * 100).toFixed(0)}%${ratio > T.longest ? " ✗" : " ✓"} · 오래된 동향 ${stale}${stale ? " ✗" : " ✓"} · 실험 ${t.lessons.filter((l) => l.demo && l.demo.type === "sim").length}/${t.lessons.length}`);
+        rows.forEach(({ l, by, flags }) => {
+            console.log(`  ${flags.length ? "✗" : "✓"} ${l.id.padEnd(18)} 문제 ${String(l.quiz.length).padStart(2)} (${Object.entries(by).map(([k, v]) => `${k} ${v}`).join(", ")}) · pre ${(l.pre || []).length} · refs ${(l.refs || []).length}${l.checked ? ` · 검증 ${l.checked}` : ""}${flags.length ? `  ← ${flags.join(", ")}` : ""}`);
+        });
+    }
 }
 
 warns.forEach((x) => console.log(`warn  ${x}`));

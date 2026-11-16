@@ -12,11 +12,25 @@
         tagline: "RTL을 회로로 보기 · 기존 Verilog/SV 학습 페이지",
         href: "../FPGA_ASIC_Learning/interactive/08_verilog_systemverilog.html"
     }];
+    // home grouping (every TRACK_ID and EXTRA id belongs to exactly one)
+    const CATEGORIES = [
+        { name: "하드웨어·저수준", tracks: ["embedded", "assembly", "memory", "fpga"] },
+        { name: "소프트웨어 기초", tracks: ["languages", "data-structures"] },
+        { name: "통신", tracks: ["protocols"] },
+        { name: "로보틱스", tracks: ["robotics"] },
+        { name: "AI", tracks: ["deep-learning", "ai"] }
+    ];
 
     const LAB = window.LAB = window.LAB || {};
     LAB.tracks = {};
     LAB.track = (t) => { LAB.tracks[t.id] = t; };
     LAB.list = () => TRACK_IDS.map((id) => LAB.tracks[id]).filter(Boolean);
+    LAB.CATEGORIES = CATEGORIES;
+    LAB.EXTRA_IDS = EXTRA.map((x) => x.id);
+    const categoryOf = (id) => CATEGORIES.find((c) => c.tracks.includes(id));
+    // learning paths: content/paths.js → LAB.path({ id, name, desc, lessons: ["track/lesson", ...] })
+    LAB.paths = [];
+    LAB.path = (p) => { LAB.paths.push(p); };
     LAB.REF_KINDS = { paper: "논문", spec: "표준", doc: "문서", book: "책" };
     // long-form explanations: content/deep/<track>.js → LAB.article("<track>", { <lessonId>: { intro, sections, pitfalls, summary } })
     LAB.articles = {};
@@ -401,37 +415,119 @@
     LAB.codeBox = codeBox;
 
     /* ---------- quiz ---------- */
-    // items: [{ q, options, a, why, src?, key?, idx? }]
+    // item types: mc { options, a } · num { answer, tol?, unit? } · text { answer: string | string[] } · order { items (correct order) }
+    // any type may carry code: { lang, src }, shown above the answer area
+    const qType = (it) => it.type || "mc";
+    const Q_LABEL = { mc: "객관식", num: "계산", text: "결과 예측", order: "순서" };
+    const parseAnswerNum = (s) => {
+        const t = String(s ?? "").trim().replace(/[_,\s]/g, "");
+        if (/^-?0x[0-9a-f]+$/i.test(t)) return parseInt(t, 16);
+        if (/^-?0b[01]+$/i.test(t)) return (t[0] === "-" ? -1 : 1) * parseInt(t.replace(/^-?0b/i, ""), 2);
+        if (/^[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i.test(t)) return Number(t);
+        return NaN;
+    };
+    const normText = (s) => String(s ?? "").toLowerCase().replace(/\s+/g, "");
+    // pure: (item, response) → correct?  response: option index (mc), string (num/text), array of item strings (order)
+    function grade(it, r) {
+        switch (qType(it)) {
+            case "num": {
+                const v = parseAnswerNum(r);
+                return Number.isFinite(v) && Math.abs(v - it.answer) <= (it.tol || 0) + 1e-9 * Math.max(1, Math.abs(it.answer));
+            }
+            case "text": return normText(r) !== "" && [].concat(it.answer).some((a) => normText(a) === normText(r));
+            case "order": return Array.isArray(r) && r.length === it.items.length && r.every((x, k) => x === it.items[k]);
+            default: return r === it.a;
+        }
+    }
+    LAB.grade = grade;
+    LAB.Q_TYPES = Object.keys(Q_LABEL);
+
+    // items: [{ ...question, src?, key?, idx? }]
     function quiz(host, items, opts = {}) {
         let i = 0;
         let score = 0;
+        let cur = [];
+        let shown = 0;
         const res = [];
         const dots = () => items.map((_, k) => `<i class="${res[k] === true ? "r" : res[k] === false ? "w" : k === i ? "cur" : ""}"></i>`).join("");
+        const drawOrder = (locked) => {
+            $(".qz-order", host).innerHTML = cur.map((x, k) => `<li data-k="${k}"><span class="n">${k + 1}</span><span>${fmt(x)}</span>`
+                + `<button type="button" data-mv="-1" title="위로"${locked || !k ? " disabled" : ""}>↑</button><button type="button" data-mv="1" title="아래로"${locked || k === cur.length - 1 ? " disabled" : ""}>↓</button></li>`).join("");
+        };
         function render() {
             if (i >= items.length) return end();
             const it = items[i];
-            const order = shuffle(it.options.map((_, k) => k));
+            const ty = qType(it);
+            shown++;
+            let body;
+            if (ty === "mc") {
+                const order = shuffle(it.options.map((_, k) => k));
+                body = `<div class="qz-opts">${order.map((k, n) => `<button type="button" data-k="${k}"><b>${"ABCDEF"[n]}</b><span>${fmt(it.options[k])}</span></button>`).join("")}</div>`;
+            } else if (ty === "order") {
+                cur = it.items.slice();
+                for (let t = 0; t < 6 && cur.every((x, k) => x === it.items[k]); t++) cur = shuffle(it.items);
+                body = `<p class="qz-hint">↑ ↓ 로 올바른 순서를 만든 뒤 확인</p><ol class="qz-order"></ol><div class="qz-in"><button type="button" class="btn small primary" data-go>확인</button></div>`;
+            } else {
+                body = `<div class="qz-in"><input type="text" autocomplete="off" spellcheck="false" placeholder="${ty === "num" ? "숫자 입력 (0x·0b 가능)" : "답 입력"}">${it.unit ? `<span>${esc(it.unit)}</span>` : ""}<button type="button" class="btn small primary" data-go>확인</button></div>`;
+            }
             host.innerHTML = `<div class="quiz">`
-                + `<div class="qz-top"><div class="qz-dots">${dots()}</div><span class="chip">${i + 1} / ${items.length}</span></div>`
+                + `<div class="qz-top"><div class="qz-dots">${dots()}</div>${ty !== "mc" ? `<span class="chip c">${Q_LABEL[ty]}</span>` : ""}<span class="chip">${i + 1} / ${items.length}</span></div>`
                 + (it.src ? `<div class="qz-src">${esc(it.src)}</div>` : "")
                 + `<p class="qz-q">${fmt(it.q)}</p>`
-                + `<div class="qz-opts">${order.map((k, n) => `<button type="button" data-k="${k}"><b>${"ABCDEF"[n]}</b><span>${fmt(it.options[k])}</span></button>`).join("")}</div>`
+                + (it.code ? codeBox(it.code) : "")
+                + body
                 + `<div class="qz-fb"></div></div>`;
-            $$(".qz-opts button", host).forEach((b) => { b.onclick = () => pick(+b.dataset.k); });
+            if (ty === "mc") { $$(".qz-opts button", host).forEach((b) => { b.onclick = () => answer(+b.dataset.k); }); return; }
+            if (ty === "order") {
+                drawOrder(false);
+                $(".qz-order", host).onclick = (e) => {
+                    const b = e.target.closest("[data-mv]");
+                    if (!b || b.disabled) return;
+                    const k = +b.closest("li").dataset.k;
+                    const j = k + +b.dataset.mv;
+                    [cur[k], cur[j]] = [cur[j], cur[k]];
+                    drawOrder(false);
+                    const again = $(`.qz-order li[data-k="${j}"] [data-mv="${b.dataset.mv}"]`, host);
+                    (again && !again.disabled ? again : $(`.qz-order li[data-k="${j}"] button:not([disabled])`, host))?.focus();
+                };
+                $("[data-go]", host).onclick = () => answer(cur.slice());
+                return;
+            }
+            const inp = $(".qz-in input", host);
+            const go = () => { if (!inp.value.trim()) { inp.focus(); return; } answer(inp.value); };
+            $("[data-go]", host).onclick = go;
+            inp.onkeydown = (e) => { if (e.key === "Enter") go(); };
+            if (shown > 1) inp.focus({ preventScroll: true }); // not on page load
         }
-        function pick(k) {
+        function answer(r) {
             const it = items[i];
-            const ok = k === it.a;
+            const ty = qType(it);
+            const ok = grade(it, r);
             res[i] = ok;
             if (ok) score++;
-            $$(".qz-opts button", host).forEach((b) => {
-                b.disabled = true;
-                const kk = +b.dataset.k;
-                if (kk === it.a) b.classList.add("r");
-                else if (kk === k) b.classList.add("w");
-            });
+            let reveal = "";
+            if (ty === "mc") {
+                $$(".qz-opts button", host).forEach((b) => {
+                    b.disabled = true;
+                    const kk = +b.dataset.k;
+                    if (kk === it.a) b.classList.add("r");
+                    else if (kk === r) b.classList.add("w");
+                });
+            } else if (ty === "order") {
+                drawOrder(true);
+                $$(".qz-order li", host).forEach((li, k) => li.classList.add(cur[k] === it.items[k] ? "r" : "w"));
+                $("[data-go]", host).remove();
+                if (!ok) reveal = `올바른 순서: ${it.items.map((x, k) => `${k + 1}) ${x}`).join("  ")}`;
+            } else {
+                const inp = $(".qz-in input", host);
+                inp.disabled = true;
+                inp.classList.add(ok ? "r" : "w");
+                $("[data-go]", host).remove();
+                const val = ty === "num" ? `${it.answer}${it.unit ? ` ${it.unit}` : ""}` : `\`${[].concat(it.answer)[0]}\``;
+                reveal = !ok ? `답 ${val}${it.tol ? ` (±${it.tol} 허용)` : ""}` : ty === "num" && it.tol ? `정확한 값 ${val}` : "";
+            }
             $(".qz-dots", host).innerHTML = dots();
-            $(".qz-fb", host).innerHTML = `<div class="qz-why ${ok ? "r" : "w"}"><b>${ok ? "정답" : "오답"}</b> · ${fmt(it.why || "")}</div>`
+            $(".qz-fb", host).innerHTML = `<div class="qz-why ${ok ? "r" : "w"}"><b>${ok ? "정답" : "오답"}</b>${reveal ? ` · ${fmt(reveal)}` : ""} · ${fmt(it.why || "")}</div>`
                 + `<div class="qz-next"><button type="button" class="btn small primary">${i + 1 < items.length ? "다음 →" : "결과 보기"}</button></div>`;
             const next = $(".qz-next button", host);
             next.onclick = () => { i++; render(); };
@@ -719,18 +815,31 @@
 </div></section>
 <section class="sec wrap" id="tracks">
   <div class="sec-head"><div><p class="eyebrow">Tracks</p><h2>무엇을 실험할까</h2></div><span class="muted">${tracks.length + EXTRA.length}개 분야 · ${lessons}강</span></div>
-  <div class="tracks">
-    ${tracks.map((t, i) => {
+  ${CATEGORIES.map((c) => `<div class="cat"><h3 class="cat-h">${esc(c.name)}</h3><div class="tracks">${c.tracks.map((id, i) => {
+            const t = LAB.tracks[id];
+            const x = EXTRA.find((e) => e.id === id);
+            if (x) return `<a class="card tilt track-card reveal" style="--c:${x.color};--i:${i}" href="${x.href}">
+      <div class="ico">${x.icon}</div><h3>${esc(x.name)}</h3><p>${esc(x.tagline)}</p>
+      <div class="foot"><span class="chip">기존 페이지</span><span class="arrow">↗</span></div></a>`;
+            if (!t) return "";
             const d = trackDone(t);
             return `<a class="card tilt track-card reveal" style="--c:${t.color};--i:${i}" href="${trackHref(t.id)}">
       <div class="ico">${t.icon}</div><h3>${esc(t.name)}</h3><p>${esc(t.tagline)}</p>
       <div class="foot"><span class="chip">${t.lessons.length}강 · ${d} 완료</span>${ring(pct(d, t.lessons.length), 46)}<span class="arrow">→</span></div></a>`;
-        }).join("")}
-    ${EXTRA.map((t, i) => `<a class="card tilt track-card reveal" style="--c:${t.color};--i:${tracks.length + i}" href="${t.href}">
-      <div class="ico">${t.icon}</div><h3>${esc(t.name)}</h3><p>${esc(t.tagline)}</p>
-      <div class="foot"><span class="chip">기존 페이지</span><span class="arrow">↗</span></div></a>`).join("")}
-  </div>
+        }).join("")}</div></div>`).join("")}
 </section>
+${LAB.paths.length ? `<section class="sec wrap">
+  <div class="sec-head"><div><p class="eyebrow">Paths</p><h2>학습 경로</h2></div><span class="muted">트랙을 가로질러 순서대로</span></div>
+  <div class="paths">${LAB.paths.map((p, i) => {
+            const steps = p.lessons.map(findLesson).filter(Boolean);
+            const n = steps.filter((s) => isDone(s.t.id, s.l.id)).length;
+            const nx = steps.find((s) => !isDone(s.t.id, s.l.id)) || steps[0];
+            return `<div class="card path-card reveal" style="--i:${i}"><p class="eyebrow">${n} / ${steps.length} 완료</p><h3>${esc(p.name)}</h3><p class="muted">${esc(p.desc || "")}</p>
+      <div class="bar"><i data-w="${pct(n, steps.length)}%"></i></div>
+      <ol class="path-steps">${steps.map((s) => `<li class="${isDone(s.t.id, s.l.id) ? "done" : ""}${s === nx ? " next" : ""}" style="--c:${s.t.color}"><a href="${lessonHref(s.t.id, s.l.id)}">${s.t.icon} ${esc(s.l.title)}</a></li>`).join("")}</ol>
+      ${nx ? `<a class="btn small primary" href="${lessonHref(nx.t.id, nx.l.id)}">${n ? "이어서" : "시작"}: ${esc(nx.l.title)} →</a>` : ""}</div>`;
+        }).join("")}</div>
+</section>` : ""}
 <section class="sec wrap">
   <div class="sec-head"><div><p class="eyebrow">Labs</p><h2>실험실</h2></div><a class="btn small" href="labs.html">전체 ${labs.length}개 실험 →</a></div>
   <div class="labs">${labs.slice(0, 8).map((x, i) => labCard(x, i)).join("")}</div>
@@ -893,7 +1002,7 @@ ${terms.length ? (() => {
         const mins = t.lessons.reduce((n, l) => n + (l.mins || 10), 0);
         app.innerHTML = `
 <section class="band"><div class="wrap">
-  <div class="crumb"><a href="index.html">홈</a><span>›</span><span>${esc(t.name)}</span></div>
+  <div class="crumb"><a href="index.html">홈</a><span>›</span>${categoryOf(t.id) ? `<a href="index.html#tracks">${esc(categoryOf(t.id).name)}</a><span>›</span>` : ""}<span>${esc(t.name)}</span></div>
   <div class="row">
     <div class="big-ico">${t.icon}</div>
     <div><p class="eyebrow">Track</p><h1>${esc(t.name)}</h1><p>${esc(t.tagline)}</p></div>
@@ -911,7 +1020,7 @@ ${terms.length ? (() => {
             return `<a class="card lesson-row reveal ${ok ? "done" : ""}" style="--i:${i}" href="${lessonHref(t.id, l.id)}">
       <span class="num">${ok ? "✓" : i + 1}</span>
       <div><h3>${esc(l.title)}${mark ? " <span style=\"color:var(--warn)\">★</span>" : ""}</h3>
-      <div class="meta">${lvl(l.level || 1)}<span class="chip">${l.mins || 10}분</span>${articleOf(t, l) ? `<span class="chip">≡ 상세</span>` : ""}${l.demo && l.demo.type === "sim" ? `<span class="chip">⚗ 실험</span>` : ""}${qz && qz.t ? `<span class="chip c">퀴즈 최고 ${qz.best || 0}%</span>` : ""}${qz && qz.wrong && qz.wrong.length ? `<span class="chip" style="color:var(--bad)">오답 ${qz.wrong.length}</span>` : ""}</div></div>
+      <div class="meta">${lvl(l.level || 1)}<span class="chip">${l.mins || 10}분</span>${articleOf(t, l) ? `<span class="chip">≡ 상세</span>` : ""}${l.checked ? `<span class="chip ok">✓ 검증</span>` : ""}${l.demo && l.demo.type === "sim" ? `<span class="chip">⚗ 실험</span>` : ""}${qz && qz.t ? `<span class="chip c">퀴즈 최고 ${qz.best || 0}%</span>` : ""}${qz && qz.wrong && qz.wrong.length ? `<span class="chip" style="color:var(--bad)">오답 ${qz.wrong.length}</span>` : ""}</div></div>
       <span class="arrow" style="color:var(--c)">→</span></a>`;
         }).join("")}</div>
 </section>
@@ -946,6 +1055,11 @@ ${(t.trends || []).length ? `<section class="sec wrap">
         const prev = t.lessons[idx - 1];
         const next = t.lessons[idx + 1];
         const art = articleOf(t, l);
+        const links = {
+            pre: (l.pre || []).map(findLesson).filter(Boolean),
+            next: LAB.list().flatMap((x) => x.lessons.filter((y) => (y.pre || []).includes(k)).map((y) => ({ t: x, l: y })))
+        };
+        const linkChip = (s) => `<a class="chip c${isDone(s.t.id, s.l.id) ? " done" : ""}" style="--c:${s.t.color}" href="${lessonHref(s.t.id, s.l.id)}">${isDone(s.t.id, s.l.id) ? "✓ " : ""}${s.t.icon} ${esc(s.l.title)}</a>`;
         const secs = [
             ["s-key", "핵심", (l.key || []).length || (l.concepts || []).length],
             ["s-demo", "동작 방식", l.demo],
@@ -965,11 +1079,12 @@ ${(t.trends || []).length ? `<section class="sec wrap">
   <header class="l-head">
     <div class="crumb"><a href="index.html">홈</a><span>›</span><a href="${trackHref(t.id)}">${t.icon} ${esc(t.name)}</a><span>›</span><span>${idx + 1} / ${t.lessons.length}</span></div>
     <h1>${esc(l.title)}</h1>
-    <div class="meta">${lvl(l.level || 1)}<span class="chip">${l.mins || 10}분</span>
+    <div class="meta">${lvl(l.level || 1)}<span class="chip">${l.mins || 10}분</span>${l.checked ? `<span class="chip ok" title="공식 문서와 대조해 사실 확인한 날짜">✓ 검증 ${esc(l.checked.slice(0, 7))}</span>` : ""}
       <button type="button" class="star" id="star" title="북마크">★</button>
       <button type="button" class="btn small done-btn" id="doneBtn">학습 완료 표시</button>
       ${art ? `<a class="btn small" href="${deepHref(t.id, l.id)}">≡ 상세 설명</a>` : ""}
       ${l.demo && l.demo.type === "sim" ? `<a class="btn small ghost" href="${labHref(t.id, l.id)}">⚗ 실험실에서 열기</a>` : ""}</div>
+    ${links.pre.length || links.next.length ? `<div class="l-links">${links.pre.length ? `<div><span>먼저 보면 좋은 강의</span>${links.pre.map(linkChip).join("")}</div>` : ""}${links.next.length ? `<div><span>이어서 볼 강의</span>${links.next.map(linkChip).join("")}</div>` : ""}</div>` : ""}
   </header>
   ${has("s-key") ? `<section class="l-sec" id="s-key">${head("s-key")}
     <ul class="keys">${(l.key || []).map((x, i) => `<li class="reveal" style="--i:${i}" data-n="${String(i + 1).padStart(2, "0")}"><span>${fmt(x)}</span></li>`).join("")}</ul>
@@ -1372,7 +1487,7 @@ ${sel ? `<section class="sec wrap" id="lab">
         const q = new URLSearchParams(location.search);
         const tid = q.get("t");
         const deep = TRACK_IDS.includes(tid) && ["track", "lesson", "deep"].includes(page) ? [`content/deep/${tid}.js`] : [];
-        await Promise.all([...TRACK_IDS.map((id) => `content/${id}.js`), ...deep, "my/progress.js"].map(load));
+        await Promise.all([...TRACK_IDS.map((id) => `content/${id}.js`), ...deep, "content/paths.js", "my/progress.js"].map(load));
         loadState();
         const t = LAB.tracks[q.get("t")];
         if (t && page !== "glossary") document.documentElement.style.setProperty("--c", t.color);

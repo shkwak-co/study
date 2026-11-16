@@ -52,6 +52,30 @@ LAB.track({
 });
 ```
 
+Optional lesson fields: `pre: ["embedded/bits", ...]` (prerequisites, any track; the follow-up links are computed), `checked: "YYYY-MM-DD"` (facts checked against official sources — shows "✓ 검증").
+
+### Quiz types
+
+Every item has `q` and `why`; any item may add `code: { lang, src }` (shown above the answer area).
+
+```js
+{ q, options: [...], a: 0, why }                                   // 객관식 (default)
+{ type: "num", q, answer: 2.12, tol: 0.05, unit: "%", why }       // 계산: number input, accepts 0x / 0b / 1,000; |x − answer| ≤ tol
+{ type: "text", q, code, answer: ["0x1234FF78", "305463160"], why } // 결과 예측: any listed answer, case and spaces ignored
+{ type: "order", q, items: ["START", "주소+W", "ACK", "데이터", "STOP"], why } // 순서: write the correct order; shown shuffled
+```
+
+Multiple choice: keep options similar in length and plausible — the right answer must not be the longest one by habit. `why` says why the answer is right and the tempting wrong one is wrong.
+Numbers in `num` / `text` answers must come from actually computing or running the thing.
+
+### Quality targets (`node check.mjs --report`)
+
+Per lesson: ≥ 8 quiz items with ≥ 3 of `num` / `text` / `order`, `checked` set, an article. Per track: multiple-choice answers that are the uniquely longest option ≤ 35 %, trend cards ending in the current year.
+
+### Learning paths
+
+`content/paths.js`: `LAB.path({ id, name, desc, lessons: ["track/lesson", ...] })` — cards with progress on the home page. Home groups tracks by `CATEGORIES` in `assets/lab.js`.
+
 Style: short lines, no paragraphs. Inline `` `code` `` and `**bold**` render in every text field.
 
 English originals: every Korean term card (`concepts`, `glossary`) has `en` — the full English name, acronym in parentheses (`Multi-Layer Perceptron (MLP)`).

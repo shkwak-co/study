@@ -5,7 +5,7 @@ LAB.article("assembly", {
             {
                 h: "ISA 와 Thumb-2: 무엇이 약속되어 있나",
                 p: [
-                    "ISA(Instruction Set Architecture)는 명령의 종류와 의미, 레지스터 개수와 역할, 명령을 비트로 적는 인코딩, 예외가 났을 때의 동작을 정한 규격이다. Cortex-M3/M4/M7 은 Armv7-M, Cortex-M0/M0+ 는 Armv6-M, M33 은 Armv8-M, M55/M85 는 Armv8.1-M 을 구현한다. 같은 ISA 를 구현한 코어끼리는 파이프라인 길이나 속도가 달라도 같은 기계어를 실행한다.",
+                    "ISA(Instruction Set Architecture)는 명령의 종류와 의미, 레지스터 개수와 역할, 명령을 비트로 적는 인코딩, 예외가 났을 때의 동작을 정한 규격이다. Cortex-M3 는 Armv7-M, DSP 확장이 붙은 M4/M7 은 Armv7E-M, Cortex-M0/M0+ 는 Armv6-M, M33 은 Armv8-M Mainline, M55/M85 는 Armv8.1-M 을 구현한다. 같은 ISA 를 구현한 코어끼리는 파이프라인 길이나 속도가 달라도 같은 기계어를 실행한다.",
                     "Cortex-M 은 **Thumb-2** 명령만 실행한다. Thumb-2 는 16bit 명령과 32bit 명령을 섞어 쓰는 인코딩으로, 첫 하프워드의 위쪽 5비트가 `0b11101`, `0b11110`, `0b11111` 이면 32bit 명령의 앞부분이고 그 밖이면 16bit 명령 하나다. 자주 쓰는 형태는 2바이트로 적고, 큰 즉시값(immediate value)이나 `r8` 이상의 레지스터가 필요하면 4바이트로 적는다.",
                     "주소의 bit0 은 명령 상태 표시로 쓰인다. `bl` 이 `lr` 에 넣는 돌아올 주소, 벡터 테이블(vector table)의 핸들러 주소, C 에서 얻은 함수 포인터 값은 모두 bit0 = 1 이다. `bx` 로 bit0 = 0 인 주소에 가면 EPSR 의 T 비트가 0 이 되고, 다음 명령에서 UsageFault(INVSTATE)가 난다. Cortex-M 에는 Arm(A32) 상태가 없기 때문이다."
                 ]
@@ -158,7 +158,7 @@ f44f 707a     mov.w   r0, #1000            @ 회전 즉시값
             {
                 h: "네 플래그가 정해지는 규칙",
                 p: [
-                    "`adds`, `subs` 처럼 `s` 가 붙은 명령과 `cmp`, `cmn`, `tst` 만 플래그를 바꾼다. 덧셈과 뺄셈은 네 비트를 모두 갱신한다. `ands`, `orrs`, `movs` 같은 논리 명령은 N 과 Z 를 갱신하고, C 는 두 번째 피연산자를 시프트(또는 회전된 즉시값을 사용)했을 때만 밀려난 비트로 바뀌며, V 는 건드리지 않는다.",
+                    "`adds`, `subs` 처럼 `s` 가 붙은 명령과 `cmp`, `cmn`, `tst`, `teq` 만 플래그를 바꾼다. 덧셈과 뺄셈은 네 비트를 모두 갱신한다. `ands`, `orrs`, `movs` 같은 논리 명령은 N 과 Z 를 갱신하고, C 는 두 번째 피연산자를 시프트(또는 회전된 즉시값을 사용)했을 때만 밀려난 비트로 바뀌며, V 는 건드리지 않는다.",
                     "C 와 V 는 같은 덧셈을 부호 없는 수와 부호 있는 수로 각각 봤을 때의 넘침이다. 아래 표처럼 하나가 켜졌다고 다른 하나가 켜지는 것은 아니다."
                 ],
                 list: [
@@ -711,7 +711,7 @@ sw:
             {
                 h: "분기 비용과 다른 ISA",
                 p: [
-                    "Cortex-M3/M4 는 3단 파이프라인이라 분기가 일어나면 미리 가져온 명령을 버리고 새 주소에서 다시 가져오는 **파이프라인 재충전(pipeline refill)**이 생긴다. 본체가 짧은 루프에서는 이 비용이 상대적으로 커서, Armv8.1-M(Cortex-M55/M85)은 **저오버헤드 루프(low-overhead loop)** 명령 `dls`/`le` 로 루프 끝 분기를 가볍게 한다. 무분기 코드는 입력과 상관없이 같은 명령을 실행하므로 실행 시간이 일정하다는 장점도 있다.",
+                    "Cortex-M3/M4 는 3단 파이프라인이라 분기가 일어나면 미리 가져온 명령을 버리고 새 주소에서 다시 가져오는 **파이프라인 재충전(pipeline refill)**이 생긴다. 본체가 짧은 루프에서는 이 비용이 상대적으로 커서, Armv8.1-M(Cortex-M55/M85)의 저오버헤드 분기 확장은 **저오버헤드 루프(low-overhead loop)** 명령 `dls`/`le` 로 루프 끝 분기를 가볍게 한다. 무분기 코드는 입력과 상관없이 같은 명령을 실행하므로 실행 시간이 일정하다는 장점도 있다.",
                     "RISC-V 는 `beq bne blt bge bltu bgeu` 가 두 레지스터를 직접 비교해 분기하고, 거리는 ±4 KB 다. `bgt` 는 피연산자를 바꾼 `blt` 로 풀리는 의사 명령(pseudo-instruction)이다. x86-64 는 `cmp`/`test` 로 RFLAGS 를 만들고 `jcc` 로 분기하며, 부호 없는 `jb`/`ja` 와 부호 있는 `jl`/`jg` 가 Arm 의 `lo`/`hi`, `lt`/`gt` 에 대응한다. 분기 없는 선택은 `cmov` 가 IT 블록 역할을 한다."
                 ]
             }
@@ -1313,6 +1313,163 @@ got:
         ]
     },
 
+    "asm-atomic": {
+        intro: "`cnt++` 한 줄은 Cortex-M 에서 읽기·더하기·쓰기 세 명령이고, 그 사이에 인터럽트가 끼면 한쪽의 증가가 사라지는 **갱신 손실(lost update)**이 생긴다. 이 글은 값이 사라지는 순서를 시뮬레이터로 확인하고, Armv7-M 이 이를 막는 `ldrex`/`strex` 와 **배타적 모니터(exclusive monitor)**, GCC 가 만드는 원자 연산 코드, **인터럽트 차단(interrupt masking)**과 고르는 기준, 그리고 Cortex-M0·RISC-V·x86-64 의 같은 연산을 차례로 본다.",
+        sections: [
+            {
+                h: "읽기-수정-쓰기는 세 명령이다",
+                p: [
+                    "GCC 는 전역 `int cnt` 의 `cnt++` 을 `ldr` · `adds` · `str` 로 만든다. 명령 하나하나는 끊기지 않지만 명령 사이에서는 언제든 예외가 들어올 수 있다. 태스크가 `ldr` 로 5 를 읽은 직후 ISR 이 들어와 cnt 를 6 으로 만들고 나가면, 태스크는 레지스터에 남은 옛 값 5 에 1 을 더해 6 을 쓴다. 두 번 증가했는데 결과는 6 이다.",
+                    "`volatile` 을 붙여도 달라지지 않는다. `volatile` 은 접근을 생략하거나 합치지 말라는 뜻이라 세 명령은 그대로 남고, 사이의 틈도 그대로다. 데모는 이 순서를 명령 단위로 펼친 것이다."
+                ],
+                code: {
+                    lang: "asm",
+                    title: "GCC 15.2 -O2 · 평범한 cnt++",
+                    src: `@ int cnt;  void inc_plain(void) { cnt++; }
+inc_plain:
+        ldr     r2, .L3          @ &cnt
+        ldr     r3, [r2]         @ 읽기   ← 여기와
+        adds    r3, r3, #1       @ 더하기 ← 여기 사이에 ISR 이 들어올 수 있음
+        str     r3, [r2]         @ 쓰기
+        bx      lr`
+                },
+                demo: {
+                    type: "sim", name: "cpu",
+                    title: "갱신 손실 · 두 번 더했는데 6",
+                    cTitle: "race.c",
+                    c: `int cnt = 5;
+void task(void)      { cnt++; }   // ldr … str 사이에서
+void SysTick_Handler(void) { cnt++; }   // ISR 이 끼어듦`,
+                    intro: "▶ 태스크의 `r1` 은 ISR 이 cnt 를 6 으로 바꾼 뒤에도 옛 값 5 · 마지막 `str` 이 ISR 의 결과를 덮어씀",
+                    code: `.data
+cnt: .word 5
+.text
+    ldr  r3, =cnt
+    ldr  r1, [r3]            @ 태스크: 읽기 → 5
+@ ── 여기서 ISR 진입 · ISR 도 cnt++ ──
+    ldr  r2, [r3]            @ ISR: 읽기 → 5
+    adds r2, r2, #1
+    str  r2, [r3]            @ ISR: cnt = 6
+@ ── ISR 복귀 · 태스크는 옛 값으로 계속 ──
+    adds r1, r1, #1
+    str  r1, [r3]            @ 태스크: cnt = 6 (7 이어야 함)
+    ldr  r0, [r3]
+    bx   lr`,
+                    expect: { r0: 6, r2: 6 }
+                }
+            },
+            {
+                h: "LDREX / STREX 와 배타적 모니터",
+                p: [
+                    "`ldrex` 는 값을 읽으면서 그 주소를 배타적 모니터에 표시하고, `strex` 는 표시가 아직 남아 있을 때만 메모리에 쓴다. 썼으면 결과 레지스터에 0, 쓰지 않았으면 1 을 돌려준다. 실패한 `strex` 는 메모리를 건드리지 않으므로, 코드는 결과가 1 이면 `ldrex` 부터 다시 하는 **재시도 루프(retry loop)**가 된다. 다시 읽은 값에는 끼어든 쪽의 갱신이 들어 있어 두 증가가 모두 남는다.",
+                    "단일 코어에서 표시를 지우는 핵심 사건은 예외다. Armv7-M 은 예외 진입과 예외 복귀 때 로컬 모니터를 지우므로, `ldrex` 와 `strex` 사이에 인터럽트가 한 번이라도 들어왔다 나가면 ISR 이 그 변수를 건드리지 않았어도 `strex` 는 실패한다. 결과가 틀릴 일은 없고 한 바퀴 더 돌 뿐이다. 다른 관찰자(다른 코어 등)의 쓰기는 전역 모니터가 맡는다.",
+                    "두 명령은 같은 주소·같은 크기로 짝을 맞춰야 한다. Armv7-M ARM 은 사이에 다른 메모리 접근을 두지 말고 거리를 128바이트 이내로 두라고 권장한다. 주소는 접근 크기의 배수여야 하며, 비정렬이면 `CCR` 설정과 무관하게 UsageFault 다."
+                ],
+                table: {
+                    head: ["사건", "로컬 모니터", "다음 `strex`"],
+                    rows: [
+                        ["`ldrex` (주소 x)", "x 를 표시 (Exclusive)", "쓰고 0 반환 가능"],
+                        ["예외 진입 / 예외 복귀", "지움 (Open)", "안 쓰고 1"],
+                        ["`clrex`", "지움 (Open)", "안 쓰고 1"],
+                        ["`strex` 실행", "성공·실패와 관계없이 Open", "—"]
+                    ]
+                },
+                demo: "lesson"
+            },
+            {
+                h: "GCC 가 만드는 원자 연산",
+                p: [
+                    "C11 의 `atomic_fetch_add`, `_Atomic` 변수의 `cnt++`, GCC 의 `__atomic_fetch_add` 는 Cortex-M4 에서 모두 같은 `ldrex`/`strex` 루프가 된다. 기본 메모리 순서 `seq_cst` 이면 루프 앞뒤에 `dmb ish` 가 붙는다. 원자성은 루프가 맡고, `dmb` 는 그 앞뒤의 다른 메모리 접근이 순서를 넘지 않게 하는 **메모리 장벽(memory barrier)**이다. Armv7-M 은 `dmb` 의 SY 외 옵션을 예약으로 두고 SY 로 실행한다.",
+                    "비교 후 교환(CAS)도 같은 재료로 만든다. `__atomic_compare_exchange_n` 은 `ldrex` 로 읽어 기대값과 `cmp` 하고, 같을 때만 `strex` 를 시도한다. 다르면 쓰지 않고 바로 빠져나온다. 단순 카운터처럼 다른 데이터와의 순서가 필요 없으면 `__ATOMIC_RELAXED` 로 두 `dmb` 를 뺄 수 있다."
+                ],
+                code: {
+                    lang: "asm",
+                    title: "GCC 15.2 -O2 · compare-and-swap (Cortex-M4)",
+                    src: `@ int cas(int *p, int expect, int want)
+@ { return __atomic_compare_exchange_n(p, &expect, want, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST); }
+cas:
+        dmb     ish
+.L14:
+        ldrex   r3, [r0]         @ 현재 값
+        cmp     r3, r1           @ 기대값과 같은가
+        bne     .L15             @ 다르면 쓰지 않고 끝
+        strex   ip, r2, [r0]     @ 같으면 want 를 시도
+        cmp     ip, #0
+        bne     .L14             @ 끼어들었으면 다시
+.L15:
+        dmb     ish
+        ite     eq
+        moveq   r0, #1           @ 바꿨으면 1
+        movne   r0, #0
+        bx      lr`,
+                    note: "`ip` = `r12` · 마지막 `ite eq` 는 `cmp` 가 남긴 Z 로 성공 여부를 돌려줌"
+                }
+            },
+            {
+                h: "인터럽트 차단과 고르는 기준",
+                p: [
+                    "`cpsid i` 는 PRIMASK 를 1 로 만들어 우선순위를 설정할 수 있는 모든 예외를 막는다. NMI 와 HardFault 는 막지 못한다. 원래 상태를 `mrs` 로 저장했다가 `msr primask` 로 되돌리면 이미 차단된 곳에서 불려도 안전하다. BASEPRI 는 정한 값과 같거나 낮은 우선순위만 막아 급한 인터럽트를 살려 둔다.",
+                    "차단은 여러 변수를 함께 바꾸거나 64bit 값을 다루는 경우에 맞다. Armv7-M 에는 `ldrexd`/`strexd` 가 없어 64bit 를 한 번에 배타적으로 다룰 수 없기 때문이다. 대신 차단 구간 동안 모든 인터럽트가 기다린다. 변수 하나의 갱신이라면 `ldrex`/`strex` 는 지연을 만들지 않고, 끼어든 경우에만 한 바퀴 더 돈다. Cortex-M0/M0+ 처럼 배타적 접근이 없는 코어에서는 차단이 기본 수단이다."
+                ],
+                code: {
+                    lang: "asm",
+                    title: "GCC 15.2 -O2 · PRIMASK 저장·복원으로 감싼 cnt++",
+                    src: `inc_crit:
+        mrs     r1, primask      @ 이전 상태 저장
+        cpsid   i                @ 차단 시작
+        ldr     r2, .L20
+        ldr     r3, [r2]
+        adds    r3, r3, #1
+        str     r3, [r2]
+        msr     primask, r1      @ 이전 상태로 (무조건 cpsie i 가 아님)
+        bx      lr`,
+                    note: "인라인 asm 에 `\"memory\"` 클로버를 넣어야 컴파일러가 `cnt` 접근을 차단 구간 밖으로 옮기지 않는다"
+                },
+                tip: "RTOS 를 쓰면 `taskENTER_CRITICAL()` 같은 포트 함수가 BASEPRI 로 같은 일을 한다. 직접 PRIMASK 를 만지기 전에 RTOS 의 규칙을 먼저 본다."
+            },
+            {
+                h: "Cortex-M0 · RISC-V · x86-64",
+                p: [
+                    "Armv6-M 에는 배타적 접근 명령이 없어 GCC 는 `__atomic_fetch_add_4` 같은 함수를 부르고 메모리 순서를 인자(5 = `__ATOMIC_SEQ_CST`)로 넘긴다. 이 함수는 툴체인 라이브러리나 프로젝트가 제공해야 하고, 단일 코어라면 인터럽트 차단으로 구현할 수 있다.",
+                    "RISC-V 의 A 확장은 두 길을 준다. `amoadd.w` 같은 AMO 는 읽기·연산·쓰기를 한 명령으로 하고, `lr.w`/`sc.w` 는 Arm 의 `ldrex`/`strex` 와 같은 짝으로 `sc.w` 가 성공하면 0, 실패하면 0 이 아닌 값을 쓴다. x86-64 는 `lock` 접두사를 붙인 `add`, `xadd`, `cmpxchg` 가 원자적이다."
+                ],
+                code: {
+                    lang: "riscv",
+                    title: "RV32IA · gcc 15.2 -O2",
+                    src: `# void inc(void) { __atomic_fetch_add(&cnt, 1, __ATOMIC_SEQ_CST); }
+inc:
+        lui     a5,%hi(cnt)
+        li      a4,1
+        addi    a5,a5,%lo(cnt)
+        amoadd.w.aqrl  zero,a4,0(a5)    # 옛 값은 버림 (rd = zero)
+        ret
+# cas: lr/sc 루프 (Arm 의 ldrex/strex 와 같은 모양)
+1:      lr.w.aqrl  a5,0(a0)
+        bne        a5,a1,1f
+        sc.w.rl    a4,a2,0(a0)          # 성공하면 a4 = 0
+        bnez       a4,1b
+1:
+# x86-64:  lock add DWORD PTR cnt[rip], 1   ·   lock xadd (옛 값이 필요할 때)`,
+                    note: "`.aqrl` 은 acquire + release 순서 표시 · Arm 의 앞뒤 `dmb` 에 해당하는 일을 명령에 붙임"
+                }
+            }
+        ],
+        pitfalls: [
+            "`volatile` 이면 원자적이라고 믿는다: `ldr`/`adds`/`str` 사이의 틈은 그대로다.",
+            "`strex` 의 결과를 검사하지 않는다: 실패했으면 아무것도 쓰지 않았는데 다음으로 넘어간다.",
+            "`ldrex` 와 `strex` 사이에 함수 호출이나 다른 메모리 접근을 넣는다: 모니터가 중간에 지워질 수 있어 성공을 보장할 수 없다.",
+            "`ldrex` 와 다른 주소·크기로 `strex` 한다: 동작이 예측 불가능해진다. 짝은 같은 주소·같은 크기로 맞춘다.",
+            "차단을 끝낼 때 무조건 `cpsie i` 를 쓴다: 이미 차단된 곳에서 불린 경우 바깥 임계 구역을 깨뜨린다. PRIMASK 를 저장했다가 되돌린다."
+        ],
+        summary: [
+            "`cnt++` 은 세 명령이라 사이에 ISR 이 끼면 갱신이 사라지고, `volatile` 은 이를 막지 못한다.",
+            "`ldrex` 가 주소를 표시하고 `strex` 는 표시가 남았을 때만 써서 0, 아니면 1 을 돌려준다.",
+            "예외 진입·복귀가 로컬 모니터를 지우므로 끼어든 경우 `strex` 가 실패하고 재시도 루프가 새 값으로 다시 한다.",
+            "GCC 의 seq_cst 원자 연산은 `dmb` + `ldrex`/`strex` 루프 + `dmb` 이고, relaxed 면 `dmb` 가 빠진다.",
+            "여러 변수·64bit 값·Armv6-M 에는 PRIMASK/BASEPRI 차단을 쓰고, RISC-V 는 AMO 와 `lr`/`sc`, x86 은 `lock` 접두사다."
+        ]
+    },
+
     "asm-isa": {
         intro: "Thumb-2 를 읽을 줄 알면 RISC-V 와 x86-64 도 절반은 읽힌다. 레지스터에 값을 두고, 비교해서 분기하고, **호출 규약(calling convention)**에 따라 인자를 넘기는 뼈대는 같고, 명령의 모양과 인코딩이 다를 뿐이다. 이 글은 세 ISA 를 레지스터, 비교·분기, 메모리 접근, 인코딩, 그리고 실제로 이식할 때 부딪히는 차이 순서로 비교한다.",
         sections: [
@@ -1436,9 +1593,10 @@ gt_u:
 48 39 d7        cmp    rdi, rdx
 75 f5           jne    .L3                      # rel8 = −11
 c3              ret
-31 c0           xor    eax, eax                 # .L4
+0f 1f 40 00     nop    DWORD PTR [rax+0x0]      # .L4 정렬용
+31 c0           xor    eax, eax                 # .L4 (0x20) · jle 의 1c = 0x04 + 0x1c
 c3              ret`,
-                    note: "objdump 출력에서 분기 목적지 주소만 레이블로 바꿔 적음"
+                    note: "objdump 출력에서 분기 목적지 주소만 레이블로 바꿔 적음 · 전체 35바이트 중 nop 7바이트"
                 }
             },
             {

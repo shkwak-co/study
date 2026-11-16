@@ -282,6 +282,31 @@ LAB.SIM_NAMES.forEach((n) => { if (!(LAB.SIM_INFO || {})[n]) err("anim.js", `SIM
     assert.equal(N.crcDiv([..."11010011101100"].map(Number), [1, 0, 1, 1]).rem.join(""), "100", "CRC-3 textbook example");
 }
 
+// protocol labs: UART frame / baud / sampling, CAN arbitration / stuffing
+{
+    const P = LAB.proto;
+    assert.equal(P.uartFrame(0x41).map((b) => b.v).join(""), "0100000101", "uart 8N1 frame, LSB first");
+    assert.equal(P.uartFrame(0x41, 8, "odd").find((b) => b.k === "par").v, 1, "uart odd parity");
+    assert.equal(P.uartBaud(16e6, 115200).div, 139, "uart divider");
+    assert.ok(Math.abs(P.uartBaud(16e6, 921600).err - 0.0212) < 0.0005, "uart baud error 2.12%");
+    assert.ok(!P.uartBaud(8e6, 921600).ok, "uart divider below oversampling");
+    assert.ok(P.uartRx(P.uartFrame(0x41), 0.05).ok && !P.uartRx(P.uartFrame(0x41), 0.06).stopOk, "uart sampling drift → framing error");
+    assert.equal(P.canArb([0x123, 0x120, 0x7ff]).winner, 1, "can lowest id wins");
+    assert.equal(P.canStuff([0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]).stuffed.join(","), "5,12", "can stuff bit after 5 equal bits");
+}
+
+// AI labs: BPE merges (Sennrich et al. 2016 toy corpus), similarity ranking
+{
+    const A = LAB.ai;
+    const L = A.bpeLearn("low low low low low lower lower newest newest newest newest newest newest widest widest widest", 20);
+    assert.equal(L.merges.slice(0, 5).map((m) => m[0] + m[1]).join(" "), "es est est</w> lo low", "bpe merge order");
+    assert.equal(A.bpeApply("lowest", L.merges.slice(0, 10)).join(" "), "low est</w>", "bpe tokenizes an unseen word");
+    const docs = [{ v: [0.9, 0.15] }, { v: [1.8, 1.1] }, { v: [0.55, 0.25] }];
+    assert.equal(A.vrank(docs, [0.8, 0.3], "dot", false)[0].i, 1, "dot product favours the long vector");
+    assert.equal(A.vrank(docs, [0.8, 0.3], "cosine", false)[0].i, 2, "cosine ignores length");
+    assert.equal(["cosine", "dot", "l2"].map((m) => A.vrank(docs, [0.8, 0.3], m, true).map((r) => r.i).join("")).join(" "), "210 210 210", "unit vectors: all metrics agree");
+}
+
 // quiz grading: numbers (hex, tolerance), text answers, order
 {
     const g = LAB.grade;

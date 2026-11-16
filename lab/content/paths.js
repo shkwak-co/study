@@ -5,7 +5,7 @@ LAB.path({
     desc: "비트와 명령어에서 시작해 인터럽트, 통신, RTOS, 저전력까지",
     lessons: [
         "embedded/bits", "assembly/asm-basics", "memory/mem-layout", "embedded/mcu", "embedded/gpio",
-        "embedded/irq", "assembly/asm-call", "assembly/asm-exception", "protocols/uart", "data-structures/ds-ring",
+        "embedded/irq", "assembly/asm-call", "assembly/asm-exception", "assembly/asm-atomic", "protocols/uart", "data-structures/ds-ring",
         "protocols/i2c", "embedded/pwm", "embedded/adc", "embedded/rtos", "memory/mem-mcu", "embedded/power"
     ]
 });

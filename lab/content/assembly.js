@@ -6,15 +6,17 @@ LAB.track({
     tagline: "C 한 줄이 어떤 명령이 되는지. Cortex-M(Thumb-2) 중심, RISC-V·x86-64 비교",
     trends: [
         {
-            title: "RISC-V RVA23 프로파일(profile) 비준",
+            title: "RISC-V RVA23: 배포판의 새 기준선",
             when: "2024–2026",
             points: [
-                "64bit 응용 프로세서용 **필수 확장 묶음** · 벡터(V)·하이퍼바이저(H)가 필수",
-                "Android RISC-V ABI 의 기준선(baseline) · 배포판이 칩마다 확장을 묻지 않고 한 이름으로 타깃",
+                "RVA23 프로파일(profile): 64bit 응용 프로세서용 **필수 확장 묶음** · 벡터(V)·하이퍼바이저(H) 필수",
+                "Android RISC-V ABI 의 기준선(baseline) · 칩마다 확장을 묻지 않고 한 이름으로 타깃",
+                "Ubuntu 25.10 부터 RVA23 이 최소 요구 · 26.04 LTS 가 같은 기준선을 장기 지원",
                 "V 가 필수라 RVA23 타깃 소프트웨어는 벡터 명령을 기본으로 가정 가능"
             ],
             refs: [
                 { title: "RISC-V Announces Ratification of the RVA23 Profile Standard", by: "RISC-V International", year: 2024, url: "https://riscv.org/blog/risc-v-announces-ratification-of-the-rva23-profile-standard/", kind: "doc" },
+                { title: "Canonical and Ubuntu RISC-V: a 2025 retro and looking forward to 2026", by: "Canonical", year: 2026, url: "https://ubuntu.com/blog/canonical-and-ubuntu-risc-v-a-2025-retro-and-looking-forward-to-2026", kind: "doc" },
                 { title: "RISC-V Architecture Profiles", by: "RISC-V International", url: "https://github.com/riscv/riscv-profiles", kind: "spec" }
             ]
         },
@@ -24,33 +26,38 @@ LAB.track({
             points: [
                 "범용 레지스터(general-purpose register) 16 → 32 (`r16`–`r31`, EGPR)",
                 "3-피연산자 형식(NDD) · 플래그 안 바꾸는 변형(NF) · 조건부 비교(CCMP) · `push2`/`pop2`",
-                "GCC 14 `-mapxf` 로 일부, GCC 15 에서 CFCMOV 외 전부 지원"
+                "GCC 14 `-mapxf` 로 일부, GCC 15 에서 CFCMOV 외 전부 지원",
+                "GCC 16 (2026-04): `-march=novalake` 가 APX_F 를 켬 · `-march=diamondrapids` 는 GCC 15 부터"
             ],
             refs: [
                 { title: "GCC 14 Release Series — Changes, New Features, and Fixes", by: "GNU Project", year: 2024, url: "https://gcc.gnu.org/gcc-14/changes.html", kind: "doc" },
-                { title: "GCC 15 Release Series — Changes, New Features, and Fixes", by: "GNU Project", year: 2025, url: "https://gcc.gnu.org/gcc-15/changes.html", kind: "doc" }
+                { title: "GCC 15 Release Series — Changes, New Features, and Fixes", by: "GNU Project", year: 2025, url: "https://gcc.gnu.org/gcc-15/changes.html", kind: "doc" },
+                { title: "GCC 16 Release Series — Changes, New Features, and Fixes", by: "GNU Project", year: 2026, url: "https://gcc.gnu.org/gcc-16/changes.html", kind: "doc" }
             ]
         },
         {
             title: "Helium(MVE): Cortex-M 의 벡터 명령",
             when: "2020–2026",
             points: [
-                "Armv8.1-M 의 M-Profile Vector Extension · Cortex-M55 가 첫 구현, M85 도 지원",
-                "128bit 벡터를 레인(lane)으로 나눠 SIMD: 16bit × 8, 32bit × 4",
-                "꼬리 예측(tail predication) `dlstp`/`letp`: 남는 원소를 스칼라 꼬리 루프 없이"
+                "Armv8.1-M 의 M-Profile Vector Extension · Cortex-M55 가 첫 구현 (GCC 기준 M52·M85 도 `mve`)",
+                "128bit 벡터를 레인(lane)으로 나눠 SIMD: 8bit × 16, 16bit × 8, 32bit × 4",
+                "꼬리 예측(tail predication) `dlstp`/`letp`: 남는 원소를 스칼라 꼬리 루프 없이",
+                "2026-11 Cortex-M42: M4·M33 급 AHB 설계를 Helium 으로 올리는 길 · M33 대비 벡터 연산 최대 3배 (Arm 발표)"
             ],
             refs: [
-                { title: "Introduction to Helium guide (102102, Version 1.3)", by: "Arm", year: 2024, url: "https://documentation-service.arm.com/static/65969ed3159ca73387227541", kind: "doc" }
+                { title: "Introduction to Helium guide (102102, Version 1.3)", by: "Arm", year: 2024, url: "https://documentation-service.arm.com/static/65969ed3159ca73387227541", kind: "doc" },
+                { title: "Arm expands Arm Flexible Access and Arm Total Access portfolios with new Arm Cortex-M42", by: "Arm", year: 2026, url: "https://newsroom.arm.com/news/arm-cortex-m42-accelerate-edge-ai-innovation", kind: "doc" },
+                { title: "GCC arm-cpus.in (CPU → architecture table)", by: "GNU Project", url: "https://gcc.gnu.org/git/?p=gcc.git;a=blob_plain;f=gcc/config/arm/arm-cpus.in;hb=HEAD", kind: "doc" }
             ]
         },
         {
             title: "PACBTI: Cortex-M 의 반환 주소 서명",
             when: "2022–2026",
             points: [
-                "Armv8.1-M 선택 확장 · Cortex-M85 등 · ROP/JOP 공격 완화",
-                "PAC: 프롤로그(prologue)에서 `lr` 에 서명(SP 를 수정자(modifier)로) → `r12`, 에필로그(epilogue)에서 `aut` 검증 · 불일치면 폴트",
-                "BTI: 간접 분기의 착지점(landing pad) 표시 · GCC `-mbranch-protection=standard`",
-                "확장 없는 코어에선 NOP 공간 명령이라 같은 바이너리가 그대로 동작"
+                "Armv8.1-M 선택 확장 · GCC 기준 Cortex-M52·M85 가 `+pacbti` · ROP/JOP 공격 완화",
+                "PAC: 프롤로그(prologue)에서 `pac r12, lr, sp` (SP 가 수정자(modifier)) · 에필로그(epilogue)에서 `aut` 검증 · 불일치면 INVSTATE UsageFault",
+                "BTI: 간접 분기의 착지점(landing pad) 표시 · GCC `-mbranch-protection=standard` (= pac-ret + bti)",
+                "PAC·AUT 는 NOP 호환 공간 명령이라 확장 없는 코어에서도 같은 바이너리가 동작"
             ],
             refs: [
                 { title: "Armv8.1-M PACBTI Extensions (109576, Version 1.0)", by: "Arm", year: 2024, url: "https://documentation-service.arm.com/static/65f03302e1542617e2aa538a", kind: "doc" },
@@ -64,6 +71,8 @@ LAB.track({
             title: "레지스터와 명령어",
             level: 1,
             mins: 12,
+            pre: ["embedded/bits"],
+            checked: "2026-11-16",
             key: [
                 "**ISA**(Instruction Set Architecture) = 하드웨어와 소프트웨어의 약속: 명령·레지스터·인코딩",
                 "**로드/스토어 구조**(load/store architecture): 계산은 레지스터끼리, 메모리는 `ldr`/`str` 로만",
@@ -71,7 +80,7 @@ LAB.track({
                 "명령 하나 = 레지스터 몇 개를 바꾸고 `pc` 를 다음으로 · 분기는 `pc` 를 바꾸는 것"
             ],
             concepts: [
-                { term: "ISA", en: "Instruction Set Architecture", def: "명령 종류·레지스터·인코딩·예외 동작의 규격 · Cortex-M3/M4 = Armv7-M" },
+                { term: "ISA", en: "Instruction Set Architecture", def: "명령 종류·레지스터·인코딩·예외 동작의 규격 · Cortex-M3 = Armv7-M, M4 = Armv7E-M (+DSP)" },
                 { term: "Thumb-2", def: "16bit 와 32bit 명령을 섞는 Arm 인코딩 · Cortex-M 은 Thumb 상태만 실행" },
                 { term: "로드/스토어 구조", en: "Load/store architecture", def: "ALU 명령은 레지스터만 읽고 씀 · 메모리 값은 먼저 `ldr` 로 가져옴" },
                 { term: "범용 레지스터", en: "General-purpose register", def: "32bit × 13개 `r0`–`r12` · `r13` = SP, `r14` = LR, `r15` = PC" },
@@ -149,11 +158,15 @@ calc:
                 { term: "즉시값", en: "Immediate value", def: "명령 비트 안에 든 상수 `#5` · 인코딩 비트 수만큼만 표현 가능" }
             ],
             quiz: [
-                { q: "Cortex-M 에 `add r0, r0, [r1]` 같은 명령이 없는 이유는?", options: ["로드/스토어 구조라 ALU 는 레지스터만 다룸", "메모리가 너무 느려서 금지", "Thumb 인코딩이 꽉 차서 잠시 빠짐", "x86 과 호환하려고"], a: 0, why: "메모리 값은 `ldr` 로 레지스터에 가져온 뒤 계산" },
-                { q: "`bl func` 직후 `lr` 에 들어 있는 값은?", options: ["func 의 주소", "bl 다음 명령 주소 (bit0 = 1)", "현재 SP", "0xFFFFFFFF"], a: 1, why: "돌아올 주소 · bit0 = 1 은 Thumb 상태 표시" },
-                { q: "`rsb r0, r2, r0, lsl #2` 의 결과는?", options: ["r2 − r0×4", "r0×4 − r2", "r0 − r2×4", "(r0 − r2) × 4"], a: 1, why: "rsb = reverse subtract: 두 번째 피연산자 − rn" },
-                { q: "`r13` 의 역할은?", options: ["링크 레지스터", "스택 포인터", "프로그램 카운터", "플래그 레지스터"], a: 1, why: "r13 = SP · r14 = LR · r15 = PC" },
-                { q: "N, Z, C, V 플래그가 들어 있는 곳은?", options: ["IPSR", "APSR (xPSR 의 일부)", "CONTROL", "r12"], a: 1, why: "xPSR = APSR + IPSR + EPSR · 조건 플래그는 APSR" }
+                { q: "Cortex-M 에 `add r0, r0, [r1]` 같은 명령이 없는 이유는?", options: ["ALU 는 레지스터만 읽는 구조", "메모리 피연산자는 32bit 형만 있음", "Flash 실행 중에만 막혀 있음", "캐시가 없어 메모리 연산 금지"], a: 0, why: "로드/스토어 구조: 메모리 값은 `ldr` 로 가져온 뒤 계산 · 32bit 인코딩에도 메모리 피연산자 ALU 명령은 없음" },
+                { q: "`bl func` 직후 `lr` 에 들어 있는 값은?", options: ["`func` 시작 주소 (bit0 = 1)", "`bl` 다음 명령 주소 (bit0 = 1)", "`bl` 자신의 주소 (bit0 = 0)", "호출 전 `sp` 값 그대로"], a: 1, why: "`lr` = 돌아올 곳 = 다음 명령 · `func` 주소는 `pc` 로 감 · bit0 = 1 은 Thumb 표시" },
+                { q: "`rsb r0, r2, r0, lsl #2` 의 결과는?", options: ["r2 − r0×4", "r0×4 − r2", "r0 − r2×4", "(r0 − r2) × 4"], a: 1, why: "rsb = op2 − rn · op2 = `r0, lsl #2` = r0×4 · `sub` 였다면 r2 − r0×4" },
+                { q: "`r13` 의 역할은?", options: ["링크 레지스터", "스택 포인터", "프로그램 카운터", "플래그 레지스터"], a: 1, why: "r13 = SP · 돌아올 주소를 든 LR 은 r14, PC 는 r15" },
+                { q: "N, Z, C, V 플래그가 들어 있는 곳은?", options: ["IPSR", "APSR", "EPSR", "CONTROL"], a: 1, why: "xPSR = APSR(플래그) + IPSR(예외 번호) + EPSR(T 비트·IT) · CONTROL 은 스택·특권 선택" },
+                { type: "text", q: "실행 후 `r0` 은? (10진수)", code: { lang: "asm", src: "movs r1, #3\nmovs r2, #10\nrsb  r0, r1, r2, lsl #2" }, answer: ["37", "0x25"], why: "op2 = 10 << 2 = 40 · rsb = 40 − 3 = 37" },
+                { type: "text", q: "실행 후 `r0` 은?", code: { lang: "asm", src: "movs r0, #5\nmvn  r1, r0        @ ~5\nadds r0, r1, #1" }, answer: ["-5", "0xFFFFFFFB", "4294967291"], why: "~5 + 1 = −5 · 2의 보수 부호 반전 · `neg` 와 같은 결과" },
+                { type: "num", q: "`calc` 를 objdump 하면 `add r0, r1` (16bit) · `rsb r0, r2, r0, lsl #2` (32bit) · `bx lr` (16bit). 함수 크기는 몇 바이트?", answer: 8, unit: "B", why: "2 + 4 + 2 = 8 · 시프트가 붙은 `rsb` 만 32bit 인코딩" },
+                { type: "order", q: "전역 변수 `x += y;` 가 Cortex-M 에서 실행되는 순서", items: ["x·y 의 주소를 레지스터로", "`ldr` 로 값 읽기", "레지스터끼리 `add`", "`str` 로 x 에 되쓰기"], why: "로드/스토어 구조: 주소 → 값 → 계산 → 저장 · 메모리가 바뀌는 건 `str` 한 번" }
             ],
             refs: [
                 { title: "Armv7-M Architecture Reference Manual (DDI 0403E.e)", by: "Arm", year: 2021, url: "https://documentation-service.arm.com/static/606dc36485368c4c2b1bf62f", kind: "spec" },
@@ -166,8 +179,10 @@ calc:
             title: "산술과 플래그",
             level: 1,
             mins: 14,
+            pre: ["assembly/asm-basics", "embedded/bits"],
+            checked: "2026-11-16",
             key: [
-                "플래그는 `s` 가 붙은 명령(`adds`, `subs`…)과 `cmp`·`cmn`·`tst` 만 바꿈",
+                "플래그는 `s` 붙은 명령(`adds`…)과 `cmp`·`cmn`·`tst`·`teq` 만 바꿈",
                 "`cmp a, b` = `a − b` 를 계산하고 결과는 버림 · **NZCV** 만 남김",
                 "같은 비트, 다른 해석: 부호 없는 `bhi`/`blo` (C·Z) vs 부호 있는 `bgt`/`blt` (N·V·Z)",
                 "64bit 덧셈 = `adds`(하위, **자리올림**(carry) → C) + `adc`(상위 + C)"
@@ -302,11 +317,15 @@ in_range_u:
                 { term: "APSR", en: "Application Program Status Register", def: "xPSR 중 N Z C V Q (와 DSP 의 GE) 플래그 부분 · `mrs r0, apsr` 로 읽음" }
             ],
             quiz: [
-                { q: "`cmp r0, r1` 이 실제로 하는 일은?", options: ["r0 = r0 − r1", "r0 − r1 을 계산해 플래그만 갱신", "r0 와 r1 을 교환", "r0 == r1 이면 분기"], a: 1, why: "결과 레지스터 없는 `subs` · NZCV 만 남김" },
-                { q: "r0 = 0xFFFFFFFF, r1 = 1 에서 `cmp r0, r1` 후 참인 조건은?", options: ["`hi` 와 `lt`", "`lo` 와 `gt`", "`hi` 와 `gt`", "`eq`"], a: 0, why: "부호 없음 4294967295 > 1 → hi · 부호 있음 −1 < 1 → lt" },
-                { q: "`adds r0, r0, r2` 다음 `adc r1, r1, r3` 이 추가로 더하는 값은?", options: ["V 플래그", "C 플래그 (하위 덧셈의 자리올림)", "항상 1", "N 플래그"], a: 1, why: "하위 워드에서 넘친 1 을 상위 워드로 전달" },
-                { q: "Arm 에서 `cmp` 로 3 − 5 를 계산한 뒤 C 플래그는?", options: ["1", "0", "변하지 않음", "V 와 같음"], a: 1, why: "Arm 의 뺄셈 C = 빌림 없음 · 빌림이 생겼으니 0" },
-                { q: "`mov r0, r1` (s 없음) 이후 플래그는?", options: ["모두 0", "N, Z 갱신", "변하지 않음", "C 만 갱신"], a: 2, why: "`s` 접미사가 없으면 플래그 그대로" }
+                { q: "`cmp r0, r1` 이 실제로 하는 일은?", options: ["r0 ← r0 − r1, 플래그 갱신", "r0 − r1 의 플래그만 남김", "r1 − r0 의 플래그만 남김", "같으면 Z=1, 나머지 그대로"], a: 1, why: "결과 레지스터 없는 `subs r0, r1` · NZCV 네 개 모두 갱신 · r0 는 그대로" },
+                { q: "r0 = 0xFFFFFFFF, r1 = 1 에서 `cmp r0, r1` 후 참인 조건은?", options: ["`hi` 와 `lt`", "`lo` 와 `gt`", "`hi` 와 `gt`", "`eq`"], a: 0, why: "부호 없음 4294967295 > 1 → hi · 부호 있음 −1 < 1 → lt · 같은 비트, 다른 해석" },
+                { q: "`adds r0, r0, r2` 다음 `adc r1, r1, r3` 이 추가로 더하는 값은?", options: ["V (부호 있는 넘침)", "C (하위 자리올림)", "N (하위 결과 부호)", "Z (하위가 0 인지)"], a: 1, why: "하위 워드에서 넘친 1 을 상위로 · V 는 부호 있는 해석용이라 사슬에 안 씀" },
+                { q: "Arm 에서 `cmp` 로 3 − 5 를 계산한 뒤 C 플래그는?", options: ["1", "0", "변하지 않음", "V 와 같음"], a: 1, why: "Arm 의 뺄셈 C = 빌림 없음 · 빌림이 생겼으니 0 · x86 CF 였다면 1" },
+                { q: "`mov r0, r1` (s 없음) 이후 플래그는?", options: ["모두 0", "N, Z 갱신", "변하지 않음", "C 만 갱신"], a: 2, why: "`s` 접미사가 없으면 플래그 그대로 · N·Z 를 바꾸는 건 `movs`" },
+                { type: "text", q: "실행 후 NZCV 는? (예: 0110)", code: { lang: "asm", src: "ldr  r0, =0x7FFFFFFF\nadds r0, r0, #1" }, answer: ["1001", "N=1 Z=0 C=0 V=1", "N1Z0C0V1"], why: "결과 0x80000000: N=1 · 부호 없는 자리올림 없음 C=0 · 양수 + 양수 = 음수 V=1" },
+                { type: "text", q: "실행 후 `r1` 은?", code: { lang: "asm", src: "    mov  r0, #-1\n    cmp  r0, #5\n    bhs  big        @ 부호 없는 ≥\n    movs r1, #1\n    b    done\nbig:\n    movs r1, #2\ndone:" }, answer: ["2"], why: "−1 = 0xFFFFFFFF 은 부호 없이 5 보다 큼 → C=1 → `bhs` 분기 · `bge` 였다면 1" },
+                { type: "num", q: "a = 0x7FFFFFF0 일 때 `adds r0, a, b` 가 V=1 이 되는 가장 작은 양수 b 는?", answer: 16, why: "0x7FFFFFF0 + 16 = 0x80000000 · INT_MAX(0x7FFFFFFF) 를 넘는 순간 부호가 뒤집힘" },
+                { type: "order", q: "128bit 덧셈 a + b 를 32bit 워드로 할 때 명령 순서", items: ["`adds` 워드 0 (최하위)", "`adcs` 워드 1", "`adcs` 워드 2", "`adc` 워드 3 (최상위)"], why: "자리올림은 아래에서 위로 · 중간은 C 를 넘겨야 해서 `adcs`, 마지막만 `s` 없이" }
             ],
             refs: [
                 { title: "Armv7-M Architecture Reference Manual (DDI 0403E.e)", by: "Arm", year: 2021, url: "https://documentation-service.arm.com/static/606dc36485368c4c2b1bf62f", kind: "spec" },
@@ -319,6 +338,8 @@ in_range_u:
             title: "로드·스토어와 주소 지정",
             level: 2,
             mins: 14,
+            pre: ["assembly/asm-basics", "memory/mem-align"],
+            checked: "2026-11-16",
             key: [
                 "로드 `ldr` `ldrb` `ldrh` `ldrsb`, 스토어 `str` `strb` `strh` · 크기와 부호만 다름",
                 "**주소 지정 방식**(addressing mode): `[r1, #4]` `[r1, r2, lsl #2]` `[r1, #4]!` `[r1], #4`",
@@ -327,7 +348,7 @@ in_range_u:
             ],
             concepts: [
                 { term: "주소 지정 방식", en: "Addressing mode", def: "오프셋 `[rn, #imm]` · 레지스터 `[rn, rm, lsl #n]` (n ≤ 3) · pre `[rn, #imm]!` · post `[rn], #imm`" },
-                { term: "리터럴 풀", en: "Literal pool", def: "코드 옆 상수 영역 · `ldr r0, =x` → PC 기준 `ldr` · `mov` 로 되는 값이면 어셈블러가 `mov` 로 바꿈" },
+                { term: "리터럴 풀", en: "Literal pool", def: "코드 옆 상수 영역 · `ldr r0, =x` → PC 기준 `ldr` · `mov`/`mvn` 으로 되는 상수면 어셈블러가 그 명령으로 바꿈" },
                 { term: "리틀 엔디언", en: "Little-endian", def: "낮은 주소에 하위 바이트 · `0x11223344` → `44 33 22 11` · Cortex-M 은 보통 리틀 엔디언" },
                 { term: "정렬된 접근", en: "Aligned access", def: "크기의 배수 주소 · Armv7-M `ldr`/`ldrh` 는 비정렬도 허용(느림), `ldrd`/`ldm` 은 폴트 · Armv6-M 은 모두 폴트" }
             ],
@@ -397,7 +418,7 @@ set_g:
             ],
             optimize: [
                 {
-                    title: "인덱스 대신 포인터 증가: 주소 갱신을 post-index 에 접기",
+                    title: "인덱스 대신 포인터 증가: 주소 갱신을 pre-index 에 접기",
                     before: { lang: "asm", src: `@ for (i = 0; i < 4; i++) d[i] = s[i];
 loop:
         ldr     r3, [r1, r2, lsl #2]
@@ -405,14 +426,17 @@ loop:
         adds    r2, r2, #1       @ i++ 가 따로
         cmp     r2, #4
         bne     loop` },
-                    after: { lang: "asm", src: `@ GCC -O2 copy4 (end = s + 16)
-.L11:
-        ldr     r3, [r1], #4     @ *s++
-        str     r3, [r0, #4]!    @ *++d  (d 는 미리 −4)
-        cmp     r1, r2
-        bne     .L11` },
+                    after: { lang: "asm", src: `@ GCC 15.2 -O2 copy4: 두 포인터를 미리 −4, 끝 = s + 12
+        subs    r3, r1, #4
+        subs    r0, r0, #4
+        adds    r1, r1, #12      @ 마지막 원소 주소
+.L10:
+        ldr     r2, [r3, #4]!    @ *++s
+        str     r2, [r0, #4]!    @ *++d
+        cmp     r3, r1
+        bne     .L10` },
                     gain: "반복당 5 → 4 명령",
-                    note: "베이스 갱신(writeback)이 load/store 안에서 일어남 · GCC -O2 는 이런 루프를 스스로 이렇게 바꿈"
+                    note: "베이스 갱신(writeback)이 load/store 안에서 일어남 · GCC -O2 는 인덱스 `i` 를 없애고 pre-index 포인터 루프로 바꿈"
                 },
                 {
                     title: "리터럴 풀 로드 → `movw`/`movt` (`-mslow-flash-data`)",
@@ -443,11 +467,15 @@ led_on:
                 { term: "PC 상대 주소", en: "PC-relative addressing", def: "현재 명령 위치 기준 오프셋 · 리터럴 풀·`adr`·분기가 사용 → 위치 독립 코드" }
             ],
             quiz: [
-                { q: "`ldr r3, [r1, r2, lsl #2]` 의 주소는?", options: ["r1 + r2", "r1 + r2×4", "(r1 + r2) × 4", "r1×4 + r2"], a: 1, why: "인덱스 레지스터만 시프트 · `int` 배열 `a[i]`" },
-                { q: "`ldr r5, [r1], #4` 실행 후 r1 은?", options: ["그대로", "r1 + 4 (읽은 뒤 갱신)", "r1 − 4", "읽은 값"], a: 1, why: "post-index: 원래 r1 주소로 읽고 나서 4 증가" },
-                { q: "메모리 `78 56 34 12` (낮은 주소부터) 에서 `ldrh` 로 처음 2바이트를 읽으면?", options: ["0x7856", "0x5678", "0x1234", "0x3412"], a: 1, why: "리틀 엔디언: 낮은 주소 바이트가 하위 → 0x5678" },
-                { q: "`int8_t` 값 0xFB 를 `ldrb` 로 읽으면?", options: ["−5", "251", "0xFFFFFFFB", "폴트"], a: 1, why: "0 확장 → 251 · 부호를 살리려면 `ldrsb`" },
-                { q: "Cortex-M4 에서 4의 배수가 아닌 주소에 `ldrd` 를 하면?", options: ["느리지만 동작", "UsageFault (정렬 폴트)", "하위 2bit 무시", "자동으로 `ldr` 두 번"], a: 1, why: "Armv7-M 의 비정렬 허용은 `ldr`/`ldrh`/`str`/`strh` 같은 단일 접근만" }
+                { q: "`ldr r3, [r1, r2, lsl #2]` 의 주소는?", options: ["r1 + r2", "r1 + r2×4", "(r1 + r2) × 4", "r1×4 + r2"], a: 1, why: "인덱스 레지스터만 시프트 · `int` 배열 `a[i]` = 베이스 + i×4" },
+                { q: "`ldr r5, [r1], #4` 가 읽는 주소와 이후 r1 은?", options: ["r1 에서 읽고 r1 += 4", "r1+4 에서 읽고 r1 += 4", "r1+4 에서 읽고 r1 그대로", "r1 에서 읽고 r1 그대로"], a: 0, why: "post-index: 원래 r1 로 읽은 뒤 갱신 · 'r1+4 에서 읽고 갱신' 은 pre-index `[r1, #4]!`" },
+                { q: "메모리 `78 56 34 12` (낮은 주소부터) 에서 `ldrh` 로 처음 2바이트를 읽으면?", options: ["0x7856", "0x5678", "0x1234", "0x3412"], a: 1, why: "리틀 엔디언: 낮은 주소 바이트(0x78)가 하위 → 0x5678" },
+                { q: "`int8_t` 값 0xFB 를 `ldrb` 로 읽으면?", options: ["−5", "251", "0xFFFFFFFB", "폴트"], a: 1, why: "`ldrb` 는 0 확장 → 251 · −5 를 얻으려면 `ldrsb`" },
+                { q: "Cortex-M4 에서 4의 배수가 아닌 주소에 `ldrd` 를 하면?", options: ["느리지만 동작 (버스 2회)", "UsageFault (UNALIGNED)", "하위 2bit 무시하고 읽음", "`ldr` 두 번으로 자동 분할"], a: 1, why: "`ldrd`·`ldm`·`ldrex` 는 항상 정렬 폴트 · 비정렬 허용은 `ldr`/`ldrh`/`str`/`strh` 같은 단일 접근만" },
+                { type: "text", q: "실행 후 `r0` 은? (16진수)", code: { lang: "asm", src: ".data\nv:  .word 0x11223344\n.text\n    ldr  r1, =v\n    movs r2, #0xAA\n    strb r2, [r1, #1]\n    ldr  r0, [r1]" }, answer: ["0x1122AA44", "287484484"], why: "v+1 은 두 번째로 낮은 바이트 0x33 자리 · 리틀 엔디언이라 0x11223344 → 0x1122AA44" },
+                { type: "text", q: "실행 후 `r0` 은?", code: { lang: "asm", src: ".data\nh:  .hword 0x8001\n.text\n    ldr   r1, =h\n    ldrsh r0, [r1]" }, answer: ["-32767", "0xFFFF8001", "4294934529"], why: "bit15 = 1 이라 위쪽 16bit 를 1 로 채움 · `ldrh` 였다면 0x8001 = 32769" },
+                { type: "num", q: "16bit 인코딩 `ldr r0, [r1, #imm]` 이 담을 수 있는 가장 큰 오프셋은? (바이트)", answer: 124, why: "imm5 × 4 = 0–124 · 더 멀면 32bit `ldr.w` (0–4095)" },
+                { type: "order", q: "`str` 로 `0x11223344` 를 0x20000000 에 쓴 뒤, 낮은 주소부터 바이트 순서", items: ["0x44", "0x33", "0x22", "0x11"], why: "리틀 엔디언: 하위 바이트가 가장 낮은 주소" }
             ],
             refs: [
                 { title: "Armv7-M Architecture Reference Manual (DDI 0403E.e)", by: "Arm", year: 2021, url: "https://documentation-service.arm.com/static/606dc36485368c4c2b1bf62f", kind: "spec" },
@@ -461,6 +489,8 @@ led_on:
             title: "분기와 반복",
             level: 2,
             mins: 14,
+            pre: ["assembly/asm-flags"],
+            checked: "2026-11-16",
             key: [
                 "**조건 분기**(conditional branch) `b<cond>` 는 플래그를 보고 `pc` 를 바꿈 · 거짓이면 다음 줄",
                 "`if` → 조건을 **뒤집어** 건너뜀 · 루프는 **루프 회전**(loop rotation)으로 아래에서 검사",
@@ -527,7 +557,7 @@ loop:
 done:
 @ do { body } while (i < n);  → 가드 없이 loop: 부터
 @ switch 가 촘촘하면 → tbb/tbh 표에서 오프셋을 읽어 한 번에 분기`,
-                    note: "`switch` 는 **점프 테이블**(jump table) `tbb`/`tbh` 로 · Armv8.1-M(M55/M85)은 **저오버헤드 루프**(low-overhead loop) `dls`/`le` 로 루프 끝 분기 비용을 줄임"
+                    note: "`switch` 는 **점프 테이블**(jump table) `tbb`/`tbh` 로 · Armv8.1-M(Cortex-M55 등)의 **저오버헤드 루프**(low-overhead loop) `dls`/`le` 는 루프 끝 분기 비용을 줄임"
                 }
             ],
             optimize: [
@@ -574,11 +604,15 @@ keep:
                 { term: "조건 실행", en: "Conditional execution", def: "조건이 참일 때만 효과를 내는 명령 · Thumb-2 는 IT 블록 안에서만, A32 는 거의 모든 명령" }
             ],
             quiz: [
-                { q: "`if (x == 5) y = 1;` 을 분기로 만들면 보통?", options: ["`cmp` → `beq` 로 then 블록에 점프", "`cmp` → `bne` 로 then 블록을 건너뜀", "`cbz x`", "`b` 만 사용"], a: 1, why: "조건을 뒤집어 '아니면 건너뛰기' · then 블록은 바로 아래" },
-                { q: "`subs r1, r1, #1` 뒤 `bne loop` 에 `cmp` 가 필요 없는 이유?", options: ["bne 가 r1 을 직접 읽어서", "subs 가 결과로 Z 를 세팅해서", "Thumb 규칙상 생략", "루프가 자동 검사"], a: 1, why: "결과가 0 이면 Z=1 → bne 가 빠져나옴" },
-                { q: "`cbz` 에 대해 틀린 것은?", options: ["플래그를 바꾸지 않음", "앞쪽으로만 분기", "r0–r12 어느 레지스터나 사용 가능", "레지스터가 0 이면 분기"], a: 2, why: "r0–r7 만 · 거리도 앞쪽 4–130바이트" },
-                { q: "`ite gt` 다음 두 명령의 조건은?", options: ["gt, gt", "gt, le", "le, gt", "무조건, gt"], a: 1, why: "e = else → 반대 조건 le" },
-                { q: "for 루프를 '아래에서 검사' 모양으로 바꾸면 줄어드는 것은?", options: ["반복당 무조건 분기 1개", "메모리 접근", "레지스터 수", "가드 검사"], a: 0, why: "검사+분기가 한 번에 · 가드는 처음 한 번만 추가됨" }
+                { q: "`if (x == 5) y = 1;` 을 분기로 만들면 보통?", options: ["`cmp` + `beq` 로 then 에 점프", "`cmp` + `bne` 로 then 을 건너뜀", "`cbz` 로 x == 5 를 검사", "`cmp` + `bgt` 로 then 을 건너뜀"], a: 1, why: "조건을 뒤집어 '아니면 건너뛰기' · then 블록이 바로 아래라 `beq` 로 가면 else 쪽 분기가 하나 더 필요" },
+                { q: "`subs r1, r1, #1` 뒤 `bne loop` 에 `cmp` 가 필요 없는 이유?", options: ["`bne` 가 r1 을 직접 읽어서", "`subs` 결과가 Z 를 세팅해서", "`bne` 는 C 플래그만 봐서", "`cmp` 는 IT 블록에서만 필요"], a: 1, why: "결과가 0 이면 Z=1 → `bne` 가 빠져나옴 · 레지스터를 직접 보는 건 `cbz`/`cbnz`" },
+                { q: "`cbz` 에 대해 틀린 것은?", options: ["플래그를 바꾸지 않음", "앞쪽으로만 분기", "r0–r12 모두 사용 가능", "IT 블록 안에선 못 씀"], a: 2, why: "레지스터는 r0–r7 만 · 거리도 앞쪽 4–130바이트" },
+                { q: "`ite gt` 다음 두 명령의 조건은?", options: ["gt, gt", "gt, le", "le, gt", "무조건, gt"], a: 1, why: "t = then (gt), e = else → 반대 조건 le" },
+                { q: "for 루프를 '아래에서 검사' 모양으로 바꾸면 줄어드는 것은?", options: ["반복마다 무조건 분기 1개", "반복마다 메모리 접근 1번", "루프 앞 가드 검사 1번", "루프에 쓰는 레지스터 1개"], a: 0, why: "검사+분기가 루프 끝 하나로 · 가드는 오히려 처음에 한 번 추가됨" },
+                { type: "text", q: "실행 후 `r0` 은? (반복 횟수)", code: { lang: "asm", src: "    movs r0, #0\n    movs r1, #3\nloop:\n    adds r0, r0, #1\n    subs r1, r1, #1\n    bpl  loop       @ N=0 이면 반복" }, answer: ["4"], why: "r1 = 2, 1, 0 에서 N=0 → 반복 · −1 이 돼야 N=1 · 0 도 '양수 쪽' 이라 3 이 아니라 4번" },
+                { type: "text", q: "r0 = −9 일 때 실행 후 `r0` 은?", code: { lang: "asm", src: "    mov  r0, #-9\n    bic  r0, r0, r0, asr #31" }, answer: ["0"], why: "asr #31 = 0xFFFFFFFF (음수) → x & ~mask = 0 · 분기 없는 `if (x < 0) x = 0`" },
+                { type: "num", q: "16bit `b<cond>` 가 앞쪽으로 갈 수 있는 최대 거리는? (바이트)", answer: 254, why: "imm8 × 2 → −256 – +254 · 더 멀면 32bit `b<cond>.w` (±1 MB)" },
+                { type: "order", q: "`for (i = 0; i < n; i++) body;` 의 -O2 모양 (루프 회전) 순서", items: ["가드: `cmp` + `bge done`", "body", "`adds` 로 i++", "`cmp` + `blt loop`"], why: "한 번도 안 도는 경우만 가드가 거르고, 검사는 루프 아래에서 · 반복당 분기 1개" }
             ],
             refs: [
                 { title: "Cortex-M4 Devices Generic User Guide", by: "Arm", year: 2010, url: "https://documentation-service.arm.com/static/5f2ac4ab60a93e65927bbdbf", kind: "doc" },
@@ -591,6 +625,8 @@ keep:
             title: "함수 호출과 스택 (AAPCS)",
             level: 2,
             mins: 16,
+            pre: ["assembly/asm-memory", "memory/mem-layout"],
+            checked: "2026-11-16",
             key: [
                 "`bl f`: `lr` ← 돌아올 주소, `pc` ← `f` · 복귀는 `bx lr` 또는 `pop {…, pc}`",
                 "인자 `r0`–`r3`, 5번째부터 스택 · 반환 `r0` (64bit 는 `r0`+`r1`)",
@@ -717,11 +753,15 @@ wrap:
                 { term: "인라인 확장", en: "Inline expansion", def: "호출 대신 함수 몸통을 그 자리에 복사 · 호출 비용 0, 코드 크기 증가 가능" }
             ],
             quiz: [
-                { q: "`int f(int a, int b, int c, int d, int e)` 에서 `e` 는 어디로?", options: ["r4", "스택 `[sp]`", "r12", "lr"], a: 1, why: "정수 인자 레지스터는 r0–r3 네 개뿐" },
-                { q: "다른 함수를 부르는 함수가 시작에서 `push {…, lr}` 하는 이유?", options: ["lr 이 callee-saved 라서", "안쪽 `bl` 이 lr 을 덮어써서", "스택 정렬 때문에만", "pc 를 보호하려고"], a: 1, why: "저장 안 하면 자기 복귀 주소를 잃음" },
-                { q: "함수가 마음대로 써도 되는 (호출자가 보존을 기대하지 않는) 레지스터는?", options: ["r4–r7", "r0–r3, r12", "r8–r11", "sp"], a: 1, why: "caller-saved · 필요하면 부르는 쪽이 미리 옮겨 둠" },
-                { q: "GCC 가 `push {r3, r4, r5, lr}` 처럼 r3 를 같이 넣는 이유?", options: ["r3 를 보존하려고", "8바이트 스택 정렬을 맞추려고", "인자 개수 표시", "Thumb 인코딩 제약"], a: 1, why: "레지스터 4개 = 16바이트 · r3 는 버려도 되는 자리 채움" },
-                { q: "`pop {r4, pc}` 가 하는 일은?", options: ["r4 복원 + 복귀", "r4 를 pc 로 복사", "스택만 정리", "인터럽트 복귀 전용"], a: 0, why: "저장해 둔 lr 값이 pc 로 들어가며 복귀" }
+                { q: "`int f(int a, int b, int c, int d, int e)` 에서 `e` 는 어디로?", options: ["`r4`", "진입 시 `[sp]`", "`r12` (ip)", "진입 시 `[sp, #4]`"], a: 1, why: "정수 인자 레지스터는 r0–r3 뿐 · 다섯째는 호출 직전 sp 가 가리키는 첫 칸" },
+                { q: "다른 함수를 부르는 함수가 시작에서 `push {…, lr}` 하는 이유?", options: ["`lr` 이 callee-saved 라서", "안쪽 `bl` 이 `lr` 을 덮어써서", "8바이트 정렬을 맞추려고", "예외가 `lr` 을 바꿀 수 있어서"], a: 1, why: "저장 안 하면 자기 복귀 주소를 잃음 · 예외는 `lr` 을 쌓았다가 복원하므로 무관" },
+                { q: "함수가 마음대로 써도 되는 (호출자가 보존을 기대하지 않는) 레지스터는?", options: ["r4–r7, r12", "r0–r3, r12", "r0–r3, r4", "r8–r11, lr"], a: 1, why: "caller-saved = r0–r3, r12 · r4–r11 은 쓰려면 저장·복원" },
+                { q: "GCC 가 `push {r3, r4, r5, lr}` 처럼 r3 를 같이 넣는 이유?", options: ["r3 의 인자 값을 보존하려고", "sp 를 8의 배수로 맞추려고", "push 는 짝수 개만 가능해서", "r3 를 지역 변수로 쓰려고"], a: 1, why: "4개 = 16바이트 · r3 는 caller-saved 라 보존 의무 없는 빈자리 · push 개수 제한은 없음" },
+                { q: "`pop {r4, pc}` 가 하는 일은?", options: ["r4 복원 + 복귀", "r4 를 pc 로 복사", "스택만 정리", "인터럽트 복귀 전용"], a: 0, why: "저장해 둔 lr 값이 pc 로 들어가며 복귀 · `bx lr` 과 같은 효과" },
+                { type: "num", q: "`push {r4, r5, r6, lr}` 다음 `sub sp, sp, #8` 이면 스택 프레임은 몇 바이트?", answer: 24, unit: "B", why: "레지스터 4개 × 4 = 16 + 지역 8 = 24 · 8의 배수라 정렬도 맞음" },
+                { type: "text", q: "시작 sp = 0x20001000. 실행 후 `r0` 은?", code: { lang: "asm", src: "    push {r4, r5, lr}\n    sub  sp, sp, #4\n    mov  r0, sp\n    add  sp, sp, #4\n    pop  {r4, r5, pc}" }, answer: ["0x20000FF0", "536874992"], why: "12 + 4 = 16 바이트 아래 · 홀수 개 push 를 `sub #4` 로 8의 배수로 맞춤" },
+                { type: "text", q: "실행 후 `r0` 은?", code: { lang: "asm", src: "    push {r4, lr}\n    movs r4, #5\n    bl   f\n    mov  r0, r4\n    pop  {r4, pc}\nf:\n    movs r4, #9     @ 저장 없이 r4 사용\n    bx   lr" }, answer: ["9"], why: "f 가 callee-saved r4 를 복원하지 않아 호출자의 5 가 깨짐 · AAPCS 위반" },
+                { type: "order", q: "non-leaf 함수의 프롤로그 → 에필로그 순서", items: ["`push {r4, lr}`", "`sub sp, sp, #8`", "본체와 `bl`", "`add sp, sp, #8`", "`pop {r4, pc}`"], why: "확보한 역순으로 반납 · 마지막 `pop` 이 저장한 lr 을 pc 로 꺼내 복귀" }
             ],
             refs: [
                 { title: "Procedure Call Standard for the Arm Architecture (AAPCS32)", by: "Arm", url: "https://github.com/ARM-software/abi-aa/blob/main/aapcs32/aapcs32.rst", kind: "spec" },
@@ -734,6 +774,8 @@ wrap:
             title: "컴파일러 출력 읽기",
             level: 3,
             mins: 16,
+            pre: ["assembly/asm-call", "languages/build"],
+            checked: "2026-11-16",
             key: [
                 "**최적화 수준**(optimization level) `-O0` 은 변수마다 스택에 쓰고 읽음 · 디버깅용",
                 "`-O2` 는 변수를 레지스터에, 루프를 회전, 인덱스를 포인터로 바꿈",
@@ -881,11 +923,15 @@ div10:
                 { term: "명령 스케줄링", en: "Instruction scheduling", def: "의존성이 허락하는 범위에서 명령 순서를 바꿔 지연을 숨김 · 플래그 수명도 고려" }
             ],
             quiz: [
-                { q: "`-O0` 출력에 `ldr`/`str` 이 많은 이유?", options: ["Thumb 제약", "모든 변수를 스택 슬롯에 두고 매번 읽고 씀", "volatile 이 자동 적용", "캐시가 없어서"], a: 1, why: "디버거가 언제든 변수를 메모리에서 볼 수 있게" },
-                { q: "`volatile` 없는 `while (!(SR & 1));` 의 -O2 결과는?", options: ["매번 ldr 하는 루프", "한 번 읽고, 0 이면 제자리 무한 루프", "컴파일 오류", "WFI 로 대기"], a: 1, why: "컴파일러는 SR 이 바뀔 이유를 모름 → 읽기를 한 번으로" },
-                { q: "`x / 10` (unsigned) 이 Cortex-M4 -O2 에서 된 것은?", options: ["`udiv`", "`umull` + `lsrs` (역수 곱셈)", "`__aeabi_uidiv` 호출", "빼기 루프"], a: 1, why: "상수 제수 → 곱셈 + 시프트" },
-                { q: "`objdump` 의 `ldr.w` 에서 `.w` 는?", options: ["word 로드", "32bit (wide) 인코딩", "쓰기 금지", "wide 레지스터"], a: 1, why: "`.n` = 16bit narrow, `.w` = 32bit wide" },
-                { q: "인라인 asm clobber 에 `\"memory\"` 를 넣는 이유?", options: ["메모리 절약", "레지스터에 캐시한 메모리 값을 믿지 말라고 알림", "스택 확장", "DMA 활성화"], a: 1, why: "asm 이 피연산자 외의 메모리를 읽고 쓸 수 있음 → 앞뒤로 다시 로드·스토어" }
+                { q: "`-O0` 출력에 `ldr`/`str` 이 많은 이유?", options: ["변수를 스택 슬롯에 두고 매번 읽고 씀", "Thumb ALU 가 메모리를 못 읽어서", "레지스터가 r0–r3 네 개뿐이라서", "디버그 정보 `-g` 가 접근을 추가해서"], a: 0, why: "디버거가 언제든 변수를 메모리에서 보게 · ISA 는 같으니 `-O2` 에선 대부분 레지스터에 남음" },
+                { q: "`volatile` 없는 `while (!(SR & 1));` 의 -O2 결과는?", options: ["매 반복 `ldr` 하는 루프", "한 번 읽고 0 이면 무한 루프", "루프 전체가 사라짐", "`wfi` 로 바꿔 대기"], a: 1, why: "컴파일러는 SR 이 바뀔 이유를 모름 → 읽기를 루프 밖 한 번으로 · 매번 읽는 건 `volatile` 판" },
+                { q: "`x / 10` (unsigned) 이 Cortex-M4 -O2 에서 된 것은?", options: ["`udiv` 한 명령", "`umull` + `lsrs`", "`bl __aeabi_uidiv`", "`mul` + `asrs`"], a: 1, why: "상수 제수 → 역수 곱셈 + 시프트 · `udiv` 는 변수 제수, `__aeabi_uidiv` 는 나눗셈 없는 M0" },
+                { q: "`objdump` 의 `ldr.w` 에서 `.w` 는?", options: ["워드(4바이트) 로드", "32bit 인코딩 (wide)", "writeback 이 있음", "약한(weak) 심볼"], a: 1, why: "`.n` = 16bit narrow, `.w` = 32bit wide · 워드 로드는 `ldr` 자체의 뜻" },
+                { q: "인라인 asm clobber 에 `\"memory\"` 를 넣는 이유?", options: ["asm 이 메모리를 바꾼다고 알림", "asm 용 스택 공간을 확보", "asm 앞뒤에 `dmb` 를 넣으라고", "asm 을 지우지 말라고 표시"], a: 0, why: "레지스터에 둔 메모리 값을 asm 앞뒤로 다시 읽고 씀 · 하드웨어 장벽 `dmb` 는 안 만들고, 삭제 방지는 `volatile` 몫" },
+                { type: "num", q: "`sum` 의 `-O0` 루프는 반복당 메모리 접근이 몇 번인가? (`ldr` 7 + `str` 2)", answer: 9, why: "i·a·a[i]·s 읽기, s 쓰기, i 읽기·쓰기, 검사의 i·n 읽기 · `-O2` 는 `ldr` 1번" },
+                { type: "num", q: "objdump 에서 `sum` 의 마지막 명령이 오프셋 `0x1a` 의 16bit `bx lr` 이면 함수는 몇 바이트?", answer: 28, unit: "B", why: "0x1a + 2 = 0x1c = 28" },
+                { type: "text", q: "GCC 의 `x / 2` (int) 출력. 실행 후 `r0` 은?", code: { lang: "asm", src: "    mov  r0, #-7\n    add  r0, r0, r0, lsr #31\n    asrs r0, r0, #1" }, answer: ["-3", "0xFFFFFFFD", "4294967293"], why: "음수면 1 을 더해 0 쪽으로 버림: (−7 + 1) >> 1 = −3 · `asrs` 만 쓰면 −4" },
+                { type: "order", q: "`gcc -O2 main.c -o fw.elf` 안에서 일어나는 단계 순서", items: ["전처리 (`#include`, 매크로)", "컴파일 (C → `.s`)", "어셈블 (`.s` → `.o`)", "링크 (`.o` → `.elf`)"], why: "`-E` 는 전처리까지, `-S` 는 `.s` 까지, `-c` 는 `.o` 까지 멈춤" }
             ],
             refs: [
                 { title: "Compiler Explorer", by: "M. Godbolt", url: "https://godbolt.org/", kind: "doc" },
@@ -899,6 +945,8 @@ div10:
             title: "예외 진입과 컨텍스트 저장",
             level: 3,
             mins: 16,
+            pre: ["assembly/asm-call", "embedded/irq"],
+            checked: "2026-11-16",
             key: [
                 "예외 진입(exception entry): 하드웨어가 8워드 저장 `r0`–`r3` `r12` `lr` `pc` `xPSR`",
                 "그 8개 = AAPCS 의 caller-saved 집합 → ISR 이 평범한 C 함수",
@@ -1026,11 +1074,15 @@ void SysTick_Handler(void) {
                 { term: "TCB", en: "Task Control Block", def: "RTOS 태스크 정보 구조체 · FreeRTOS 는 첫 칸에 저장된 스택 꼭대기(psp)" }
             ],
             quiz: [
-                { q: "하드웨어 예외 프레임 `f[0..7]` 에서 `f[6]` 은?", options: ["lr", "복귀 주소 (pc)", "xPSR", "r12"], a: 1, why: "r0 r1 r2 r3 r12 lr pc xPSR 순서 · 7번째" },
-                { q: "Thread 모드·PSP 에서 들어온 예외의 `lr` 값은? (FPU 미사용)", options: ["0xFFFFFFF1", "0xFFFFFFF9", "0xFFFFFFFD", "복귀 주소"], a: 2, why: "F1 = Handler·MSP, F9 = Thread·MSP, FD = Thread·PSP" },
-                { q: "PendSV 핸들러가 `r4`–`r11` 을 직접 저장하는 이유?", options: ["하드웨어 저장과 중복 확인용", "하드웨어는 r0–r3, r12, lr, pc, xPSR 만 저장해서", "PendSV 엔 스태킹이 없어서", "r4–r11 이 MSP 에 있어서"], a: 1, why: "callee-saved 는 하드웨어 몫이 아님 · 태스크를 바꾸려면 전부 필요" },
-                { q: "Late arrival 설명으로 맞는 것은?", options: ["낮은 우선순위가 오면 스택을 다시 쌓음", "스태킹 중 더 높은 우선순위가 오면 그 핸들러부터 · 스태킹은 그대로", "나중 인터럽트는 무시됨", "HardFault 로 전환"], a: 1, why: "저장할 내용이 같으니 벡터만 바꿈" },
-                { q: "PendSV 를 가장 낮은 우선순위로 두는 이유?", options: ["전력 절약", "다른 ISR 이 모두 끝난 뒤 (tail-chain 으로) 전환하려고", "NVIC 제약", "PSP 를 쓰려고"], a: 1, why: "ISR 도중 태스크 스택을 바꾸면 그 ISR 의 복귀가 꼬임" }
+                { q: "하드웨어 예외 프레임 `f[0..7]` 에서 `f[6]` 은?", options: ["예외 전 `lr`", "복귀 주소 `pc`", "`xPSR` 값", "`r12` 값"], a: 1, why: "r0 r1 r2 r3 r12 lr pc xPSR 순서 · `f[5]` 의 lr 은 그 함수를 부른 곳이라 헷갈리기 쉬움" },
+                { q: "Thread 모드·PSP 에서 들어온 예외의 `lr` 값은? (FPU 미사용)", options: ["0xFFFFFFF1", "0xFFFFFFF9", "0xFFFFFFFD", "복귀 주소"], a: 2, why: "F1 = Handler·MSP, F9 = Thread·MSP, FD = Thread·PSP · bit2 = 1 이 PSP" },
+                { q: "PendSV 핸들러가 `r4`–`r11` 을 직접 저장하는 이유?", options: ["하드웨어는 caller-saved 8개만 쌓아서", "PendSV 는 하드웨어 스태킹이 없어서", "r4–r11 은 MSP 에 쌓여 있어서", "C 컴파일러가 r4–r11 을 못 써서"], a: 0, why: "하드웨어는 r0–r3, r12, lr, pc, xPSR 만 · PendSV 도 이건 똑같이 쌓음 · 태스크를 바꾸려면 나머지가 필요" },
+                { q: "Late arrival 설명으로 맞는 것은?", options: ["스태킹 중 온 높은 쪽을 먼저 실행", "스태킹을 멈추고 처음부터 다시 쌓음", "늦게 온 예외는 다음 복귀 때 처리", "늦게 온 쪽 프레임을 하나 더 쌓음"], a: 0, why: "저장할 내용이 같으니 스태킹은 그대로 마치고 벡터만 바꿈 · 원래 예외는 그 뒤 tail-chain" },
+                { q: "PendSV 를 가장 낮은 우선순위로 두는 이유?", options: ["모든 ISR 이 끝난 뒤 전환하려고", "SysTick 보다 먼저 실행되려고", "PendSV 우선순위는 고정이라서", "Thread 모드에서 실행되게 하려고"], a: 0, why: "ISR 이 중첩된 도중 태스크 스택을 바꾸면 바깥 ISR 복귀가 꼬임 · PendSV 도 Handler 모드에서 실행" },
+                { type: "order", q: "Thread 모드에서 인터럽트가 받아들여질 때 순서", items: ["현재 명령을 마침", "8워드 스태킹 + 벡터 읽기", "`lr` ← EXC_RETURN, IPSR ← 번호", "Handler 모드·MSP 로 핸들러 첫 명령"], why: "스태킹과 벡터 읽기는 동시에 · 핸들러 첫 명령 땐 문맥 절반이 이미 스택에" },
+                { type: "order", q: "기본 예외 프레임을 낮은 주소부터", items: ["r0–r3", "r12", "lr", "복귀 주소 (pc)", "xPSR"], why: "+0x00 r0 … +0x10 r12, +0x14 lr, +0x18 pc, +0x1C xPSR · 아키텍처가 정한 건 쓰는 순서가 아니라 위치" },
+                { type: "num", q: "FPU 를 쓰던 문맥에 예외가 오면 확장 프레임은 몇 바이트?", answer: 104, unit: "B", why: "8 + S0–S15 16 + FPSCR 1 + 예약 1 = 26워드 = 0x68" },
+                { type: "text", q: "쌓인 xPSR = 0x0100002B. 실행 후 `r0` (CMSIS 의 IRQn) 은?", code: { lang: "asm", src: "    ldr  r4, =0x0100002B\n    and  r0, r4, #0x1FF   @ IPSR = 예외 번호\n    sub  r0, r0, #16" }, answer: ["27", "0x1B"], why: "예외 번호 43 · 외부 인터럽트 0 이 예외 16 이라 IRQ 27" }
             ],
             refs: [
                 { title: "Armv7-M Architecture Reference Manual (DDI 0403E.e)", by: "Arm", year: 2021, url: "https://documentation-service.arm.com/static/606dc36485368c4c2b1bf62f", kind: "spec" },
@@ -1039,10 +1091,151 @@ void SysTick_Handler(void) {
             ]
         },
         {
+            id: "asm-atomic",
+            title: "원자 연산: LDREX / STREX",
+            level: 3,
+            mins: 14,
+            pre: ["assembly/asm-exception", "languages/concurrency"],
+            checked: "2026-11-16",
+            key: [
+                "`cnt++` 은 `ldr`·`adds`·`str` 세 명령 · 사이에 ISR 이 끼면 **갱신 손실**(lost update)",
+                "`ldrex` 는 읽으며 주소를 표시 · `strex` 는 표시가 남았을 때만 쓰고 0, 아니면 1",
+                "**배타적 모니터**(exclusive monitor)는 예외 진입·복귀가 지움 → **재시도 루프**(retry loop)로 다시",
+                "M0(Armv6-M)엔 없음 → **인터럽트 차단**(interrupt masking) `cpsid i` · 순서는 `dmb`"
+            ],
+            concepts: [
+                { term: "LDREX / STREX", en: "Load-Exclusive / Store-Exclusive", def: "`ldrex` 가 읽으며 주소를 표시 · `strex` 는 표시가 남아 있을 때만 쓰고 결과 0(성공) / 1(실패)" },
+                { term: "배타적 모니터", en: "Exclusive monitor", def: "`ldrex` 의 표시를 기억하는 하드웨어 · 예외 진입·복귀와 `clrex` 가 지움" },
+                { term: "재시도 루프", en: "Retry loop (load-exclusive / store-exclusive)", def: "`strex` 가 1 이면 `ldrex` 부터 다시 · 끼어든 쪽의 갱신을 새로 읽어 반영" },
+                { term: "인터럽트 차단", en: "Interrupt masking (PRIMASK / BASEPRI)", def: "`cpsid i` 로 우선순위 설정 가능한 예외를 막음 · 모든 코어에서 되지만 IRQ 지연이 늘어남" }
+            ],
+            demo: {
+                type: "seq",
+                actors: ["태스크", "모니터", "cnt", "ISR"],
+                msgs: [
+                    { from: 0, to: 1, label: "ldrex r1 ← 5", text: "`ldrex` 가 cnt = 5 를 읽고 모니터가 주소를 표시 (Exclusive)" },
+                    { from: 0, to: 0, label: "adds r1, #1", text: "레지스터에서 6 을 만듦 · 메모리는 아직 5" },
+                    { from: 3, to: 1, label: "예외 진입 → 지움", text: "인터럽트 · 예외 진입이 로컬 모니터를 지움 (Open)" },
+                    { from: 3, to: 2, label: "cnt = 6", text: "ISR 도 원자적으로 +1 → cnt = 6 · 예외 복귀도 모니터를 지움" },
+                    { from: 0, to: 1, label: "strex → r2 = 1", text: "표시가 없으니 쓰지 않고 실패 1 · 태스크의 6 은 버려짐" },
+                    { from: 0, to: 0, label: "bne 재시도", text: "`cmp r2, #0` / `bne` → `ldrex` 부터 다시" },
+                    { from: 0, to: 1, label: "ldrex r1 ← 6", text: "다시 읽으니 ISR 이 쓴 6 · 이번엔 끼어드는 예외 없음" },
+                    { from: 0, to: 2, label: "strex → 0, cnt = 7", text: "성공 · 두 증가가 모두 남음 (`ldr`/`str` 이었다면 6)" }
+                ]
+            },
+            code: [
+                {
+                    lang: "asm",
+                    title: "GCC 15.2 -O2 · atomic_fetch_add (Cortex-M4)",
+                    src: `@ atomic_int cnt;  void inc(void) { atomic_fetch_add(&cnt, 1); }
+inc:
+        ldr     r3, .L4          @ &cnt (리터럴 풀)
+        dmb     ish              @ 앞쪽 접근이 먼저 끝나게
+.L2:
+        ldrex   r1, [r3]         @ 읽기 + 모니터 표시
+        adds    r1, r1, #1
+        strex   r2, r1, [r3]     @ 표시가 남았으면 쓰고 r2 = 0
+        cmp     r2, #0
+        bne     .L2              @ 1 이면 처음부터
+        dmb     ish              @ 뒤쪽 접근은 그 뒤에
+        bx      lr`,
+                    note: "`_Atomic` 변수의 `cnt++` 도 같은 코드 · 원자성은 `ldrex`/`strex`, 순서는 **메모리 장벽**(memory barrier) `dmb` 몫 · Armv7-M 은 `ish` 같은 옵션을 SY 로 실행"
+                },
+                {
+                    lang: "asm",
+                    title: "같은 증가: Cortex-M0 · RV32IA · x86-64 (gcc 15.2 -O2)",
+                    src: `@ Cortex-M0 (Armv6-M): 배타적 접근 명령 없음 → 함수 호출
+        movs    r2, #5           @ 5 = __ATOMIC_SEQ_CST
+        movs    r1, #1
+        ldr     r0, .L3          @ &cnt
+        bl      __atomic_fetch_add_4
+# RV32IA: 읽기-더하기-쓰기를 한 명령 (A 확장 AMO)
+        amoadd.w.aqrl  zero,a4,0(a5)    # a4 = 1, a5 = &cnt
+# x86-64: lock 접두사
+        lock add       DWORD PTR cnt[rip], 1`,
+                    note: "M0 는 `__atomic_fetch_add_4` 를 부를 뿐 · 그 함수는 툴체인이나 프로젝트가 제공 (단일 코어면 인터럽트 차단으로 구현 가능)"
+                }
+            ],
+            optimize: [
+                {
+                    title: "ISR 공유 카운터: 인터럽트 차단 → `ldrex`/`strex`",
+                    before: { lang: "asm", src: `@ m = PRIMASK; cpsid i; cnt++; PRIMASK = m;     gcc -O2
+inc_crit:
+        mrs     r1, primask
+        cpsid   i                @ 여기서부터 모든 IRQ 대기
+        ldr     r2, .L20
+        ldr     r3, [r2]
+        adds    r3, r3, #1
+        str     r3, [r2]
+        msr     primask, r1      @ 원래 상태로
+        bx      lr` },
+                    after: { lang: "asm", src: `@ atomic_fetch_add(&cnt, 1)                     gcc -O2
+inc:
+        ldr     r3, .L4
+        dmb     ish
+.L2:    ldrex   r1, [r3]
+        adds    r1, r1, #1
+        strex   r2, r1, [r3]
+        cmp     r2, #0
+        bne     .L2              @ 끼어들었을 때만 한 번 더
+        dmb     ish
+        bx      lr` },
+                    gain: "IRQ 차단 구간 0",
+                    note: "차단은 짧아도 모든 인터럽트를 늦춤 · 여러 변수를 한꺼번에 바꿔야 하면 여전히 차단(또는 RTOS 뮤텍스)이 맞음"
+                },
+                {
+                    title: "순서가 필요 없는 카운터: `seq_cst` → `relaxed`",
+                    before: { lang: "asm", src: `@ __atomic_fetch_add(&cnt, 1, __ATOMIC_SEQ_CST)
+        dmb     ish
+.L6:    ldrex   r1, [r3]
+        adds    r1, r1, #1
+        strex   r2, r1, [r3]
+        cmp     r2, #0
+        bne     .L6
+        dmb     ish` },
+                    after: { lang: "asm", src: `@ __atomic_fetch_add(&cnt, 1, __ATOMIC_RELAXED)
+.L10:   ldrex   r1, [r3]
+        adds    r1, r1, #1
+        strex   r2, r1, [r3]
+        cmp     r2, #0
+        bne     .L10` },
+                    gain: "`dmb` 2 → 0",
+                    note: "증가 자체는 여전히 원자적 · 다른 데이터와의 순서(예: '버퍼 채움 → 플래그') 가 필요하면 release/acquire 이상"
+                }
+            ],
+            glossary: [
+                { term: "갱신 손실", en: "Lost update", def: "두 쪽이 같은 옛 값을 읽고 각자 써서 한쪽 증가가 사라짐" },
+                { term: "CLREX", en: "Clear-Exclusive", def: "로컬 모니터를 지우는 명령 · 다음 `strex` 는 실패" },
+                { term: "메모리 장벽", en: "Memory barrier (DMB)", def: "`dmb` 앞뒤 메모리 접근 순서를 고정 · GCC 가 seq_cst 원자 연산 앞뒤에 넣음" },
+                { term: "PRIMASK", en: "Priority Mask Register", def: "1 이면 우선순위 설정 가능한 예외를 모두 막음 (NMI·HardFault 제외) · `cpsid i` / `cpsie i`" },
+                { term: "CAS", en: "Compare-And-Swap", def: "값이 기대값일 때만 새 값으로 · Arm `ldrex`+`cmp`+`strex`, RISC-V `lr.w`/`sc.w`, x86 `lock cmpxchg`" },
+                { term: "AMO", en: "Atomic Memory Operation (RISC-V A extension)", def: "RISC-V `amoadd.w` 등 · 읽기-연산-쓰기를 한 명령으로 원자적으로" }
+            ],
+            quiz: [
+                { q: "`strex r2, r1, [r3]` 뒤 `r2 = 1` 의 뜻은?", options: ["쓰기 성공 · 다음으로 진행", "쓰기 안 함 · 다시 시도", "버스 오류 · 폴트 대기", "다른 값으로 덮어씀"], a: 1, why: "0 = 썼음, 1 = 표시가 지워져 안 씀 · 메모리는 그대로라 `ldrex` 부터 다시" },
+                { q: "단일 코어 M4 에서 `ldrex` 와 `strex` 사이에 인터럽트가 들어왔다 나가면?", options: ["모니터가 지워져 `strex` 실패", "ISR 이 안 건드렸으면 성공", "인터럽트가 `strex` 뒤로 밀림", "UsageFault 로 알려 줌"], a: 0, why: "예외 진입·복귀가 로컬 모니터를 지움 · ISR 이 그 변수를 건드렸는지와 무관 · 한 번 더 돌 뿐 결과는 정확" },
+                { q: "Cortex-M0 에서 `__atomic_fetch_add(&cnt, 1, __ATOMIC_SEQ_CST)` 는?", options: ["`ldrex`/`strex` 루프", "`bl __atomic_fetch_add_4`", "`cpsid i`/`cpsie i` 로 감싼 인라인", "`lock` 접두사 붙은 `add`"], a: 1, why: "Armv6-M 엔 배타적 접근 명령이 없어 라이브러리 함수 호출 · `lock` 은 x86" },
+                { q: "GCC 가 seq_cst 원자 증가 앞뒤에 넣는 `dmb ish` 의 역할은?", options: ["앞뒤 접근의 순서를 고정", "그 구간 인터럽트를 막음", "데이터 캐시를 모두 비움", "`strex` 가 실패하지 않게 함"], a: 0, why: "원자성은 `ldrex`/`strex`, 순서는 `dmb` · relaxed 로 바꾸면 두 `dmb` 가 사라짐" },
+                { q: "ISR 과 공유하는 `volatile int cnt;` 에 `cnt++` 을 하면?", options: ["읽기와 쓰기 사이에 ISR 이 낌", "`volatile` 이라 원자적으로 증가", "`volatile` 이 `ldrex` 를 만들어 줌", "컴파일러가 차단 코드를 넣음"], a: 0, why: "`volatile` 은 접근 횟수·순서만 지킴 · `ldr`/`adds`/`str` 세 명령 사이는 여전히 끊김" },
+                { type: "text", q: "태스크의 `cnt++` 이 ISR(`cnt += 5`)에 끊긴 순서다. 실행 후 `r0` (최종 cnt) 은?", code: { lang: "asm", src: ".data\ncnt: .word 10\n.text\n    ldr  r0, =cnt\n    ldr  r1, [r0]        @ 태스크: 읽기\n@ ── ISR: cnt += 5 ──\n    ldr  r2, [r0]\n    adds r2, r2, #5\n    str  r2, [r0]\n@ ── 태스크로 복귀 ──\n    adds r1, r1, #1\n    str  r1, [r0]        @ 태스크: 쓰기\n    ldr  r0, [r0]" }, answer: ["11", "0xB"], why: "태스크가 옛 값 10 에 1 을 더해 덮어씀 · ISR 의 +5 가 사라짐 (맞는 값 16)" },
+                { type: "order", q: "`ldrex`/`strex` 증가 루프의 순서", items: ["`ldrex` 로 읽고 주소 표시", "레지스터에서 +1", "`strex` 로 조건부 쓰기", "결과 ≠ 0 이면 처음으로"], why: "표시가 지워졌으면 `strex` 가 안 쓰고 1 · 메모리를 건드린 건 성공한 `strex` 한 번뿐" },
+                { type: "num", q: "ISR 이 두 번 끼어들어 `strex` 가 두 번 실패했다. `ldrex` ~ `bne` 5 명령짜리 루프 본체는 모두 몇 명령 실행됐나?", answer: 15, why: "실패 2 + 성공 1 = 3 바퀴 × 5" },
+                { type: "num", q: "Armv7-M ARM 이 `ldrex` 와 `strex` 사이 코드를 몇 바이트 이내로 두라고 강하게 권장하나?", answer: 128, unit: "B", why: "짧을수록 모니터가 중간에 지워질 일이 적음 · 사이에 다른 메모리 접근도 피함" }
+            ],
+            refs: [
+                { title: "Armv7-M Architecture Reference Manual (DDI 0403E.e)", by: "Arm", year: 2021, url: "https://documentation-service.arm.com/static/606dc36485368c4c2b1bf62f", kind: "spec" },
+                { title: "Cortex-M4 Devices Generic User Guide", by: "Arm", year: 2010, url: "https://documentation-service.arm.com/static/5f2ac4ab60a93e65927bbdbf", kind: "doc" },
+                { title: "Built-in Functions for Memory Model Aware Atomic Operations (Using the GNU Compiler Collection)", by: "GNU Project", url: "https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html", kind: "doc" },
+                { title: "RISC-V Instruction Set Manual", by: "RISC-V International", url: "https://github.com/riscv/riscv-isa-manual", kind: "spec" }
+            ]
+        },
+        {
             id: "asm-isa",
             title: "RISC-V 와 x86-64 비교",
             level: 2,
             mins: 16,
+            pre: ["assembly/asm-branch", "assembly/asm-call"],
+            checked: "2026-11-16",
             key: [
                 "레지스터·분기·호출 개념은 같고, **명령 모양**이 ISA 마다 다름",
                 "RISC-V 는 플래그 없음: **비교 후 분기**(compare-and-branch) `bne a5, a1, L` 한 명령",
@@ -1180,11 +1373,15 @@ pick_sz:
                 { term: "psABI", en: "Processor-specific Application Binary Interface", def: "ISA 별 ABI 문서 · 호출 규약, ELF 재배치, 자료형 크기·정렬" }
             ],
             quiz: [
-                { q: "RISC-V 에서 `if (a < b) goto L;` 에 필요한 명령은 보통?", options: ["`cmp` + `blt` 2개", "`blt` 1개", "`slt` 만, 분기 없음", "3개"], a: 1, why: "비교 후 분기 · 플래그 레지스터가 없음" },
-                { q: "x86-64 System V 에서 세 번째 정수 인자 레지스터는?", options: ["rcx", "rdx", "r8", "rsi"], a: 1, why: "rdi, rsi, rdx, rcx, r8, r9 순서" },
-                { q: "RV32 는 64bit 덧셈의 자리올림을 어떻게 구하나?", options: ["C 플래그", "`sltu` 로 '하위 결과 < 원래 피연산자' 비교", "`adc`", "불가능"], a: 1, why: "넘쳤으면 결과가 더 작아짐 → 1" },
-                { q: "x86 `add eax, DWORD PTR [rdi]` 를 Thumb-2 로 옮기면?", options: ["`add r0, [r1]`", "`ldr r2, [r1]` + `add r0, r0, r2`", "`adds r0, r1`", "`ldm`"], a: 1, why: "로드/스토어 구조 · 메모리 피연산자 없음" },
-                { q: "함수 복귀 방식으로 맞는 것은?", options: ["셋 다 레지스터에서 복귀 주소", "x86 은 스택에서 꺼내고, RISC-V 는 `ra` 레지스터로 점프", "RISC-V 는 스택에서 꺼냄", "Arm 은 항상 스택"], a: 1, why: "x86 `call` 이 push, `ret` 이 pop · Arm `lr`, RISC-V `ra`" }
+                { q: "RISC-V 에서 `if (a < b) goto L;` 에 필요한 명령은 보통?", options: ["`cmp` + `blt` 2개", "`blt` 1개", "`slt` 만, 분기 없음", "`slt` + `bnez` 2개"], a: 1, why: "`blt a, b, L` 이 비교와 분기를 한 번에 · `slt` 는 0/1 값이 필요할 때" },
+                { q: "x86-64 System V 에서 세 번째 정수 인자 레지스터는?", options: ["rcx", "rdx", "r8", "rsi"], a: 1, why: "rdi, rsi, rdx, rcx, r8, r9 순서 · rcx 가 첫째인 건 Windows x64" },
+                { q: "RV32 는 64bit 덧셈의 자리올림을 어떻게 구하나?", options: ["CSR 의 carry 비트를 읽음", "`sltu` 로 합 < 피연산자 비교", "`addc` 명령으로 더함", "상위 비트를 `srli` 로 꺼냄"], a: 1, why: "넘쳤으면 32bit 합이 피연산자보다 작아짐 → 1 · 플래그도 `adc` 류 명령도 없음" },
+                { q: "x86 `add eax, DWORD PTR [rdi]` 를 Thumb-2 로 옮기면?", options: ["`add r0, r0, [r1]`", "`ldr r2, [r1]` + `add r0, r2`", "`add r0, r0, r1`", "`ldr r0, [r1, r0]`"], a: 1, why: "로드/스토어 구조라 메모리 피연산자가 없음 → 먼저 `ldr` · `add r0, r0, r1` 은 주소를 더해 버림" },
+                { q: "호출 명령(`call`/`bl`/`jal`)이 복귀 주소를 두는 곳은?", options: ["셋 다 링크 레지스터", "x86 만 스택, 둘은 레지스터", "셋 다 스택에 push", "RISC-V 만 스택, 둘은 레지스터"], a: 1, why: "x86 `call` 이 push, `ret` 이 pop · Arm `lr`, RISC-V `ra` (non-leaf 는 그 뒤 직접 스택에 저장)" },
+                { type: "num", q: "RV32I 로 12 명령(48 B)인 함수를 C 확장으로 컴파일하니 10개가 2바이트가 됐다. 크기는?", answer: 28, unit: "B", why: "10 × 2 + 2 × 4 = 28 · `sum` 에선 두 분기(`blez`, `bne`)만 4바이트로 남음" },
+                { type: "text", q: "x86 `lea rdx, [rdi+rsi*4]` 와 같은 Thumb 한 줄. r0 = 0x1000, r1 = 5 이면 `r2` 는?", code: { lang: "asm", src: "add  r2, r0, r1, lsl #2" }, answer: ["0x1014", "4116"], why: "0x1000 + 5 × 4 = 0x1014 · `lea` 도 메모리를 읽지 않고 주소 계산만" },
+                { type: "text", q: "Arm 에서 실행 후 `r0` 은? (x86 `sal`·RV32 `sll` 이면 1)", code: { lang: "asm", src: "movs r0, #1\nmovs r1, #32\nlsl  r0, r0, r1" }, answer: ["0"], why: "Arm 레지스터 시프트는 하위 8비트(32)를 그대로 써서 0 · x86·RV32 는 하위 5비트(0)만 봐서 그대로 1 · C 에선 정의되지 않은 동작" },
+                { type: "order", q: "x86-64 명령 바이트의 필드 순서", items: ["접두사 (REX 등)", "opcode", "ModRM", "SIB", "변위(displacement)", "즉시값"], why: "필요한 필드만 이어 붙여 1–15바이트 · REX 는 opcode 바로 앞" }
             ],
             refs: [
                 { title: "RISC-V Instruction Set Manual", by: "RISC-V International", url: "https://github.com/riscv/riscv-isa-manual", kind: "spec" },

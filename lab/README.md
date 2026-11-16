@@ -139,6 +139,11 @@ References: `refs` on lessons and trends — original papers (arXiv/DOI), offici
 | `bst` | `values` | binary search tree insert/search/delete · path, height, in-order |
 | `sort` | `algo n input` | sorting animation · algo `bubble` `insertion` `selection` `merge` `quick` `heap` · input `random` `nearly` `reversed` `few` · comparisons / swaps |
 
+| `uart` | `byte baud fclk bits parity stop oversample` | UART frame on the wire (LSB first), divider and baud error, receiver sample drift → framing / bit errors |
+| `can` | `ids data` | CAN bitwise arbitration of 2–3 IDs (dominant 0 wins), then bit stuffing of the winner's SOF…data bits |
+| `bpe` | `corpus merges word` | byte-pair-encoding merges step by step on a tiny corpus, tokenizing a new word |
+| `vector` | `docs:[{ t, v:[x, y] }] query k metric` | 2-D vector search: drag the query, cosine vs dot vs L2, normalization, top-k |
+
 **cpu** program rules: Armv7-M Thumb-2 UAL subset — `mov mvn add adc sub sbc rsb neg mul udiv sdiv and orr eor bic lsl lsr asr ror cmp cmn tst` (+`s` suffix sets flags; operand 2 may be `#imm`, a register, or `rX, lsl #n`), `b` + condition (`eq ne cs/hs cc/lo mi pl vs vc hi ls ge lt gt le`), `cbz cbnz bl bx blx`, `push pop` (`{r4-r7, lr}`, `pop {.., pc}` returns), `ldr str ldrb strb ldrh strh ldrsb ldrsh` with `[rn]`, `[rn, #imm]`, `[rn, rm]`, `[rn, rm, lsl #2]`, pre-index `[rn, #4]!`, post-index `[rn], #4`, and `ldr rX, =label|imm`.
 Data: `.data` / `.text`, `label: .word 1, 2` · `.hword` `.byte` `.space n` `.asciz "s"` → RAM from `0x20000000`. Comments `@` `;` `//`.
 LR starts at `0xFFFFFFFF`: `bx lr` from the top level ends the program (or falling off the end). SP starts at `0x20001000`. Out-of-RAM access → HardFault. Simplified: 4 bytes per instruction, no IT blocks, no `ldm/stm`, no reading `pc`.

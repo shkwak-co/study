@@ -3188,6 +3188,370 @@
         build();
     };
 
+    /* ---------- protocol labs: pure models (tested by check.mjs) ---------- */
+    // UART frame: [{ k: "idle"|"start"|"d0".."d8"|"par"|"stop", v }]
+    function uartFrame(byte, bits = 8, parity = "none", stop = 1) {
+        const f = [{ k: "start", v: 0 }];
+        let ones = 0;
+        for (let i = 0; i < bits; i++) { const v = (byte >> i) & 1; ones += v; f.push({ k: `d${i}`, v }); }
+        if (parity !== "none") f.push({ k: "par", v: parity === "even" ? ones % 2 : 1 - (ones % 2) });
+        for (let i = 0; i < stop; i++) f.push({ k: "stop", v: 1 });
+        return f;
+    }
+    // baud generator with oversampling ovs (16 or 8): divider = round(fclk / baud), steps of 1/ovs of a bit
+    function uartBaud(fclk, baud, ovs = 16) {
+        const div = Math.round(fclk / baud);
+        if (div < ovs) return { div, actual: NaN, err: NaN, ok: false };
+        const actual = fclk / div;
+        return { div, actual, err: (actual - baud) / baud, ok: true, mant: Math.floor(div / ovs), frac: div % ovs };
+    }
+    // receiver with relative clock error e (+ = receiver bit time longer): sample each bit at its middle from the start edge
+    function uartRx(frame, e) {
+        const samples = frame.map((_, k) => (k + 0.5) / (1 + e)); // in TX bit times; e > 0 = receiver clock fast
+        const got = samples.map((t) => { const k = Math.floor(t); return k < frame.length ? frame[k].v : 1; });
+        const data = frame.reduce((acc, b, k) => (b.k[0] === "d" && b.k !== "d" ? acc + got[k] * 2 ** +b.k.slice(1) : acc), 0);
+        const stopOk = frame.every((b, k) => b.k !== "stop" || got[k] === 1);
+        const bad = frame.map((b, k) => got[k] !== b.v);
+        return { samples, got, data, stopOk, bad, ok: !bad.some(Boolean) };
+    }
+    // CAN arbitration: ids send MSB first, bus = AND (0 dominant); a node that sends 1 but reads 0 drops out
+    function canArb(ids, width = 11) {
+        let alive = ids.map(() => true);
+        const steps = [];
+        for (let b = width - 1; b >= 0; b--) {
+            const vals = ids.map((id) => (id >> b) & 1);
+            const bus = vals.reduce((acc, v, k) => (alive[k] ? acc & v : acc), 1);
+            const lost = ids.map((_, k) => alive[k] && vals[k] === 1 && bus === 0);
+            steps.push({ bit: b, vals, bus, alive: alive.slice(), lost });
+            alive = alive.map((a, k) => a && !lost[k]);
+        }
+        return { steps, winner: ids.findIndex((_, k) => alive[k]) };
+    }
+    // bit stuffing: after 5 equal bits insert the complement
+    function canStuff(bits) {
+        const out = [];
+        const stuffed = [];
+        let run = 0;
+        let last = -1;
+        for (const b of bits) {
+            out.push(b);
+            run = b === last ? run + 1 : 1;
+            last = b;
+            if (run === 5) { out.push(1 - b); stuffed.push(out.length - 1); last = 1 - b; run = 1; }
+        }
+        return { out, stuffed };
+    }
+    // CAN 2.0A data frame header + data bits (SOF … data), the region shown for stuffing
+    const canBits = (id, data) => {
+        const bits = [0];
+        for (let b = 10; b >= 0; b--) bits.push((id >> b) & 1);
+        bits.push(0, 0, 0); // RTR (data), IDE (standard), r0
+        for (let b = 3; b >= 0; b--) bits.push((data.length >> b) & 1);
+        data.forEach((x) => { for (let b = 7; b >= 0; b--) bits.push((x >> b) & 1); });
+        return bits;
+    };
+    LAB.proto = { uartFrame, uartBaud, uartRx, canArb, canStuff, canBits };
+
+    // UART: frame bits on the wire, baud divider error, receiver sampling drift
+    SIMS.uart = (host, spec) => {
+        let byte = (spec.byte ?? 0x41) & 0xff;
+        let baud = spec.baud || 115200;
+        let fclk = spec.fclk || 16e6;
+        let ovs = spec.oversample === 8 ? 8 : 16;
+        let bits = spec.bits === 7 ? 7 : 8;
+        let parity = ["even", "odd"].includes(spec.parity) ? spec.parity : "none";
+        let stop = spec.stop === 2 ? 2 : 1;
+        let skew = 0;
+        const st = stage(host);
+        const cv = canvas(st, 190);
+        const bar = ctlBar(host);
+        const bar2 = ctlBar(host);
+        const out = readout(host);
+        const draw = () => {
+            const { ctx, w, h } = cv;
+            if (!w) return;
+            const C = vars(host);
+            const f = uartFrame(byte, bits, parity, stop);
+            const B = uartBaud(fclk, baud, ovs);
+            const e = (B.ok ? B.err : 0) + skew / 100;
+            const rx = uartRx(f, e);
+            ctx.clearRect(0, 0, w, h);
+            const n = f.length + 2;
+            const X = (t) => 12 + ((t + 1) / n) * (w - 24);
+            const hi = 40;
+            const lo = 110;
+            ctx.font = "11px Consolas, monospace";
+            ctx.textAlign = "center";
+            f.forEach((b, k) => {
+                ctx.fillStyle = b.k === "start" || b.k === "stop" ? rgba(C.warn, 0.1) : b.k === "par" ? rgba(C.bad, 0.1) : rgba(C.c, 0.08);
+                ctx.fillRect(X(k), hi - 14, X(k + 1) - X(k), lo - hi + 28);
+                ctx.fillStyle = C.muted;
+                ctx.fillText(b.k === "start" ? "S" : b.k === "stop" ? "P" : b.k === "par" ? "패리티" : b.k.toUpperCase(), (X(k) + X(k + 1)) / 2, hi - 20);
+                ctx.fillStyle = C.text;
+                ctx.fillText(b.v, (X(k) + X(k + 1)) / 2, lo + 30);
+            });
+            ctx.strokeStyle = C.c;
+            ctx.lineWidth = 2.2;
+            ctx.beginPath();
+            const lvl = (v) => (v ? hi : lo);
+            ctx.moveTo(X(-1), hi);
+            let prev = 1;
+            f.forEach((b, k) => { if (b.v !== prev) { ctx.lineTo(X(k), lvl(prev)); ctx.lineTo(X(k), lvl(b.v)); } prev = b.v; });
+            ctx.lineTo(X(f.length), lvl(prev));
+            ctx.lineTo(X(f.length), hi);
+            ctx.lineTo(X(f.length + 1), hi);
+            ctx.stroke();
+            rx.samples.forEach((t, k) => {
+                const x = X(t);
+                ctx.strokeStyle = rx.bad[k] ? C.bad : C.ok;
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([3, 3]);
+                ctx.beginPath(); ctx.moveTo(x, hi - 8); ctx.lineTo(x, lo + 8); ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.fillStyle = rx.bad[k] ? C.bad : C.ok;
+                ctx.beginPath(); ctx.arc(x, rx.got[k] ? hi : lo, 3.5, 0, 7); ctx.fill();
+            });
+            ctx.textAlign = "left";
+            ctx.fillStyle = C.muted;
+            ctx.fillText("— 송신 파형 (LSB 먼저)   ┊ 수신측 샘플 시점", 12, h - 8);
+            const drift = (f.length - 0.5) * Math.abs(e) * 100;
+            const hex = (v) => `0x${v.toString(16).toUpperCase().padStart(2, "0")}`;
+            out([
+                ["프레임", `${f.length} bit (${bits}${parity[0].toUpperCase()}${stop})`],
+                ["1비트", `${(1e6 / baud).toFixed(2)} µs`],
+                ["처리량", `${Math.round(baud / f.length).toLocaleString()} B/s`],
+                ["분주", B.ok ? `${B.div} (정수 ${B.mant} · 소수 ${B.frac}/${ovs})` : `불가: fclk/baud < ${ovs}`, B.ok ? "" : "bad"],
+                ["보레이트 오차", B.ok ? `${(B.err * 100).toFixed(2)}%` : "–", B.ok && Math.abs(B.err) > 0.02 ? "bad" : "good"],
+                ["끝 비트 드리프트", `${drift.toFixed(0)}% 비트`, drift >= 50 ? "bad" : drift > 30 ? "" : "good"],
+                ["수신", rx.ok ? `${hex(rx.data)} ✓` : `${hex(rx.data)} ✗ ${rx.stopOk ? "비트 오류" : "프레이밍 오류"}`, rx.ok ? "good" : "bad"]
+            ]);
+        };
+        cv.draw = draw;
+        const inp = textIn(bar, "바이트", `0x${byte.toString(16).toUpperCase()}`, (s) => {
+            const v = s.length === 1 ? s.charCodeAt(0) : parseInt2(s, 8);
+            if (v === null || Number.isNaN(v)) LAB.toast("0x41 · 65 · A"); else byte = v & 0xff;
+            draw();
+        });
+        void inp;
+        seg(bar, "데이터", [["7", "7"], ["8", "8"]], String(bits), (v) => { bits = +v; draw(); });
+        seg(bar, "패리티", [["none", "없음"], ["even", "짝수"], ["odd", "홀수"]], parity, (v) => { parity = v; draw(); });
+        seg(bar, "정지", [["1", "1"], ["2", "2"]], String(stop), (v) => { stop = +v; draw(); });
+        seg(bar2, "보레이트", [9600, 57600, 115200, 460800, 921600].map((v) => [v, v >= 1000 ? `${v / 1000}k` : v]), baud, (v) => { baud = +v; draw(); });
+        seg(bar2, "클럭", [8e6, 16e6, 48e6, 72e6].map((v) => [v, `${v / 1e6}M`]), fclk, (v) => { fclk = +v; draw(); });
+        seg(bar2, "오버샘플", [["16", "×16"], ["8", "×8"]], String(ovs), (v) => { ovs = +v; draw(); });
+        slider(bar2, "수신 클럭 오차", -10, 10, 0.5, skew, (v) => `${v > 0 ? "+" : ""}${v}%`, (v) => { skew = v; draw(); });
+        cv.fit();
+    };
+
+    // CAN: bitwise arbitration between nodes, then bit stuffing of the winner's frame
+    SIMS.can = (host, spec) => {
+        let ids = (spec.ids || [0x123, 0x120, 0x7ff]).slice(0, 3);
+        let data = spec.data || [0x00, 0xff];
+        let stepCtl = null;
+        const bar = ctlBar(host);
+        const box = document.createElement("div");
+        host.append(box);
+        const out = readout(host);
+        const hx = (v) => `0x${v.toString(16).toUpperCase().padStart(3, "0")}`;
+        const build = () => {
+            if (stepCtl) stepCtl.stop();
+            const A = canArb(ids);
+            const win = ids[A.winner];
+            const raw = canBits(win, data);
+            const S = canStuff(raw);
+            const stuffSet = new Set(S.stuffed);
+            box.innerHTML = `<div class="demo-stage" style="padding:0"><div class="bits-lab">
+              <div class="lab-name">중재: 11bit ID 를 MSB 부터 동시에 송신 · 버스 = AND (0 = 우성)</div>
+              <div class="can-arb" style="grid-template-columns:64px repeat(11, minmax(0, 1fr)) 70px">
+                <b></b>${A.steps.map((s) => `<b>${s.bit}</b>`).join("")}<b></b>
+                ${ids.map((id, k) => `<b>노드 ${"ABC"[k]}</b>${A.steps.map((s, j) => `<i data-n="${k}" data-j="${j}">${s.vals[k]}</i>`).join("")}<span data-st="${k}"></span>`).join("")}
+                <b>버스</b>${A.steps.map((s, j) => `<i class="bus" data-j="${j}">${s.bus}</i>`).join("")}<span></span>
+              </div>
+              <div class="lab-name">이긴 프레임 SOF~데이터 (${raw.length} bit) → 스터핑 후 ${S.out.length} bit · <span style="color:var(--warn)">■</span> 스터프 비트</div>
+              <div class="can-stuff">${S.out.map((b, k) => `<i class="${stuffSet.has(k) ? "st" : ""}">${b}</i>`).join("")}</div>
+            </div></div>`;
+            const cells = [...box.querySelectorAll(".can-arb i")];
+            stepCtl = stepper(box, A.steps.length, (j) => {
+                const s = A.steps[j];
+                cells.forEach((el) => {
+                    const jj = +el.dataset.j;
+                    const k = el.dataset.n === undefined ? -1 : +el.dataset.n;
+                    const st = A.steps[jj];
+                    el.className = `${el.classList.contains("bus") ? "bus " : ""}${jj > j ? "future" : ""}${k >= 0 && !st.alive[k] ? " out" : ""}${k >= 0 && st.lost[k] && jj <= j ? " lost" : ""}${jj === j ? " cur" : ""}`;
+                });
+                ids.forEach((_, k) => {
+                    const el = box.querySelector(`[data-st="${k}"]`);
+                    const lostAt = A.steps.findIndex((x, jj) => jj <= j && x.lost[k]);
+                    el.textContent = lostAt >= 0 ? `탈락 (bit ${A.steps[lostAt].bit})` : j === A.steps.length - 1 && k === A.winner ? "승리 ✓" : "송신 중";
+                    el.className = lostAt >= 0 ? "out" : k === A.winner && j === A.steps.length - 1 ? "win" : "";
+                });
+                const losers = ids.filter((_, k) => s.lost[k]).map(hx);
+                return `bit ${s.bit}: 버스 = ${s.bus}${losers.length ? ` · ${losers.join(", ")} 은 1 을 보냈는데 0 을 읽음 → **탈락**` : ""}${j === A.steps.length - 1 ? ` · 승자 ${hx(win)} (가장 작은 ID)` : ""}`;
+            }, { interval: 900 });
+            out([["승자", hx(win), "good"], ["스터프 비트", S.stuffed.length], ["DLC", data.length], ["데이터", data.map((x) => x.toString(16).toUpperCase().padStart(2, "0")).join(" ") || "–"]]);
+        };
+        const idIn = textIn(bar, "ID", ids.map((x) => x.toString(16).toUpperCase()).join(" "), (s) => {
+            const v = s.split(/[\s,]+/).filter(Boolean).map((x) => parseInt(x.replace(/^0x/i, ""), 16)).filter((x) => x >= 0 && x <= 0x7ff);
+            if (v.length < 2) LAB.toast("16진 ID 2~3개 (예: 123 120 7FF)"); else { ids = v.slice(0, 3); build(); }
+        }, true);
+        void idIn;
+        textIn(bar, "데이터", data.map((x) => x.toString(16).toUpperCase().padStart(2, "0")).join(" "), (s) => {
+            const v = s.split(/[\s,]+/).filter(Boolean).map((x) => parseInt(x.replace(/^0x/i, ""), 16));
+            if (v.length > 8 || v.some((x) => !(x >= 0 && x <= 255))) LAB.toast("바이트 0~8개 (예: 00 FF)"); else { data = v; build(); }
+        }, true);
+        build();
+    };
+
+    /* ---------- AI labs: pure models (tested by check.mjs) ---------- */
+    // BPE (Sennrich et al. 2016): words as symbols + "</w>", repeatedly merge the most frequent adjacent pair
+    const EOW = "</w>";
+    const bpeWords = (text) => {
+        const counts = new Map();
+        String(text).trim().split(/\s+/).filter(Boolean).forEach((w) => counts.set(w, (counts.get(w) || 0) + 1));
+        return [...counts].map(([w, n]) => ({ w, n, s: [...w, EOW] }));
+    };
+    function bpePairs(words) {
+        const m = new Map(); // insertion order = first seen → deterministic ties
+        words.forEach(({ n, s }) => { for (let i = 0; i < s.length - 1; i++) { const k = `${s[i]}\u0000${s[i + 1]}`; m.set(k, (m.get(k) || 0) + n); } });
+        return [...m].map(([k, n]) => [...k.split("\u0000"), n]);
+    }
+    const bpeMerge = (s, a, b) => { const o = []; for (let i = 0; i < s.length; i++) { if (i < s.length - 1 && s[i] === a && s[i + 1] === b) { o.push(a + b); i++; } else o.push(s[i]); } return o; };
+    function bpeLearn(text, n) {
+        let words = bpeWords(text);
+        const merges = [];
+        const steps = [{ words: words.map((x) => ({ ...x, s: x.s.slice() })), pairs: bpePairs(words) }];
+        for (let k = 0; k < n; k++) {
+            const pairs = bpePairs(words);
+            if (!pairs.length) break;
+            const best = pairs.reduce((m, p) => (p[2] > m[2] ? p : m));
+            if (best[2] < 2) break; // nothing repeats any more
+            merges.push(best);
+            words = words.map((x) => ({ ...x, s: bpeMerge(x.s, best[0], best[1]) }));
+            steps.push({ words: words.map((x) => ({ ...x, s: x.s.slice() })), pairs: bpePairs(words), merged: best });
+        }
+        return { merges, steps };
+    }
+    const bpeApply = (word, merges) => merges.reduce((s, [a, b]) => bpeMerge(s, a, b), [...word, EOW]);
+    // vector search scores
+    const vlen = (v) => Math.hypot(...v);
+    const vdot = (a, b) => a.reduce((s, x, i) => s + x * b[i], 0);
+    const vscore = (metric, q, v) => (metric === "dot" ? vdot(q, v) : metric === "l2" ? -Math.hypot(...q.map((x, i) => x - v[i])) : vdot(q, v) / (vlen(q) * vlen(v) || 1));
+    const vrank = (docs, q, metric, norm) => docs.map((d, i) => {
+        const v = norm ? d.v.map((x) => x / (vlen(d.v) || 1)) : d.v;
+        const qq = norm ? q.map((x) => x / (vlen(q) || 1)) : q;
+        return { i, s: vscore(metric, qq, v) };
+    }).sort((a, b) => b.s - a.s);
+    LAB.ai = { bpeWords, bpeLearn, bpeApply, vscore, vrank };
+
+    // BPE tokenizer: merge steps on a tiny corpus, then tokenize a new word
+    SIMS.bpe = (host, spec) => {
+        let corpus = spec.corpus || "low low low low low lower lower newest newest newest newest newest newest widest widest widest";
+        let word = spec.word || "lowest";
+        let k = Math.min(spec.merges ?? 4, 20);
+        let L = bpeLearn(corpus, 20);
+        const st = stage(host, true);
+        st.innerHTML = `<div class="bpe"><div><h4>말뭉치 (단어 × 빈도) · 현재 분할</h4><div class="bpe-w"></div><h4>인접 쌍 빈도 (상위)</h4><div class="bpe-p"></div></div>
+          <div><h4>배운 병합 순서</h4><ol class="bpe-m"></ol><h4>새 단어 토큰화</h4><div class="bpe-t"></div></div></div><div class="cpu-cap"></div>`;
+        const bar = ctlBar(host);
+        const out = readout(host);
+        const $q = (x) => st.querySelector(x);
+        const tok = (s, hl) => s.map((x) => `<b class="${hl && hl.has(x) ? "new" : ""}">${esc(x.replace(EOW, "_"))}</b>`).join("");
+        const draw = () => {
+            const n = Math.min(k, L.merges.length);
+            const S = L.steps[n];
+            const last = n ? L.merges[n - 1] : null;
+            const fresh = new Set(last ? [last[0] + last[1]] : []);
+            $q(".bpe-w").innerHTML = S.words.map((x) => `<div class="bpe-row"><span>${esc(x.w)} ×${x.n}</span><div>${tok(x.s, fresh)}</div></div>`).join("");
+            const top = S.pairs.slice().sort((a, b) => b[2] - a[2]).slice(0, 6);
+            const next = L.merges[n];
+            $q(".bpe-p").innerHTML = top.map((p) => `<div class="bpe-row${next && p[0] === next[0] && p[1] === next[1] ? " pick" : ""}"><span>${esc(p[0].replace(EOW, "_"))} + ${esc(p[1].replace(EOW, "_"))}</span><div><i style="width:${(p[2] / top[0][2]) * 100}%"></i><em>${p[2]}</em></div></div>`).join("") || "<span class='muted'>더 합칠 쌍 없음</span>";
+            $q(".bpe-m").innerHTML = L.merges.slice(0, n).map((m, i) => `<li class="${i === n - 1 ? "new" : ""}">${esc(m[0].replace(EOW, "_"))} + ${esc(m[1].replace(EOW, "_"))} → <b>${esc((m[0] + m[1]).replace(EOW, "_"))}</b> <small>(${m[2]})</small></li>`).join("") || "<li class='muted'>아직 없음 · 글자 단위</li>";
+            const t = bpeApply(word, L.merges.slice(0, n));
+            $q(".bpe-t").innerHTML = `<div class="bpe-row"><span>${esc(word)}</span><div>${tok(t)}</div></div>`;
+            const vocab = new Set(S.words.flatMap((x) => x.s));
+            $q(".cpu-cap").innerHTML = fmt(last ? `${n}번째 병합: 가장 많이 붙어 나온 **${last[0].replace(EOW, "_")} + ${last[1].replace(EOW, "_")}** (${last[2]}회) → 새 토큰 **${(last[0] + last[1]).replace(EOW, "_")}**` : "처음엔 모든 단어가 글자 + 단어 끝 표시(`_`)로 나뉨");
+            out([["병합", `${n} / ${L.merges.length}`], ["말뭉치 기호 종류", vocab.size], ["말뭉치 토큰 수", S.words.reduce((s, x) => s + x.s.length * x.n, 0)], [`'${word}' 토큰`, t.length]]);
+        };
+        const sl = slider(bar, "병합 횟수", 0, L.merges.length, 1, Math.min(k, L.merges.length), (v) => v, (v) => { k = v; draw(); });
+        button(bar, "−1", () => { k = Math.max(0, Math.min(k, L.merges.length) - 1); sl.set(k); draw(); });
+        button(bar, "+1", () => { k = Math.min(L.merges.length, k + 1); sl.set(k); draw(); }, true);
+        textIn(bar, "새 단어", word, (s) => { word = s.replace(/\s/g, "") || word; draw(); });
+        textIn(bar, "말뭉치", corpus, (s) => { if (s.trim()) { corpus = s; L = bpeLearn(corpus, 20); sl.max = L.merges.length; k = Math.min(k, L.merges.length); sl.set(k); } draw(); }, true);
+        draw();
+    };
+
+    // vector search: drag the query, compare cosine / dot / L2, top-k
+    SIMS.vector = (host, spec) => {
+        const docs = spec.docs || [
+            { t: "UART 보레이트", v: [0.9, 0.15] }, { t: "SPI 클럭 모드", v: [0.75, 0.45] }, { t: "I2C 풀업 저항", v: [0.55, 0.25] },
+            { t: "PID 튜닝", v: [-0.6, 0.7] }, { t: "칼만 필터", v: [-0.8, 0.35] }, { t: "긴 통신 매뉴얼", v: [1.8, 1.1] }, { t: "어텐션", v: [-0.2, -0.9] }
+        ];
+        let q = spec.query || [0.8, 0.3];
+        let metric = ["cosine", "dot", "l2"].includes(spec.metric) ? spec.metric : "cosine";
+        let norm = false;
+        let K = spec.k || 2;
+        const st = stage(host);
+        st.classList.add("vec");
+        const cvHost = document.createElement("div");
+        const list = document.createElement("div");
+        list.className = "vec-list";
+        st.append(cvHost, list);
+        const cv = canvas(cvHost, (w) => Math.min(340, w));
+        const bar = ctlBar(host);
+        const out = readout(host);
+        const R = 2.2; // plot half-range
+        const P = (v) => [cv.w / 2 + (v[0] / R) * (cv.w / 2 - 14), cv.h / 2 - (v[1] / R) * (cv.h / 2 - 14)];
+        const draw = () => {
+            const { ctx, w, h } = cv;
+            if (!w) return;
+            const C = vars(host);
+            const rank = vrank(docs, q, metric, norm);
+            const top = new Set(rank.slice(0, K).map((r) => r.i));
+            ctx.clearRect(0, 0, w, h);
+            ctx.strokeStyle = C.line;
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2); ctx.moveTo(w / 2, 0); ctx.lineTo(w / 2, h); ctx.stroke();
+            if (norm) { ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(w / 2, h / 2, (1 / R) * (w / 2 - 14), 0, 7); ctx.stroke(); ctx.setLineDash([]); }
+            const O = P([0, 0]);
+            ctx.font = "12px Pretendard, Segoe UI, sans-serif";
+            docs.forEach((d, i) => {
+                const v = norm ? d.v.map((x) => x / vlen(d.v)) : d.v;
+                const [x, y] = P(v);
+                ctx.strokeStyle = top.has(i) ? C.ok : rgba(C.muted, 0.5);
+                ctx.lineWidth = top.has(i) ? 2.2 : 1.2;
+                ctx.beginPath(); ctx.moveTo(O[0], O[1]); ctx.lineTo(x, y); ctx.stroke();
+                ctx.fillStyle = top.has(i) ? C.ok : C.muted;
+                ctx.beginPath(); ctx.arc(x, y, 5, 0, 7); ctx.fill();
+                ctx.fillText(d.t, x + 7, y - 6);
+            });
+            const qq = norm ? q.map((x) => x / vlen(q)) : q;
+            const [qx, qy] = P(qq);
+            ctx.strokeStyle = C.c;
+            ctx.lineWidth = 2.6;
+            ctx.beginPath(); ctx.moveTo(O[0], O[1]); ctx.lineTo(qx, qy); ctx.stroke();
+            ctx.fillStyle = C.c;
+            ctx.beginPath(); ctx.arc(qx, qy, 8, 0, 7); ctx.fill();
+            ctx.fillText("질의 (드래그)", qx + 10, qy + 16);
+            list.innerHTML = `<h4>${{ cosine: "코사인 유사도", dot: "내적", l2: "L2 거리 (작을수록 가까움)" }[metric]}</h4>` + rank.map((r, n) => `<div class="vrow${n < K ? " top" : ""}"><span>${n + 1}. ${esc(docs[r.i].t)}</span><b>${(metric === "l2" ? -r.s : r.s).toFixed(3)}</b></div>`).join("");
+            out([["질의", `(${q[0].toFixed(2)}, ${q[1].toFixed(2)})`], ["|질의|", vlen(q).toFixed(2)], ["top-k", K], ["1위", docs[rank[0].i].t, "good"]]);
+        };
+        cv.draw = draw;
+        const move = (e) => {
+            const r = cv.cv.getBoundingClientRect();
+            const x = ((e.clientX - r.left - cv.w / 2) / (cv.w / 2 - 14)) * R;
+            const y = (-(e.clientY - r.top - cv.h / 2) / (cv.h / 2 - 14)) * R;
+            q = [clamp(x, -R, R), clamp(y, -R, R)];
+            if (Math.hypot(...q) < 0.05) q = [0.05, 0];
+            draw();
+        };
+        cv.cv.addEventListener("pointerdown", (e) => { cv.cv.setPointerCapture(e.pointerId); move(e); });
+        cv.cv.addEventListener("pointermove", (e) => { if (e.buttons) move(e); });
+        seg(bar, "거리", [["cosine", "코사인"], ["dot", "내적"], ["l2", "L2"]], metric, (v) => { metric = v; draw(); });
+        seg(bar, "정규화", [["0", "원래 길이"], ["1", "단위 벡터"]], "0", (v) => { norm = v === "1"; draw(); });
+        slider(bar, "top-k", 1, docs.length, 1, K, (v) => v, (v) => { K = v; draw(); });
+        cv.fit();
+    };
+
     LAB.SIM_INFO = {
         reg: ["레지스터 비트", "MASK·결과 미리보기 · set/clear/toggle · 필드 읽기·쓰기", "비트"],
         bitops: ["비트 연산 ALU", "AND·OR·XOR·시프트·회전 · 2의 보수 · NZCV 플래그", "비트"],
@@ -3213,9 +3577,13 @@
         hash: ["해시 테이블", "체이닝 vs 선형 탐사 · 적재율 · 재해시", "자료구조"],
         heap: ["이진 힙", "삽입·꺼내기 · sift up/down · 배열 = 트리", "자료구조"],
         bst: ["이진 탐색 트리", "삽입·검색·삭제 · 높이 · 정렬 입력의 함정", "자료구조"],
-        sort: ["정렬 알고리즘", "버블·삽입·선택·병합·퀵·힙 · 비교·교환 횟수", "자료구조"]
+        sort: ["정렬 알고리즘", "버블·삽입·선택·병합·퀵·힙 · 비교·교환 횟수", "자료구조"],
+        uart: ["UART 프레임", "비트 순서 · 패리티 · 보레이트 오차 · 수신 샘플 드리프트", "통신"],
+        can: ["CAN 중재", "ID 비트별 중재 · 우성/열성 · 비트 스터핑", "통신"],
+        bpe: ["BPE 토크나이저", "자주 붙는 쌍 병합 한 단계씩 · 새 단어 토큰화", "AI"],
+        vector: ["벡터 검색", "질의 드래그 · 코사인 vs 내적 vs L2 · top-k", "AI"]
     };
-    LAB.SIM_TAGS = ["비트", "CPU·메모리", "자료구조", "신호", "제어·로봇", "시스템", "AI"];
+    LAB.SIM_TAGS = ["비트", "CPU·메모리", "자료구조", "통신", "신호", "제어·로봇", "시스템", "AI"];
 
     const TYPES = { steps, wave, seq, sim: (host, spec) => SIMS[spec.name](host, spec) };
     LAB.SIM_NAMES = Object.keys(SIMS);

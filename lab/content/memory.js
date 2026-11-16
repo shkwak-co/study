@@ -11,7 +11,7 @@ LAB.track({
             points: [
                 "CXL = CPU 와 메모리·가속기를 잇는 캐시 일관성(cache-coherent) 인터커넥트",
                 "CXL 2.0 메모리 풀링 → 3.0 메모리 공유(memory sharing): 여러 호스트가 같은 영역을 하드웨어 일관성으로 동시 접근",
-                "CXL 4.0 (2025-11): PCIe 7.0 기반 128 GT/s · bundled ports · 3.x/2.0/1.x 하위 호환"
+                "CXL 4.0 (2025-11): PCIe 7.0 기반 128 GT/s · 여러 포트를 묶는 bundled ports · 이전 세대와 하위 호환"
             ],
             refs: [
                 { title: "Compute Express Link 3.0 (white paper)", by: "Das Sharma et al.", year: 2022, url: "https://computeexpresslink.org/wp-content/uploads/2023/12/CXL_3.0_white-paper_FINAL.pdf", kind: "doc" },
@@ -19,15 +19,17 @@ LAB.track({
             ]
         },
         {
-            title: "HBM4: AI 가속기의 메모리 대역폭(memory bandwidth)",
+            title: "HBM4 · SPHBM4: AI 가속기의 메모리 대역폭(memory bandwidth)",
             when: "2025–2026",
             points: [
-                "JEDEC JESD270-4 (2025-04): 2048bit 인터페이스 × 핀당 최대 8 Gb/s → 스택당 최대 2 TB/s",
-                "스택당 독립 채널 16 → 32 · 4/8/12/16단 적층 · 32Gb 다이 16단이면 64GB",
-                "HBM3 컨트롤러와 하위 호환 · 행 해머(row-hammer) 완화용 DRFM 추가"
+                "JEDEC JESD270-4 HBM4 (2025-04): 2048bit 인터페이스 × 핀당 최대 8 Gb/s → 스택당 최대 2 TB/s",
+                "스택당 독립 채널 16 → 32 · 32Gb 다이 16단이면 64GB · 행 해머(row-hammer) 완화용 DRFM",
+                "SPHBM4 JESD330-4 (2026-07): 같은 HBM4 DRAM 다이 · 데이터 신호 2048 → 512, 4:1 직렬화(serialization)",
+                "범프 간격이 넓어져 실리콘 기판 대신 **유기 기판(organic substrate)**에 실장 · 채널이 길어 스택을 더 달 여지"
             ],
             refs: [
-                { title: "JEDEC and Industry Leaders Collaborate to Release JESD270-4 HBM4 Standard: Advancing Bandwidth, Efficiency, and Capacity for AI and HPC", by: "JEDEC", year: 2025, url: "https://www.jedec.org/news/pressreleases/jedec%C2%AE-and-industry-leaders-collaborate-release-jesd270-4-hbm4-standard-advancing", kind: "doc" }
+                { title: "JEDEC and Industry Leaders Collaborate to Release JESD270-4 HBM4 Standard: Advancing Bandwidth, Efficiency, and Capacity for AI and HPC", by: "JEDEC", year: 2025, url: "https://www.jedec.org/news/pressreleases/jedec%C2%AE-and-industry-leaders-collaborate-release-jesd270-4-hbm4-standard-advancing", kind: "doc" },
+                { title: "New JEDEC SPHBM4 Standard Enables HBM4-Class Bandwidth on Organic Substrates", by: "JEDEC", year: 2026, url: "https://www.jedec.org/news/pressreleases/new-jedec%C2%AE-sphbm4-standard-enables-hbm4-class-bandwidth-organic-substrates", kind: "doc" }
             ]
         },
         {
@@ -36,7 +38,8 @@ LAB.track({
             points: [
                 "JEDEC JESD209-6 (2025-07): 다이당 서브채널(sub-channel) 2개 × 12 DQ · 32B/64B 접근",
                 "행 활성화 카운트(PRAC) · on-die ECC · CA 패리티 등 신뢰성 기능",
-                "2026-04 로드맵: x6 모드로 고용량, 데이터센터·PIM(processing-in-memory) 확장 예고"
+                "2026-04 로드맵: x6 서브채널 모드로 고용량 · 512 GB 밀도 예고",
+                "LPDDR6 SOCAMM2 모듈과 LPDDR6 PIM(processing-in-memory) 표준을 개발 중"
             ],
             refs: [
                 { title: "JEDEC Releases New LPDDR6 Standard to Enhance Mobile and AI Memory Performance", by: "JEDEC", year: 2025, url: "https://www.jedec.org/news/pressreleases/jedec%C2%AE-releases-new-lpddr6-standard-enhance-mobile-and-ai-memory-performance", kind: "doc" },
@@ -49,10 +52,12 @@ LAB.track({
             points: [
                 "Arm MTE (Armv8.5): 16 B 단위(granule)마다 4bit 태그 · 포인터 상위 비트(59–56) 태그와 다르면 fault",
                 "use-after-free · 버퍼 오버플로를 하드웨어가 검출 · Linux arm64 는 `PROT_MTE` 로 사용",
+                "Apple MIE (2025-09): iPhone 17·Air 에서 EMTE 를 동기(synchronous) 모드로 항상 켬",
                 "CHERI: 정수 주소 대신 범위·권한을 담은 capability · Arm Morello, CHERI-RISC-V"
             ],
             refs: [
                 { title: "Memory Tagging Extension (MTE) in AArch64 Linux", by: "Linux kernel community", url: "https://docs.kernel.org/arch/arm64/memory-tagging-extension.html", kind: "doc" },
+                { title: "Memory Integrity Enforcement: A complete vision for memory safety in Apple devices", by: "Apple Security Engineering and Architecture", year: 2025, url: "https://security.apple.com/blog/memory-integrity-enforcement/", kind: "doc" },
                 { title: "Capability Hardware Enhanced RISC Instructions (CHERI)", by: "University of Cambridge", url: "https://www.cl.cam.ac.uk/research/security/ctsrd/cheri/", kind: "doc" }
             ]
         }
@@ -63,6 +68,8 @@ LAB.track({
             title: "프로그램 메모리 배치",
             level: 1,
             mins: 12,
+            pre: ["languages/build"],
+            checked: "2026-11-16",
             key: [
                 "실행 파일 = **섹션(section)** 묶음 · `.text` `.rodata` `.data` `.bss`",
                 "코드·상수는 Flash, 변수는 SRAM · `.data` 만 **LMA**(Flash)와 **VMA**(SRAM)가 다름",
@@ -118,7 +125,7 @@ _Min_Stack_Size = 0x1000;                 /* 4 KB 예약 */
 SECTIONS {
     .text   : { KEEP(*(.isr_vector)) *(.text*) } > FLASH
     .rodata : { *(.rodata*) } > FLASH
-    .data   : { _sdata = .; *(.data*); _edata = .; } > RAM AT > FLASH
+    .data   : { _sdata = .; *(.data*) _edata = .; } > RAM AT > FLASH
     _sidata = LOADADDR(.data);            /* Flash 쪽 초기값 위치 */
     .bss    : { _sbss = .; *(.bss*) *(COMMON); _ebss = .; } > RAM
     ._user_heap_stack (NOLOAD) : {
@@ -177,16 +184,21 @@ arm-none-eabi-gcc *.o -Wl,--gc-sections -o app.elf   # 참조 없는 섹션 제�
                 { term: "`--gc-sections`", en: "Linker garbage collection of unused sections", def: "어디서도 참조하지 않는 입력 섹션을 링크에서 제외하는 ld 옵션" }
             ],
             quiz: [
-                { q: "전역 `const char *msg = \"hello\";` 에서 `\"hello\"` 의 바이트는 어디에?", options: [".data (SRAM)", ".rodata (Flash)", ".bss", "스택"], a: 1, why: "문자열 리터럴은 읽기 전용 · 포인터 변수 `msg` 자체는 `.data`" },
-                { q: "`size` 출력이 text=20000, data=500, bss=3000 이면 Flash 사용량은?", options: ["20000", "20500", "23500", "3500"], a: 1, why: "Flash = text + data · `.data` 초기값도 Flash 에 저장" },
-                { q: "`static int counter;` (초기값 없음)의 부팅 직후 값은?", options: ["쓰레기값", "0", "Flash 에 남은 마지막 값", "-1"], a: 1, why: "`.bss` 는 시작 코드가 0 으로 채움 · C 도 정적 저장 기간 객체를 0 으로 초기화" },
-                { q: "`.data` 섹션의 VMA 와 LMA 로 맞는 것은?", options: ["둘 다 Flash", "둘 다 SRAM", "VMA = SRAM, LMA = Flash", "VMA = Flash, LMA = SRAM"], a: 2, why: "실행 중 주소는 SRAM, 초기값 저장 위치는 Flash · `> RAM AT > FLASH`" },
-                { q: "MPU 가 없는 MCU 에서 스택이 힙을 침범하면 흔한 결과는?", options: ["링크 오류", "컴파일 경고", "조용한 메모리 덮어쓰기", "스택이 자동으로 커짐"], a: 2, why: "하드웨어가 경계를 모름 · 링커 예약 영역은 정적 크기만 확인" }
+                { q: "전역 `const char *msg = \"hello\";` 에서 `\"hello\"` 의 바이트는 어디에?", options: ["`.data` (부팅 때 SRAM 으로 복사)", "`.rodata` (Flash)", "`.bss` (SRAM)", "스택 (`main` 진입 때)"], a: 1, why: "리터럴은 읽기 전용이라 `.rodata` · `.data` 로 가는 건 주소를 담는 포인터 `msg` 4 B 쪽" },
+                { q: "`size` 출력이 text=20000, data=500, bss=3000 이면 Flash 사용량은?", options: ["20000", "20500", "23500", "3500"], a: 1, why: "Flash = text + data · 23500 은 bss 까지 더한 값인데 `.bss` 는 Flash 에 내용이 없음" },
+                { q: "`static int counter;` (초기값 없음)의 부팅 직후 값은?", options: ["쓰레기값", "0", "Flash 에 남은 마지막 값", "-1"], a: 1, why: "`.bss` 는 시작 코드가 0 으로 채움 · 쓰레기값은 초기화 안 한 지역 변수 이야기" },
+                { q: "`.data` 섹션의 VMA 와 LMA 로 맞는 것은?", options: ["둘 다 Flash", "둘 다 SRAM", "VMA = SRAM, LMA = Flash", "VMA = Flash, LMA = SRAM"], a: 2, why: "`> RAM AT > FLASH`: 실행 주소는 SRAM, 초기값 저장은 Flash · 반대면 쓰기가 안 됨" },
+                { q: "MPU 가 없는 MCU 에서 스택이 힙을 침범하면 흔한 결과는?", options: ["링크 단계에서 오류", "컴파일 경고", "조용한 덮어쓰기", "스택이 자동으로 커짐"], a: 2, why: "하드웨어는 경계를 모름 · `_Min_Stack_Size` 링크 검사는 정적 크기만 봄" },
+                { type: "num", q: "`size` 가 text 18200, data 640, bss 7800 이면 정적 RAM(힙·스택 제외)은 몇 B?", answer: 8440, unit: "B", why: "정적 RAM = data + bss = 640 + 7800 · text 는 Flash 쪽" },
+                { type: "num", q: "`.data` 가 `0x2000_0000` 부터 312 B, 바로 뒤가 `.bss` 면 `.bss` 시작 주소는? (16진 입력 가능)", answer: 0x20000138, why: "312 = `0x138` → `0x2000_0138` · `.data` 끝 = `.bss` 시작" },
+                { type: "text", q: "이 파일만 32bit Arm 으로 컴파일하면 `size` 의 data 열은 몇 B?", code: { lang: "c", src: "const int lut[256] = { 1 };\nint counter;\nint boot = 3;\nchar name[12] = \"abc\";" }, answer: ["16", "16B", "16 B"], why: "`boot` 4 + `name` 12 = 16 · `lut` 은 `.rodata`(text 열), `counter` 는 `.bss`" },
+                { type: "order", q: "리셋부터 `main` 까지 일어나는 순서대로", items: ["벡터 0번 → SP, 1번 → PC", "`.data` 초기값을 Flash 에서 SRAM 으로 복사", "`.bss` 를 0 으로 채움", "`__libc_init_array` (정적 생성자)", "`main` 호출"], why: "SP 는 하드웨어가 먼저 · 복사·0 채움이 끝나야 C 전역이 약속한 값을 가짐 · 생성자는 그 뒤" }
             ],
             refs: [
                 { title: "Output Section LMA (GNU ld manual)", by: "GNU Binutils", url: "https://sourceware.org/binutils/docs/ld/Output-Section-LMA.html", kind: "doc" },
                 { title: "size (GNU Binary Utilities)", by: "GNU Binutils", url: "https://sourceware.org/binutils/docs/binutils/size.html", kind: "doc" },
-                { title: "Options (GNU ld manual)", by: "GNU Binutils", url: "https://sourceware.org/binutils/docs/ld/Options.html", kind: "doc" }
+                { title: "Options (GNU ld manual)", by: "GNU Binutils", url: "https://sourceware.org/binutils/docs/ld/Options.html", kind: "doc" },
+                { title: "GCC 10 Release Series: Changes, New Features, and Fixes", by: "GCC", year: 2020, url: "https://gcc.gnu.org/gcc-10/changes.html", kind: "doc" }
             ]
         },
         {
@@ -194,6 +206,8 @@ arm-none-eabi-gcc *.o -Wl,--gc-sections -o app.elf   # 참조 없는 섹션 제�
             title: "정렬·패딩·엔디안",
             level: 1,
             mins: 14,
+            pre: ["languages/c-pointer"],
+            checked: "2026-11-16",
             key: [
                 "**정렬(alignment)**: N바이트 타입은 N의 배수 주소에 · 구조체는 가장 큰 멤버를 따름",
                 "멤버 사이·끝에 **패딩(padding)** · 정렬 큰 멤버부터 나열하면 `sizeof` 가 줄어듦",
@@ -285,11 +299,15 @@ void parse(const struct hdr_wire *w, struct hdr *h) {
                 { term: "Strict aliasing", en: "Strict aliasing rule", def: "다른 타입 포인터로 같은 객체를 읽으면 UB · `memcpy` 나 문자 타입 접근은 허용" }
             ],
             quiz: [
-                { q: "32bit Arm 에서 `struct { char a; int b; char c; }` 의 sizeof 는?", options: ["6", "8", "12", "16"], a: 2, why: "a(1)+패딩 3, b(4), c(1)+끝 패딩 3 = 12" },
-                { q: "같은 멤버로 sizeof 를 가장 작게 만드는 순서는?", options: ["정렬 작은 것부터", "정렬 큰 것부터", "선언 순서 그대로", "이름 알파벳순"], a: 1, why: "큰 정렬을 앞에 두면 뒤쪽 작은 멤버들이 빈틈 없이 붙음" },
-                { q: "`0x12345678` 을 리틀 엔디안으로 저장할 때 가장 낮은 주소의 바이트는?", options: ["`0x12`", "`0x34`", "`0x56`", "`0x78`"], a: 3, why: "가장 낮은 자리 바이트가 가장 낮은 주소" },
-                { q: "Cortex-M0+ 에서 주소 `0x20000001` 의 word 를 `LDR` 로 읽으면?", options: ["두 번 읽어 정상 동작", "HardFault", "하위 2bit 를 무시하고 읽음", "UsageFault"], a: 1, why: "Armv6-M 은 비정렬 접근 미지원 → HardFault" },
-                { q: "Cortex-M7 에서 비정렬 주소로 실행해도 fault 가 안 나는 명령은?", options: ["`LDRD`", "`LDM`", "`LDR`", "`STRD`"], a: 2, why: "`LDR/STR/LDRH/STRH` 계열만 허용 · `LDRD/STRD/LDM/STM` 은 항상 UsageFault" }
+                { q: "32bit Arm 에서 `struct { char a; int b; char c; }` 의 sizeof 는?", options: ["6", "8", "12", "16"], a: 2, why: "a 0, b 4, c 8 → 9 를 정렬 4 로 올려 12 · 6 은 패딩을 잊은 값" },
+                { q: "같은 멤버로 sizeof 를 가장 작게 만드는 순서는?", options: ["정렬 작은 것부터", "정렬 큰 것부터", "선언 순서 그대로", "이름 알파벳순"], a: 1, why: "큰 정렬을 앞에 두면 작은 멤버가 빈틈에 붙음 · 작은 것부터면 큰 멤버 앞에 구멍이 생김" },
+                { q: "`0x12345678` 을 리틀 엔디안으로 저장할 때 가장 낮은 주소의 바이트는?", options: ["`0x12`", "`0x34`", "`0x56`", "`0x78`"], a: 3, why: "가장 낮은 자리 바이트가 가장 낮은 주소 · `0x12` 가 먼저면 빅 엔디안" },
+                { q: "Cortex-M0+ 에서 주소 `0x20000001` 의 word 를 `LDR` 로 읽으면?", options: ["두 번 읽어 정상 동작", "HardFault", "하위 2bit 를 무시하고 읽음", "UsageFault"], a: 1, why: "Armv6-M 은 비정렬 미지원 → HardFault · UsageFault 는 M3 이상에만 있음" },
+                { q: "Cortex-M7 에서 비정렬 주소로 실행해도 fault 가 안 나는 명령은?", options: ["`LDRD`", "`LDM`", "`LDR`", "`STRD`"], a: 2, why: "`LDR/STR/LDRH/STRH` 계열만 허용 · `LDRD` 도 word 를 읽지만 비정렬이면 항상 UsageFault" },
+                { type: "num", q: "LP64 에서 `struct { char tag; void *p; char flag; }` 의 sizeof 는?", answer: 24, unit: "B", why: "tag 0, p 8, flag 16 → 17 을 정렬 8 로 올려 24 · 32bit Arm 이면 12" },
+                { type: "text", q: "32bit Arm 에서 `offsetof(struct msg, flag)` 는?", code: { lang: "c", src: "struct msg { uint8_t id; uint16_t len; uint32_t crc; uint8_t flag; };" }, answer: ["8"], why: "id 0, len 2 (정렬 2), crc 4, flag 8 · sizeof 는 끝 패딩까지 12" },
+                { type: "text", q: "리틀 엔디안 CPU 가 `0x2000_0000` 에 `uint32_t` `0xA1B2C3D4` 를 저장했다. `0x2000_0002` 의 바이트는? (16진)", answer: ["0xB2", "B2", "178"], why: "바이트 순서 `D4 C3 B2 A1` · +2 는 셋째 바이트" },
+                { type: "num", q: "32bit Arm 에서 `struct { char a; double d; short s; }` 의 패딩은 모두 몇 B?", answer: 13, unit: "B", why: "a 뒤 7 + 끝 패딩 6 = 13 · 데이터 11 B 가 24 B 를 차지" }
             ],
             refs: [
                 { title: "Procedure Call Standard for the Arm Architecture (AAPCS32)", by: "Arm", url: "https://github.com/ARM-software/abi-aa/blob/main/aapcs32/aapcs32.rst", kind: "spec" },
@@ -303,6 +321,7 @@ void parse(const struct hdr_wire *w, struct hdr *h) {
             title: "메모리 계층과 지역성",
             level: 2,
             mins: 14,
+            checked: "2026-11-16",
             key: [
                 "**메모리 계층(memory hierarchy)**: 레지스터 → L1 → L2 → DRAM → Flash/SSD",
                 "위로 갈수록 빠르고 작고 비쌈 · DRAM 지연(latency)은 L1 의 수십~수백 배",
@@ -393,11 +412,15 @@ for (int i = 0; i < N; i++) sum += P.x[i];   // 라인마다 x 가 16개` },
                 { term: "루프 교환", en: "Loop interchange", def: "중첩 루프 순서를 바꿔 안쪽 루프가 연속 메모리를 돌게 하는 변환" }
             ],
             quiz: [
-                { q: "접근 지연이 가장 짧은 것은?", options: ["L2 캐시", "레지스터", "DRAM", "L1 캐시"], a: 1, why: "레지스터는 연산 유닛 바로 옆 · L1 도 몇 사이클 걸림" },
-                { q: "C 의 `int a[100][100]` 에서 메모리상 `a[3][99]` 바로 다음 원소는?", options: ["`a[4][99]`", "`a[3][0]`", "`a[4][0]`", "`a[2][99]`"], a: 2, why: "행 우선: 한 행이 끝나면 다음 행의 0번" },
-                { q: "64 B 라인에서 `float` 배열을 처음부터 순차로 읽을 때 미스 비율은 (프리페치 없음)?", options: ["1/4", "1/8", "1/16", "1/64"], a: 2, why: "64 / 4 = 16 원소마다 새 라인 1개" },
-                { q: "Drepper(2007)가 인용한 Pentium M 수치에서 L1d 대비 메인 메모리 접근은 대략?", options: ["2배", "10배", "80배", "1000배"], a: 2, why: "L1d ~3 사이클 vs 메인 메모리 ~240 사이클" },
-                { q: "연결 리스트 순회가 같은 크기 배열 순회보다 느린 주된 이유는?", options: ["포인터가 더 커서", "노드가 흩어져 공간 지역성·프리페치가 안 통해서", "컴파일러가 최적화를 못 해서", "분기 예측 실패"], a: 1, why: "다음 주소를 알려면 현재 노드를 읽어야 함 → 지연이 그대로 쌓임" }
+                { q: "접근 지연이 가장 짧은 것은?", options: ["L2 캐시", "레지스터", "DRAM", "L1 캐시"], a: 1, why: "레지스터는 연산 유닛 바로 옆 · L1 도 몇 사이클(Drepper 표 ~3) 걸림" },
+                { q: "C 의 `int a[100][100]` 에서 메모리상 `a[3][99]` 바로 다음 원소는?", options: ["`a[4][99]`", "`a[3][0]`", "`a[4][0]`", "`a[2][99]`"], a: 2, why: "행 우선: 한 행이 끝나면 다음 행의 0번 · `a[4][99]` 는 열 우선(Fortran)일 때" },
+                { q: "64 B 라인에서 `float` 배열을 처음부터 순차로 읽을 때 미스 비율은 (프리페치 없음)?", options: ["1/4", "1/8", "1/16", "1/64"], a: 2, why: "64 / 4 = 16 원소마다 새 라인 1개 · 1/64 는 바이트 배열일 때" },
+                { q: "Drepper(2007)가 인용한 Pentium M 수치에서 L1d 대비 메인 메모리 접근은 대략?", options: ["2배", "10배", "80배", "1000배"], a: 2, why: "L1d ~3 사이클 vs 메인 메모리 ~240 사이클 · L2(~14)는 약 5배" },
+                { q: "연결 리스트 순회가 같은 크기 배열 순회보다 느린 주된 이유는?", options: ["노드마다 포인터만큼 커서", "다음 주소가 앞 노드 읽기에 묶여서", "컴파일러가 루프를 벡터화·언롤링하지 못해서", "분기 예측이 매번 틀려서"], a: 1, why: "현재 노드가 와야 다음 요청을 보냄 → 노드마다 메모리 지연이 쌓임 · 벡터화 여부보다 훨씬 큼" },
+                { type: "num", q: "64 B 직접 사상 캐시(16 B 블록, 빈 상태)에서 `int` 64개를 `0x1000` 부터 순서대로 읽으면 히트 수는?", answer: 48, why: "블록마다 `int` 4개 → 미스 16, 히트 48 · 데모 '8×8 행 순회'와 같음" },
+                { type: "text", q: "`int a[100][100]` 이 `0x1000` 에서 시작하면 `&a[3][5]` 는? (16진)", answer: ["0x14C4", "14C4", "5316"], why: "`0x1000 + (3 × 100 + 5) × 4` = `0x1000 + 1220`" },
+                { type: "num", q: "빈 캐시, 64 B 라인에서 `float` 4096개를 순차로 한 번 읽으면 미스 수는? (프리페치 없음)", answer: 256, why: "16 KB ÷ 64 B = 256 라인 · 라인마다 첫 원소만 미스" },
+                { type: "order", q: "접근 지연이 짧은 것부터", items: ["레지스터", "L1 캐시", "L2 캐시", "DRAM", "SSD"], why: "위층일수록 작고 빠름 · DRAM 은 L1 의 수십~수백 배, SSD 는 그보다 훨씬 느림" }
             ],
             refs: [
                 { title: "What Every Programmer Should Know About Memory", by: "Drepper", year: 2007, url: "https://www.akkadia.org/drepper/cpumemory.pdf", kind: "paper" },
@@ -410,6 +433,8 @@ for (int i = 0; i < N; i++) sum += P.x[i];   // 라인마다 x 가 16개` },
             title: "캐시 구조: 태그·인덱스·오프셋",
             level: 2,
             mins: 16,
+            pre: ["memory/mem-hierarchy", "embedded/bits"],
+            checked: "2026-11-16",
             key: [
                 "주소 = **태그(tag)** | **인덱스(index)** | **오프셋(offset)** · 오프셋 bit = log₂(라인 크기)",
                 "인덱스로 세트(set)를 고르고 그 안 **웨이(way)**들의 태그와 비교 · 같으면 히트",
@@ -501,11 +526,15 @@ struct conn_hot conns[1000];   // 12000 B = 라인 375개` },
                 { term: "직접 사상 캐시", en: "Direct-mapped cache", def: "주소마다 들어갈 칸이 하나뿐인 1-way 캐시 · 단순·빠르지만 충돌에 약함" }
             ],
             quiz: [
-                { q: "32 KB, 4-way, 64 B 라인 캐시의 세트 수는?", options: ["64", "128", "256", "512"], a: 1, why: "32768 / (4 × 64) = 128" },
-                { q: "위 캐시에서 32bit 주소의 오프셋·인덱스 bit 수는?", options: ["6 · 7", "5 · 8", "6 · 8", "7 · 6"], a: 0, why: "log₂64 = 6, log₂128 = 7 · 태그는 나머지 19bit" },
-                { q: "직접 사상 캐시에서 `a[i]` 와 `b[i]` 가 정확히 캐시 크기만큼 떨어져 있으면?", options: ["항상 히트", "같은 세트를 두고 서로 쫓아냄", "용량 미스만 생김", "자동으로 2-way 처럼 동작"], a: 1, why: "인덱스 bit 가 같아 충돌 미스" },
-                { q: "write-back 캐시가 라인을 쫓아낼 때 메모리에 쓰는 경우는?", options: ["항상", "dirty 일 때만", "읽기만 한 라인일 때", "쓰지 않음"], a: 1, why: "수정된(dirty) 라인만 기록 · 깨끗한 라인은 그냥 버림" },
-                { q: "완전 연관 캐시로 바꿔도 남는 미스는?", options: ["충돌 미스만", "강제·용량 미스", "없음", "충돌·강제 미스"], a: 1, why: "3C 중 충돌만 연관도로 사라짐" }
+                { q: "32 KB, 4-way, 64 B 라인 캐시의 세트 수는?", options: ["64", "128", "256", "512"], a: 1, why: "32768 / (4 × 64) = 128 · 512 는 웨이로 나누는 걸 잊은 값" },
+                { q: "위 캐시에서 32bit 주소의 오프셋·인덱스 bit 수는?", options: ["6 · 7", "5 · 8", "6 · 8", "7 · 6"], a: 0, why: "log₂64 = 6, log₂128 = 7 · 6 · 8 은 2-way(256 세트)로 본 값" },
+                { q: "직접 사상 캐시에서 `a[i]` 와 `b[i]` 가 정확히 캐시 크기만큼 떨어져 있으면?", options: ["둘 다 히트 (용량이 남아서)", "같은 세트에서 서로 쫓아냄", "용량 미스만 생김", "자동으로 2-way 처럼 동작"], a: 1, why: "인덱스 bit 가 같아 충돌 미스 · 용량이 남아도 세트당 1칸이라 소용없음" },
+                { q: "write-back 캐시가 라인을 쫓아낼 때 메모리에 쓰는 경우는?", options: ["항상", "dirty 일 때만", "읽기만 한 라인일 때", "쓰지 않음"], a: 1, why: "수정된(dirty) 라인만 기록 · 매번 쓰는 건 write-through" },
+                { q: "완전 연관 캐시로 바꿔도 남는 미스는?", options: ["충돌 미스만", "강제·용량 미스", "없음", "충돌·강제 미스"], a: 1, why: "3C 중 충돌만 연관도로 사라짐 · 첫 접근과 용량 초과는 그대로" },
+                { type: "num", q: "8 KB · 2-way · 16 B 라인 캐시에서 32bit 주소의 태그는 몇 bit?", answer: 20, unit: "bit", why: "세트 8192 ÷ (2 × 16) = 256 → 인덱스 8 · 오프셋 4 · 태그 32 − 12 = 20" },
+                { type: "text", q: "16 KB · 4-way · 32 B 캐시(128 세트)에서 주소 `0x2000_4A6C` 의 세트 인덱스는? (16진)", answer: ["0x53", "53", "83"], why: "`(addr >> 5) & 0x7F` = `0x53` · 오프셋 `0xC`, 태그 `0x20004`" },
+                { type: "num", q: "64 B 직접 사상 캐시(16 B 블록, 4세트, 빈 상태)에 `0x000, 0x004, 0x040, 0x000, 0x044, 0x010` 순서로 읽으면 히트 수는?", answer: 1, why: "`0x000` 과 `0x040` 이 세트 0 을 두고 쫓아냄 → `0x004` 만 히트 · 2-way 면 3" },
+                { type: "order", q: "write-back · LRU 캐시에서 미스가 났을 때 처리 순서", items: ["인덱스로 세트 선택", "웨이들의 태그 비교 → 미스", "LRU 웨이를 희생으로 고름", "희생 라인이 dirty 면 메모리에 기록", "새 블록을 읽어 채우고 태그 갱신"], why: "세트 → 태그 → 교체 대상 → write-back → 채움 · dirty 기록 전에 덮으면 데이터 손실" }
             ],
             refs: [
                 { title: "Evaluating Associativity in CPU Caches", by: "Hill et al.", year: 1989, url: "https://doi.org/10.1109/12.40842", kind: "paper" },
@@ -519,6 +548,8 @@ struct conn_hot conns[1000];   // 12000 B = 라인 375개` },
             title: "가상 메모리와 TLB",
             level: 3,
             mins: 16,
+            pre: ["memory/mem-cache"],
+            checked: "2026-11-16",
             key: [
                 "프로세스마다 **가상 주소(virtual address)** · MMU 가 **페이지(page)** 단위로 물리 주소로 번역",
                 "번역표 = **페이지 테이블(page table)** · 다단계라 번역 한 번에 메모리를 여러 번 읽음",
@@ -530,7 +561,7 @@ struct conn_hot conns[1000];   // 12000 B = 라인 375개` },
                 { term: "페이지 테이블", en: "Page table", def: "VPN → 물리 프레임 번호(PFN) + 권한 비트 · x86-64·AArch64(4 KB 페이지)는 보통 4단계" },
                 { term: "TLB", en: "Translation Lookaside Buffer", def: "VPN → PFN 번역 캐시 · 엔트리 수가 적어 작업 집합이 크면 미스가 늘어남" },
                 { term: "페이지 폴트", en: "Page fault", def: "매핑 없음·권한 위반 시 CPU 예외 → OS 가 페이지를 채우고 재실행하거나 `SIGSEGV`" },
-                { term: "MPU", en: "Memory Protection Unit", def: "주소 번역 없이 영역별 권한·속성만 검사 · Cortex-M 은 8 또는 16 영역" }
+                { term: "MPU", en: "Memory Protection Unit", def: "주소 번역 없이 영역별 권한·속성만 검사 · M3/M4 는 8 영역, M7 은 8 또는 16" }
             ],
             demo: {
                 type: "steps",
@@ -624,11 +655,15 @@ memset(hist, 0, 256u << 20);       // 모든 페이지를 지금 건드림 → �
                 { term: "ASID", en: "Address Space Identifier", def: "TLB 엔트리에 붙는 주소 공간 태그 · 문맥 전환 때 TLB 를 통째로 비우지 않아도 됨" }
             ],
             quiz: [
-                { q: "4 KB 페이지에서 VA `0x12345678` 의 페이지 오프셋은?", options: ["`0x678`", "`0x5678`", "`0x12345`", "`0x78`"], a: 0, why: "하위 12bit = `0x678`, VPN = `0x12345`" },
-                { q: "TLB 가 캐시하는 것은?", options: ["데이터 라인", "가상 → 물리 번역", "명령어", "페이지 테이블 전체"], a: 1, why: "VPN → PFN(+권한) 쌍" },
-                { q: "x86-64 4단계 페이징에서 TLB 미스 한 번에 읽는 표 엔트리 수는 (워크 캐시 없을 때)?", options: ["1", "2", "4", "9"], a: 2, why: "단계마다 한 엔트리씩 4번 · 그다음 데이터 접근" },
-                { q: "읽기 전용으로 매핑된 페이지에 쓰면?", options: ["조용히 무시", "페이지 폴트 → OS 판단 (CoW 면 복사, 아니면 SIGSEGV)", "TLB 미스만 발생", "캐시 미스만 발생"], a: 1, why: "권한 비트 위반 = 폴트 · copy-on-write 는 이걸 이용" },
-                { q: "Cortex-M4 MCU 에 MMU 대신 MPU 가 쓰이는 이유로 가장 맞는 것은?", options: ["MPU 가 번역을 더 빨리 해서", "단일 주소 공간이라 번역이 필요 없고 지연이 예측 가능해야 해서", "MPU 가 가상 메모리를 지원해서", "Flash 를 늘리려고"], a: 1, why: "페이지 워크·TLB 미스가 없음 → 시간 결정적 · 필요한 건 보호뿐" }
+                { q: "4 KB 페이지에서 VA `0x12345678` 의 페이지 오프셋은?", options: ["`0x678`", "`0x5678`", "`0x12345`", "`0x78`"], a: 0, why: "하위 12bit = `0x678` · `0x5678` 은 16bit 로 자른 값, `0x12345` 는 VPN" },
+                { q: "TLB 가 캐시하는 것은?", options: ["데이터 라인", "가상 → 물리 번역", "명령어", "페이지 테이블 전체"], a: 1, why: "최근 VPN → PFN(+권한) 쌍만 · 표 전체는 메모리에 있고 TLB 는 수십~수천 엔트리" },
+                { q: "x86-64 4단계 페이징에서 TLB 미스 한 번에 읽는 표 엔트리 수는 (워크 캐시 없을 때)?", options: ["1", "2", "4", "9"], a: 2, why: "단계마다 한 엔트리씩 4번 · 9 는 단계별 인덱스 bit 수" },
+                { q: "읽기 전용으로 매핑된 페이지에 쓰면?", options: ["쓰기가 조용히 무시됨", "페이지 폴트 → OS 가 처리", "TLB 미스 후 워크로 권한을 고쳐 진행", "캐시 미스만 발생"], a: 1, why: "권한 위반 = 페이지 폴트 · CoW 면 복사 후 재실행, 아니면 `SIGSEGV` · 워크는 권한을 바꾸지 않음" },
+                { q: "Cortex-M4 MCU 에 MMU 대신 MPU 가 쓰이는 이유로 가장 맞는 것은?", options: ["MPU 가 주소 번역을 더 빨리 해서", "번역이 없어 접근 시간이 예측 가능해서", "MPU 도 페이지 단위 가상 메모리를 지원해서", "MPU 가 Flash 용량을 늘려 줘서"], a: 1, why: "워크·TLB 미스가 없어 시간 결정적 · MPU 는 번역을 아예 안 함, 보호만" },
+                { type: "num", q: "4 KB 페이지에서 VA `0x7F3A_1C48` 의 VPN 은? (16진 입력 가능)", answer: 0x7F3A1, why: "VA >> 12 = `0x7F3A1` · 하위 `0xC48` 은 오프셋" },
+                { type: "num", q: "32bit 2단계 페이징(10 · 10 · 12 bit)에서 VA `0x0804_9ABC` 의 페이지 디렉터리 인덱스는? (10진)", answer: 32, why: "VA >> 22 = `0x20` = 32 · 테이블 인덱스는 `(VA >> 12) & 0x3FF` = 73" },
+                { type: "num", q: "엔트리 64개인 TLB 가 2 MB 페이지로 덮는 범위(reach)는 몇 MB?", answer: 128, unit: "MB", why: "64 × 2 MB = 128 MB · 4 KB 페이지면 256 KB" },
+                { type: "order", q: "`ldr` 한 번의 주소 번역 순서 (TLB 미스, 매핑 있음)", items: ["VA 를 VPN 과 오프셋으로 나눔", "TLB 조회 → 미스", "페이지 테이블 워크로 PTE 읽기", "번역을 TLB 에 채움", "PFN ‖ 오프셋으로 캐시·DRAM 접근"], why: "번역이 끝나야 물리 주소로 데이터 접근 · PTE 가 없으면 워크 단계에서 페이지 폴트" }
             ],
             refs: [
                 { title: "Operating Systems: Three Easy Pieces — Paging: Faster Translations (TLBs)", by: "Arpaci-Dusseau et al.", year: 2023, url: "https://pages.cs.wisc.edu/~remzi/OSTEP/vm-tlbs.pdf", kind: "book" },
@@ -642,11 +677,13 @@ memset(hist, 0, 256u << 20);       // 모든 페이지를 지금 건드림 → �
             title: "MCU 메모리: Flash·SRAM·TCM·MPU·DMA",
             level: 2,
             mins: 16,
+            pre: ["embedded/mcu", "memory/mem-layout", "memory/mem-cache"],
+            checked: "2026-11-16",
             key: [
                 "Cortex-M 4 GB 주소 공간은 고정 구역: Code · SRAM · Peripheral · External · PPB",
                 "고클럭 Flash 는 대기 상태(wait state)가 필요 · 프리페치·Flash 캐시로 가림",
                 "**TCM**: 캐시를 거치지 않는 CPU 전용 메모리 · 시간 결정적 코드·데이터용",
-                "M7 D-캐시 + DMA: 보내기 전 **clean**, 받은 뒤 **invalidate** · 버퍼는 32 B 정렬·배수"
+                "M7 D-캐시 + DMA: 보내기 전 **clean**, 받기 전·후 **invalidate** · 버퍼는 32 B 정렬·배수"
             ],
             concepts: [
                 { term: "메모리 구역 속성", en: "Memory type and attributes (Normal / Device / Strongly-ordered)", def: "구역마다 캐시 가능·버퍼링·실행 금지(XN)가 정해짐 · 주변장치 구역은 Device + XN" },
@@ -767,16 +804,21 @@ static int     rx_count;       // 항상 다른 라인` },
                 { term: "투기적 읽기", en: "Speculative read", def: "CPU 가 쓸지 모를 데이터를 미리 읽음 · DMA 중에도 캐시 라인이 다시 채워지는 이유" }
             ],
             quiz: [
-                { q: "Cortex-M 기본 메모리맵에서 `0x4000_0000` 구역은?", options: ["SRAM", "Peripheral (Device, XN)", "Code", "PPB"], a: 1, why: "`0x4000_0000`–`0x5FFF_FFFF` = 주변장치 · 실행 금지" },
-                { q: "M7 에서 DMA 로 보낼 버퍼를 CPU 가 채운 뒤 필요한 것은?", options: ["Invalidate", "Clean", "아무것도 안 함", "캐시를 꺼야만 함"], a: 1, why: "dirty 라인을 SRAM 에 기록해야 DMA 가 새 값을 읽음" },
-                { q: "DMA 수신 완료 후 CPU 가 옛 값을 읽는 원인은?", options: ["DMA 가 느려서", "D-캐시에 남은 옛 라인", "Flash 대기 상태", "MPU 권한"], a: 1, why: "캐시 히트라 SRAM 을 안 봄 → invalidate 필요" },
-                { q: "Armv7-M MPU 로 32 KB 영역을 만들 때 시작 주소 조건은?", options: ["4 B 정렬", "32 B 정렬", "32 KB 정렬", "제한 없음"], a: 2, why: "영역 시작 = 크기의 배수" },
-                { q: "M7 의 DTCM 에 둔 DMA 버퍼에 캐시 유지 작업이 필요 없는 이유는?", options: ["TCM 이 더 빨라서", "TCM 은 항상 Non-cacheable 로 동작해서", "DMA 가 캐시를 비워서", "MPU 가 자동 처리해서"], a: 1, why: "TRM: TCM 은 MPU 속성과 무관하게 Non-cacheable" }
+                { q: "Cortex-M 기본 메모리맵에서 `0x4000_0000` 구역은?", options: ["SRAM (Normal, WBWA)", "Peripheral (Device)", "Code (Normal, WT)", "PPB (Strongly-ordered, XN)"], a: 1, why: "`0x4000_0000`–`0x5FFF_FFFF` = 주변장치, Device + XN · PPB 는 `0xE000_0000` 부터" },
+                { q: "M7 에서 DMA 로 보낼 버퍼를 CPU 가 채운 뒤 필요한 것은?", options: ["Invalidate", "Clean", "아무것도 안 함", "캐시를 꺼야만 함"], a: 1, why: "dirty 라인을 SRAM 에 기록해야 DMA 가 새 값을 읽음 · invalidate 는 그 새 값을 버림" },
+                { q: "DMA 수신 완료 후 CPU 가 옛 값을 읽는 원인은?", options: ["DMA 전송이 아직 덜 끝나서", "D-캐시에 남은 옛 라인", "Flash 대기 상태 때문에", "MPU 가 읽기를 막아서"], a: 1, why: "캐시 히트라 SRAM 을 안 봄 → invalidate 필요 · MPU 위반이면 옛 값이 아니라 fault" },
+                { q: "Armv7-M MPU 로 32 KB 영역을 만들 때 시작 주소 조건은?", options: ["4 B 정렬", "32 B 정렬 (최소 크기)", "32 KB 정렬", "1 KB 정렬"], a: 2, why: "시작 = 크기의 배수 · 32 B 는 최소 영역 크기일 뿐 (Armv8-M 은 32 B 단위)" },
+                { q: "M7 의 DTCM 에 둔 DMA 버퍼에 캐시 유지 작업이 필요 없는 이유는?", options: ["TCM 이 SRAM 보다 빨라서", "TCM 은 늘 Non-cacheable", "DMA 가 끝날 때 캐시를 비워서", "MPU 가 TCM 을 자동으로 관리해서"], a: 1, why: "TRM: TCM 은 MPU 속성과 무관하게 Non-cacheable Normal · 빠른 건 사실이지만 이유는 아님" },
+                { type: "order", q: "M7 D-캐시가 켜진 상태에서 DMA 수신 순서", items: ["`rx_buf` 를 32 B 정렬·배수로 잡음", "invalidate (DMA 시작 전)", "DMA 수신 시작", "완료 인터럽트", "invalidate 한 번 더", "CPU 가 `rx_buf` 처리"], why: "앞 invalidate 는 dirty 라인이 DMA 데이터를 덮지 않게, 뒤 invalidate 는 투기적 읽기로 다시 찬 옛 라인을 버리려고" },
+                { type: "num", q: "70 B 버퍼가 `0x2000_0C38` 에서 시작한다. 32 B 라인 기준 invalidate 가 건드리는 라인은 몇 개?", answer: 3, why: "끝 `0x2000_0C7D` · 라인 `…C20`, `…C40`, `…C60` · 앞 24 B 와 뒤 2 B 는 이웃 변수 자리" },
+                { type: "num", q: "Armv7-M MPU 의 RASR.SIZE 로 64 KB 영역을 만들려면 SIZE 값은? (크기 = 2^(SIZE+1))", answer: 15, why: "2^16 = 65536 → SIZE = 15 · 최소 32 B 는 SIZE = 4" },
+                { type: "text", q: "XN=1, AP=3, TEX=1·C=0·B=0, SIZE=9 (1 KB), ENABLE=1 인 RASR 값은? (16진)", answer: ["0x13080013", "13080013"], why: "XN `0x1000_0000` + AP `0x0300_0000` + TEX `0x0008_0000` + `9 << 1` + 1" }
             ],
             refs: [
                 { title: "Arm Cortex-M7 Devices Generic User Guide", by: "Arm", year: 2015, url: "https://documentation-service.arm.com/static/61efd6602dd99944d051417b", kind: "doc" },
                 { title: "Arm Cortex-M7 Processor Technical Reference Manual (r1p1)", by: "Arm", year: 2015, url: "https://documentation-service.arm.com/static/5e906da3c8052b1608760e3d", kind: "doc" },
-                { title: "CMSIS-Core (Cortex-M): D-Cache Functions", by: "Arm", url: "https://arm-software.github.io/CMSIS_6/latest/Core/group__Dcache__functions__m7.html", kind: "doc" }
+                { title: "CMSIS-Core (Cortex-M): D-Cache Functions", by: "Arm", url: "https://arm-software.github.io/CMSIS_6/latest/Core/group__Dcache__functions__m7.html", kind: "doc" },
+                { title: "STM32CubeH7: NUCLEO-H743ZI template linker script (ITCM 64K · DTCM 128K)", by: "STMicroelectronics", url: "https://github.com/STMicroelectronics/STM32CubeH7/blob/master/Projects/NUCLEO-H743ZI/Templates/STM32CubeIDE/STM32H743ZITx_FLASH_DTCMRAM.ld", kind: "doc" }
             ]
         },
         {
@@ -784,6 +826,8 @@ static int     rx_count;       // 항상 다른 라인` },
             title: "동적 할당과 단편화",
             level: 2,
             mins: 14,
+            pre: ["memory/mem-layout", "languages/c-pointer"],
+            checked: "2026-11-16",
             key: [
                 "`malloc` 블록 앞엔 **블록 헤더(block header)** · 빈 블록은 **가용 리스트(free list)**로",
                 "**외부 단편화(external fragmentation)**: 빈 공간 합은 충분한데 연속 블록이 없음",
@@ -923,11 +967,15 @@ void *m = pool256_alloc();   // 20 B 요청도 256 B → 92% 낭비` },
                 { term: "최저 여유량", en: "Low-water mark", def: "부팅 후 가장 적었던 여유 힙·스택 · 여유 설계의 근거" }
             ],
             quiz: [
-                { q: "빈 공간 합은 1 KB 인데 200 B 할당이 실패했다. 원인은?", options: ["내부 단편화", "외부 단편화", "메모리 누수", "스택 오버플로"], a: 1, why: "빈 공간이 200 B 미만 조각들로 흩어짐" },
-                { q: "8 B 정렬 할당기에 `malloc(13)` 이면 데이터 영역은 최소?", options: ["13 B", "14 B", "16 B", "24 B"], a: 2, why: "8 의 배수로 올림 → 16 B · 남는 3 B 는 내부 단편화" },
-                { q: "고정 크기 블록 풀의 특징이 아닌 것은?", options: ["할당 O(1)", "외부 단편화 없음", "작은 요청에도 낭비 없음", "최대 개수가 미리 정해짐"], a: 2, why: "작은 요청도 블록 하나를 통째로 씀 → 내부 단편화" },
-                { q: "`free` 가 인접한 빈 블록을 합치는 이유는?", options: ["속도 향상", "외부 단편화 완화", "보안", "캐시 히트율"], a: 1, why: "작은 조각들을 큰 블록으로 되살려 큰 요청을 받음" },
-                { q: "임베디드 코딩 규칙이 '초기화 후 동적 할당 금지'를 두는 이유는?", options: ["`malloc` 이 표준이 아니라서", "실행 시간·실패 여부를 예측하기 어려워서", "Flash 를 많이 써서", "컴파일러가 지원 안 해서"], a: 1, why: "단편화·누수로 몇 달 뒤 실패할 수 있음 · 정적 할당은 링크 때 검증" }
+                { q: "빈 공간 합은 1 KB 인데 200 B 할당이 실패했다. 원인은?", options: ["내부 단편화", "외부 단편화", "메모리 누수", "스택 오버플로"], a: 1, why: "빈 공간이 200 B 미만 조각으로 흩어짐 · 누수라면 빈 공간 합 자체가 줄어 있음" },
+                { q: "8 B 정렬 할당기에 `malloc(13)` 이면 데이터 영역은 최소?", options: ["13 B", "14 B", "16 B", "24 B"], a: 2, why: "8 의 배수로 올림 → 16 B · 24 B 는 헤더 8 B 까지 더한 블록 크기" },
+                { q: "고정 크기 블록 풀의 특징이 아닌 것은?", options: ["할당 O(1)", "외부 단편화 없음", "작은 요청에도 낭비 없음", "최대 개수가 미리 정해짐"], a: 2, why: "작은 요청도 블록 하나를 통째로 씀 → 내부 단편화 · 외부 단편화는 정말 없음" },
+                { q: "`free` 가 인접한 빈 블록을 합치는 이유는?", options: ["할당 속도를 높이려고", "외부 단편화 완화", "해제 후 사용을 막으려고", "캐시 히트율을 높이려고"], a: 1, why: "작은 조각을 큰 블록으로 되살려 큰 요청을 받음 · 병합은 오히려 `free` 를 조금 느리게 함" },
+                { q: "임베디드 코딩 규칙이 '초기화 후 동적 할당 금지'를 두는 이유는?", options: ["`malloc` 이 C 표준이 아니라서", "실패 시점을 예측하기 어려워서", "`malloc` 코드가 Flash 를 많이 먹어서", "MCU 컴파일러가 지원하지 않아서"], a: 1, why: "단편화·누수로 몇 달 뒤 실패할 수 있음 · `malloc` 은 엄연한 C 표준 함수" },
+                { type: "num", q: "64bit glibc 에서 `malloc(100)` 의 청크 크기는? (헤더 8 B 포함, 16 B 배수, 최소 32)", answer: 112, unit: "B", why: "100 + 8 = 108 → 16 의 배수로 올려 112" },
+                { type: "num", q: "32 · 128 · 256 B 크기별 풀에 100 B 요청이 오면 내부 단편화는 몇 %?", answer: 21.9, tol: 0.1, unit: "%", why: "128 B 풀 사용 · 28 ÷ 128 = 21.875 %" },
+                { type: "num", q: "버디 할당기에서 오프셋 `0x6000` 의 8 KB 블록의 짝(buddy) 오프셋은? (16진 입력 가능)", answer: 0x4000, why: "`0x6000 ^ 0x2000` = `0x4000` · 크기 비트 하나만 뒤집음" },
+                { type: "text", q: "가용 리스트(주소 순)가 `0x100:64`, `0x200:24`, `0x300:40` 일 때 32 B 요청에 best-fit 이 고르는 블록 주소는?", answer: ["0x300", "300"], why: "맞는 것 64·40 중 가장 작은 40 · first-fit 이면 `0x100`" }
             ],
             refs: [
                 { title: "Dynamic Storage Allocation: A Survey and Critical Review", by: "Wilson et al.", year: 1995, url: "https://doi.org/10.1007/3-540-60368-9_19", kind: "paper" },

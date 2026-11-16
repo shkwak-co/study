@@ -6,17 +6,19 @@ LAB.track({
     tagline: "배열에서 그래프까지. 메모리에 어떻게 놓이고 연산이 몇 번 일어나는지",
     trends: [
         {
-            title: "Swiss table — 해시 맵의 새 기본값",
-            when: "2019–2025",
+            title: "해시 맵: Swiss table 이 기본값으로, 불변 dict 까지",
+            when: "2019–2026",
             points: [
                 "**개방 주소법(open addressing)** + 칸마다 1바이트 메타데이터로 후보를 먼저 거름",
                 "Rust 1.36 (2019-07): `HashMap` 을 SwissTable 기반 hashbrown 으로 교체 · 기본 해시는 SipHash 1-3 유지",
                 "Go 1.24 (2025-02): 내장 map 재작성 · 8칸 그룹 + 64비트 제어 워드 · 마이크로벤치 최대 60% 빠름",
-                "Go map 은 점진적으로 자람 → 삽입 한 번이 떠안는 재해시(rehash) 지연에 상한"
+                "Go map 은 테이블 하나에 최대 1024개 · 커질 때 그 테이블만 재해시(rehash) → 삽입 한 번의 지연에 상한",
+                "Python 3.15 (2026-10): 내장 `frozendict` · 만든 뒤 수정 불가, 키·값이 해시 가능하면 자신도 해시 가능"
             ],
             refs: [
                 { title: "Announcing Rust 1.36.0", by: "The Rust Release Team", year: 2019, url: "https://blog.rust-lang.org/2019/07/04/Rust-1.36.0/", kind: "doc" },
-                { title: "Faster Go maps with Swiss Tables", by: "Pratt", year: 2025, url: "https://go.dev/blog/swisstable", kind: "doc" }
+                { title: "Faster Go maps with Swiss Tables", by: "Pratt", year: 2025, url: "https://go.dev/blog/swisstable", kind: "doc" },
+                { title: "What's new in Python 3.15", by: "Python Software Foundation", year: 2026, url: "https://docs.python.org/3.15/whatsnew/3.15.html", kind: "doc" }
             ]
         },
         {
@@ -25,24 +27,29 @@ LAB.track({
             points: [
                 "B-트리(B-tree): 노드 = 디스크 페이지 · SQLite 는 테이블·인덱스를 B-트리 페이지로 저장",
                 "LSM 트리(log-structured merge-tree): 쓰기를 메모리에 모았다가 정렬된 파일로 순차 기록 → 쓰기 처리량 ↑",
-                "대가: 읽기는 여러 파일 확인, 백그라운드 병합(compaction) 필요 · RocksDB 등 키-값 저장소"
+                "대가: 읽기는 여러 파일 확인, 백그라운드 병합(compaction) 필요",
+                "RocksDB: memtable 이 차면 정렬된 SST 파일로 내려씀 · 층(level)별로 병합해 낡은 키를 지움"
             ],
             refs: [
                 { title: "Database File Format", by: "SQLite", url: "https://www.sqlite.org/fileformat2.html", kind: "spec" },
-                { title: "The log-structured merge-tree (LSM-tree)", by: "O'Neil et al.", year: 1996, url: "https://doi.org/10.1007/s002360050048", kind: "paper" }
+                { title: "The log-structured merge-tree (LSM-tree)", by: "O'Neil et al.", year: 1996, url: "https://doi.org/10.1007/s002360050048", kind: "paper" },
+                { title: "RocksDB Overview", by: "RocksDB", url: "https://github.com/facebook/rocksdb/wiki/RocksDB-Overview", kind: "doc" }
             ]
         },
         {
-            title: "Big-O 다음: 배열 배치와 SIMD",
-            when: "2015–2025",
+            title: "Big-O 다음: 메모리 배치와 SIMD",
+            when: "2015–2026",
             points: [
                 "Eytzinger 배치(BFS layout): 힙처럼 층 순서로 저장한 배열 → 큰 n 에서 정렬 배열 이진 탐색보다 대체로 빠름",
                 "작은 n 은 여전히 정렬 배열 + 잘 짠 이진 탐색이 최선",
-                "vqsort (2022): 벡터 명령 퀵 정렬 · 같은 코드가 SVE·RISC-V V 포함 7개 명령어 집합에서 동작"
+                "vqsort (2022): 벡터 명령 퀵 정렬 · 같은 코드가 SVE·RISC-V V 포함 7개 명령어 집합에서 동작",
+                "C++26 기술 작업 완료 (2026-03): 표준 `<simd>` 데이터 병렬 타입 · 고정 용량 `std::inplace_vector`(힙 할당 없음)"
             ],
             refs: [
                 { title: "Array Layouts for Comparison-Based Searching", by: "Khuong et al.", year: 2015, url: "https://arxiv.org/abs/1509.05053", kind: "paper" },
-                { title: "Vectorized and performance-portable Quicksort", by: "Blacher et al.", year: 2022, url: "https://arxiv.org/abs/2205.05982", kind: "paper" }
+                { title: "Vectorized and performance-portable Quicksort", by: "Blacher et al.", year: 2022, url: "https://arxiv.org/abs/2205.05982", kind: "paper" },
+                { title: "C++26 is done! — Trip report: March 2026 ISO C++ standards meeting", by: "Sutter", year: 2026, url: "https://herbsutter.com/2026/03/29/c26-is-done-trip-report-march-2026-iso-c-standards-meeting-london-croydon-uk/", kind: "doc" },
+                { title: "C++26", by: "cppreference.com", url: "https://en.cppreference.com/w/cpp/26", kind: "doc" }
             ]
         },
         {
@@ -65,6 +72,8 @@ LAB.track({
             title: "배열과 연결 리스트",
             level: 1,
             mins: 12,
+            pre: ["languages/c-pointer", "languages/complexity", "memory/mem-hierarchy"],
+            checked: "2026-11-16",
             key: [
                 "배열(array): 원소가 **연속** → `a[i]` 주소 = 시작 + i × 크기, 접근 O(1)",
                 "연결 리스트(linked list): 노드가 힙에 흩어짐 · i 번째 찾기 O(n), 위치를 알면 삽입·삭제 O(1)",
@@ -205,11 +214,19 @@ for (int i = 0; i < n; i++)
                 { term: "스왑 삭제", en: "Swap-remove", def: "지울 칸에 마지막 원소를 옮기고 길이 −1 · 순서를 포기하고 O(1)" }
             ],
             quiz: [
-                { q: "`int a[100]` 에서 `a[57]` 에 접근하는 비용은?", options: ["O(1) — 주소 계산 한 번", "O(log n)", "O(n)", "앞 원소 57개를 따라가야 함"], a: 0, why: "시작 주소 + 57 × 4 · 곱셈과 덧셈 한 번" },
-                { q: "단일 연결 리스트에서 포인터 p 가 가리키는 노드 **자신**을 지우려면 (앞 노드 모름)?", options: ["항상 O(1)", "앞 노드를 찾느라 O(n)", "O(log n)", "불가능"], a: 1, why: "앞 노드의 `next` 를 바꿔야 함 · 이중 연결 리스트면 `prev` 로 O(1)" },
-                { q: "`std::vector` 에 `push_back` 한 뒤, 미리 받아 둔 `&v[0]` 포인터는?", options: ["항상 유효", "재할당이 일어났다면 무효", "자동으로 새 주소로 갱신", "컴파일 오류"], a: 1, why: "용량이 넘치면 새 블록으로 옮겨지고 옛 블록은 해제" },
-                { q: "리눅스 `list_head` 같은 내장형 리스트의 장점이 **아닌** 것은?", options: ["노드를 따로 할당하지 않음", "한 객체가 여러 리스트에 동시에 들어갈 수 있음", "i 번째 원소에 O(1) 접근", "타입과 무관한 공통 리스트 코드"], a: 2, why: "리스트는 어떤 방식이든 i 번째까지 따라가야 함" },
-                { q: "용량을 2배씩 키우는 동적 배열에 n 번 push 할 때 복사되는 원소 총수는?", options: ["약 n log n", "2n 미만", "약 n²", "0"], a: 1, why: "1 + 2 + 4 + … < 2n · 원소당 상수 = 분할상환 O(1)" }
+                { q: "`int a[100]` 에서 `a[57]` 에 접근하는 비용은?", options: ["O(1) · 주소 계산", "O(log n) · 이진 탐색", "O(i) · 57칸 따라감", "O(n) · 처음부터 셈"], a: 0, why: "시작 주소 + 57 × 4 · 곱셈·덧셈 한 번 · 칸을 따라가는 건 연결 리스트의 비용" },
+                { q: "단일 연결 리스트에서 p 가 가리키는 노드 **자신**을 지우려면 (앞 노드 모름)?", options: ["O(1) · `free(p)` 한 번", "O(n) · 앞 노드부터 찾음", "O(log n) · 반씩 건너뜀", "O(1) · `p->next` 만 고침"], a: 1, why: "앞 노드의 `next` 를 바꿔야 함 · `free(p)` 만 하면 앞 노드가 해제된 메모리를 가리킴" },
+                { q: "`std::vector` 에 `push_back` 한 뒤, 미리 받아 둔 `&v[0]` 포인터는?", options: ["언제나 그대로 유효", "재할당이 있었다면 무효", "새 주소로 자동 갱신", "`reserve` 없으면 늘 무효"], a: 1, why: "용량이 넘칠 때만 새 블록으로 이동 · 안 넘쳤으면 그대로라 '늘 무효'도 틀림" },
+                { q: "리눅스 `list_head` 같은 내장형 리스트의 장점이 **아닌** 것은?", options: ["노드를 따로 할당하지 않음", "한 객체가 여러 리스트에 들어감", "i 번째 원소에 O(1) 접근", "타입과 무관한 공통 리스트 코드"], a: 2, why: "어떤 리스트든 i 번째까지 따라가야 함 · 나머지 셋은 링크를 객체 안에 둔 덕분" },
+                { q: "용량을 2배씩 키우는 동적 배열에 n 번 push 할 때 복사되는 원소 총수는?", options: ["약 n log₂n", "2n 미만", "약 n²/2", "정확히 n"], a: 1, why: "1 + 2 + 4 + … < 2n · 원소당 상수 = 분할상환 O(1) · n²/2 는 10칸씩 더할 때" },
+                { type: "num", q: "64비트(LP64)에서 `struct node { int v; struct node *next; }` 의 `sizeof` 는?", answer: 16, unit: "B", why: "`int` 4 + 패딩 4 (포인터 8 B 정렬) + 포인터 8" },
+                { type: "num", q: "용량 1 에서 시작해 2배씩 키우는 동적 배열에 1000 개를 push 하면 재할당은 몇 번?", answer: 10, unit: "번", why: "1 → 2 → 4 → … → 1024 · 10번 바뀌고 복사는 1 + 2 + … + 512 = 1023개" },
+                { type: "text", q: "출력은? (공백으로 구분)", code: { lang: "c", src: `int a[5] = {10, 20, 30, 40, 50};
+int n = 5, i = 1;
+a[i] = a[n - 1];        /* 스왑 삭제 */
+n--;
+for (int k = 0; k < n; k++) printf("%d ", a[k]);` }, answer: ["10 50 30 40"], why: "지운 1번 칸을 마지막 50 으로 메우고 길이 −1 · 순서는 바뀜" },
+                { type: "order", q: "단일 리스트 a → b 사이에 새 노드 m 을 끼우는 안전한 순서", items: ["m 할당", "`m->next = a->next`", "`a->next = m`"], why: "`a->next = m` 을 먼저 하면 b 의 주소를 덮어써 b 이후를 잃음" }
             ],
             refs: [
                 { title: "Linked Lists in Linux", by: "Frattaroli", url: "https://docs.kernel.org/core-api/list.html", kind: "doc" },
@@ -223,6 +240,8 @@ for (int i = 0; i < n; i++)
             title: "스택·큐·링 버퍼",
             level: 1,
             mins: 14,
+            pre: ["data-structures/ds-array-list"],
+            checked: "2026-11-16",
             key: [
                 "스택(stack)은 LIFO: 넣은 역순으로 꺼냄 · 큐(queue)는 FIFO: 넣은 순서대로",
                 "링 버퍼(ring buffer): 고정 배열 + head(쓰기)·tail(읽기) · 끝에 닿으면 0 으로",
@@ -342,11 +361,18 @@ alignas(64) std::atomic<std::size_t> tail{0};   // 소비자 코어 전용 라�
                 { term: "덮어쓰기 정책", en: "Overwrite policy (drop-oldest)", def: "가득 찼을 때 새 데이터를 버리지 않고 가장 오래된 칸을 덮음 · 로그·최신 센서값용" }
             ],
             quiz: [
-                { q: "스택에 1, 2, 3 을 차례로 push 한 뒤 pop 을 두 번 하면?", options: ["1, 2", "3, 2", "2, 3", "3, 1"], a: 1, why: "LIFO: 마지막에 넣은 3 부터" },
-                { q: "크기 8 링 버퍼를 '빈 칸 하나' 방식으로 쓰면 최대 몇 개 저장?", options: ["8", "7", "4", "9"], a: 1, why: "가득 = `(head+1)%8 == tail` · 한 칸은 늘 비어 있음" },
-                { q: "32비트 unsigned 자유 증가 인덱스에서 저장된 개수는?", options: ["`head - tail` (랩어라운드해도 맞음)", "`abs(head - tail)`", "`head > tail ? head - tail : 0`", "`(head + tail) / 2`"], a: 0, why: "unsigned 뺄셈은 2³² 모듈러 연산 · head 가 0 으로 돌아가도 차이는 정확" },
-                { q: "UART ISR(생산자)과 main(소비자)이 락 없이 링 버퍼를 공유하는 조건은?", options: ["각자 자기 인덱스만 쓰고, 데이터를 쓴 뒤 인덱스를 갱신", "인덱스를 `int` 로 선언", "버퍼 크기를 홀수로", "main 에서 인터럽트를 항상 꺼 둠"], a: 0, why: "쓰는 쪽이 하나씩이라 경쟁 없음 · 순서만 지키면 됨" },
-                { q: "생산자가 두 ISR 로 늘어나면?", options: ["그대로 안전", "head 갱신이 경쟁 → 인터럽트 차단·락·CAS 필요", "tail 만 보호하면 됨", "버퍼를 2배로 키우면 해결"], a: 1, why: "두 생산자가 같은 head 를 읽고 같은 칸에 쓸 수 있음" }
+                { q: "스택에 1, 2, 3 을 차례로 push 한 뒤 pop 을 두 번 하면?", options: ["1, 2", "3, 2", "2, 3", "3, 1"], a: 1, why: "LIFO: 마지막에 넣은 3 부터 · 1, 2 는 큐(FIFO)의 결과" },
+                { q: "크기 8 링 버퍼를 '빈 칸 하나' 방식으로 쓰면 최대 몇 개 저장?", options: ["8", "7", "4", "9"], a: 1, why: "가득 = `(head+1)%8 == tail` · 한 칸은 늘 비어 있음 · 8 개는 개수 변수·자유 증가 방식" },
+                { q: "32비트 unsigned 자유 증가 인덱스에서 저장된 개수는?", options: ["`head - tail`", "`(head - tail) % N`", "`tail - head`", "`head > tail ? head - tail : 0`"], a: 0, why: "unsigned 뺄셈은 2³² 모듈러 → head 가 0 으로 넘어가도 정확 · `% N` 은 가득 찼을 때 0 이 됨" },
+                { q: "UART ISR(생산자)과 main(소비자)이 락 없이 링 버퍼를 공유하는 조건은?", options: ["각자 자기 인덱스만 쓰고 데이터 먼저", "두 인덱스를 `volatile int` 로 선언", "버퍼 크기를 홀수로 해 충돌 회피", "ISR 이 tail 까지 함께 갱신"], a: 0, why: "쓰는 쪽이 하나씩이라 경쟁 없음 · `volatile` 만으로는 데이터 → 인덱스 순서가 보장되지 않음" },
+                { q: "생산자가 두 ISR 로 늘어나면?", options: ["32비트 인덱스라 그대로 안전", "head 경쟁 → 차단·락·CAS 필요", "tail 만 `volatile` 로 바꾸면 됨", "버퍼를 2배로 키우면 해결"], a: 1, why: "두 생산자가 같은 head 를 읽고 같은 칸에 쓸 수 있음 · 읽기 원자성과 read-modify-write 원자성은 다름" },
+                { type: "num", q: "32비트 unsigned 자유 증가 인덱스: `head = 3`, `tail = 0xFFFFFFFE` 이면 저장 개수는?", answer: 5, why: "3 − 0xFFFFFFFE = 5 (mod 2³²) · head 만 먼저 넘어가도 뺄셈은 정확" },
+                { type: "num", q: "115200 bps 8N1 UART 에서 main 이 8 ms 멈추는 동안 들어오는 양은? (올림)", answer: 93, unit: "B", why: "1바이트 = 10비트 → 11,520 B/s × 0.008 s = 92.16 → 93 B · 버퍼는 여유를 두고 128 B(2^k)" },
+                { type: "text", q: "크기 N = 4, '빈 칸 하나' 방식, 가득 차면 새 값을 버린다. 마지막 줄에서 꺼내지는 값은 순서대로?", code: { lang: "c", src: `for (int v = 1; v <= 5; v++) put(v);
+get(&x); get(&x);
+put(6); put(7);
+while (get(&x)) printf("%d ", x);` }, answer: ["3 6 7"], why: "용량 3 → 4, 5 버림 · get 두 번에 1, 2 · 6, 7 이 3 뒤에 들어감" },
+                { type: "order", q: "레슨 코드의 UART ISR(생산자) 한 번의 처리 순서", items: ["`DR` 에서 바이트 읽기", "`head - tail == RB_SIZE` 검사", "`buf[head & RB_MASK]` 에 쓰기", "`__DMB()`", "`head++`"], why: "DR 을 먼저 읽어 RXNE 를 풀고 · 데이터를 쓴 뒤 장벽 · 인덱스는 마지막에 공개" }
             ],
             refs: [
                 { title: "Circular Buffers", by: "Howells et al.", url: "https://docs.kernel.org/core-api/circular-buffers.html", kind: "doc" },
@@ -360,6 +386,8 @@ alignas(64) std::atomic<std::size_t> tail{0};   // 소비자 코어 전용 라�
             title: "해시 테이블",
             level: 2,
             mins: 16,
+            pre: ["data-structures/ds-array-list"],
+            checked: "2026-11-16",
             key: [
                 "해시 함수(hash function)가 키를 고르게 흩어야 평균 O(1) · 몰리면 O(n)",
                 "선형 탐사(linear probing): 충돌하면 다음 칸 · 캐시엔 좋지만 **1차 군집(primary clustering)**",
@@ -456,7 +484,7 @@ fn main() {
     println!("{:016x}", s2.hash_one("kim"));
     // → 공격자가 '같은 버킷으로 가는 키 목록'을 미리 만들 수 없음
 }`,
-                    note: "**해시 시드(hash seed)**를 프로세스마다 무작위로 · Python 도 3.4 부터 문자열 해시가 SipHash (PEP 456) · 신뢰된 내부 키만 다루면 더 빠른 해시로 바꾸기도"
+                    note: "**해시 시드(hash seed)**를 프로세스마다 무작위로 · Python 도 3.4 부터 문자열 해시가 SipHash (PEP 456, 3.11 부터 SipHash-1-3) · 신뢰된 내부 키만 다루면 더 빠른 해시로 바꾸기도"
                 }
             ],
             optimize: [
@@ -482,7 +510,7 @@ for hk, k, v in bucket:           # 항목에 해시를 함께 저장
     if hk == h and k == key:      # 정수 비교로 대부분 걸러냄
         return v` },
                     gain: "문자열 비교 대부분 생략",
-                    note: "CPython `dict` 도 항목에 해시를 저장 · **스위스 테이블(Swiss table)**은 해시 7비트를 메타데이터 바이트에 둬 16칸을 SIMD 한 번에 거름"
+                    note: "CPython `dict` 도 항목에 해시를 저장 (키가 모두 `str` 이면 문자열에 캐시된 해시 사용) · **스위스 테이블(Swiss table)**은 해시 7비트를 메타데이터 바이트에 둬 16칸을 SIMD 한 번에 거름"
                 }
             ],
             glossary: [
@@ -493,11 +521,21 @@ for hk, k, v in bucket:           # 항목에 해시를 함께 저장
                 { term: "완전 해시", en: "Perfect hashing", def: "키 집합이 고정일 때 충돌이 0 인 해시 · 키워드 표, 컴파일 타임 조회표 (gperf)" }
             ],
             quiz: [
-                { q: "선형 탐사 테이블에서 키를 지울 때 칸을 그냥 EMPTY 로 비우면?", options: ["그 뒤로 밀려 들어간 키를 못 찾게 됨", "아무 문제 없음", "메모리 누수", "해시 함수가 바뀜"], a: 0, why: "검색은 EMPTY 를 만나면 '없음'으로 멈춤 → 사슬이 끊김" },
-                { q: "선형 탐사에서 적재율이 0.5 → 0.9 가 되면 없는 키 검색의 평균 탐사 수는 대략?", options: ["2.5 → 50", "1 → 2", "변화 없음", "0.5 → 0.9"], a: 0, why: "½(1 + 1/(1−α)²) · α=0.5 → 2.5, α=0.9 → 50.5 (Knuth)" },
-                { q: "해시 플러딩을 막는 표준적인 방법은?", options: ["프로세스마다 무작위 키를 쓰는 해시 (SipHash 등)", "버킷 수를 소수로", "해시를 두 번 계산", "키 길이만 제한"], a: 0, why: "키를 모르면 공격자가 충돌 키를 미리 만들 수 없음" },
-                { q: "Swiss table 이 16칸을 빠르게 검사하는 방법은?", options: ["메타데이터 바이트 16개를 SIMD 로 해시 7비트와 비교", "16개 키를 모두 문자열 비교", "이진 탐색", "해시를 16번 계산"], a: 0, why: "후보를 몇 명령으로 추린 뒤 그 칸만 키 비교" },
-                { q: "체이닝 대비 개방 주소법의 장점은?", options: ["노드 할당 없이 연속 배열 → 캐시에 유리", "적재율 1 초과 가능", "삭제가 더 단순", "최악 O(1) 보장"], a: 0, why: "체이닝은 α > 1 도 되고 삭제가 단순 · 개방 주소법은 α < 1 필수, 묘비 필요" }
+                { q: "선형 탐사 테이블에서 키를 지울 때 칸을 그냥 EMPTY 로 비우면?", options: ["뒤로 밀려난 키 검색이 실패", "빈칸이 늘어 탐사가 빨라질 뿐", "지운 키의 메모리가 샘", "다음 재해시 때 키가 중복됨"], a: 0, why: "검색은 EMPTY 를 만나면 '없음'으로 멈춤 → 사슬이 끊김 · 그래서 묘비를 남김" },
+                { q: "선형 탐사에서 적재율이 0.5 → 0.9 가 되면 없는 키 검색의 평균 탐사 수는 대략?", options: ["2.5 → 50", "1.5 → 5.5", "2 → 10", "1 → 2"], a: 0, why: "실패 ½(1 + 1/(1−α)²): 2.5 → 50.5 · 1.5 → 5.5 는 성공 검색 공식 (Knuth)" },
+                { q: "해시 플러딩을 막는 표준적인 방법은?", options: ["시드를 섞은 SipHash 사용", "버킷 수를 소수로 바꿔 흩기", "해시를 두 번 연달아 계산", "적재율 한도를 0.5 로 낮추기"], a: 0, why: "시드를 모르면 충돌 키를 미리 만들 수 없음 · 소수 버킷·낮은 α 는 공개된 해시면 그대로 뚫림" },
+                { q: "Swiss table 이 16칸을 빠르게 검사하는 방법은?", options: ["16바이트를 SIMD 로 H2 와 비교", "키 16개를 하나씩 차례로 `==` 비교", "16칸 안에서 이진 탐색으로 좁힘", "칸마다 해시를 다시 계산해 비교"], a: 0, why: "제어 바이트에 해시 7비트(H2) · 일치 후보만 키 비교 · 키 16개 비교는 그 비용을 피하려는 것" },
+                { q: "체이닝 대비 개방 주소법의 장점은?", options: ["연속 배열이라 캐시 미스가 적음", "적재율이 1 을 넘어도 그대로 동작", "삭제할 때 묘비가 필요 없음", "최악의 경우에도 O(1) 보장"], a: 0, why: "α > 1 허용과 묘비 없는 삭제는 체이닝 쪽 장점 · 최악 O(1) 은 둘 다 아님" },
+                { type: "num", q: "m = 8, h(k) = k mod 8, 선형 탐사에 5, 13, 21, 7, 15 를 차례로 넣었다. 15 를 찾을 때 탐사한 칸 수는?", answer: 3, unit: "칸", why: "15 → 칸 7(21) → 0(7) → 1(15) · 21 이 7 을, 7 이 15 를 밀어냄" },
+                { type: "num", q: "선형 탐사, 적재율 α = 0.75 에서 없는 키 검색의 평균 탐사 수는? (Knuth 근사)", answer: 8.5, tol: 0.05, why: "½(1 + 1/(1−0.75)²) = ½(1 + 16) = 8.5" },
+                { type: "text", q: "출력은?", code: { lang: "python", src: `t = [None] * 8
+for k in (10, 18, 26, 3):
+    i = k % 8
+    while t[i] is not None:      # 선형 탐사
+        i = (i + 1) % 8
+    t[i] = k
+print(t.index(3), t.count(None))` }, answer: ["5 4"], why: "10·18·26 이 칸 2·3·4 · 3 은 칸 3 에서 밀려 5 · 빈칸 8 − 4 = 4" },
+                { type: "order", q: "레슨 코드 `put` (선형 탐사 + 묘비)의 처리 순서", items: ["해시로 시작 칸 계산", "찬 칸·묘비를 지나며 같은 키 확인", "빈칸을 만나 키가 없음을 확정", "지나온 첫 묘비(없으면 그 빈칸)에 저장"], why: "같은 키가 묘비 뒤에 있을 수 있어 빈칸까지 가 본 뒤에야 묘비를 재사용" }
             ],
             refs: [
                 { title: "Swiss Tables Design Notes", by: "Abseil", url: "https://abseil.io/about/design/swisstables", kind: "doc" },
@@ -511,6 +549,8 @@ for hk, k, v in bucket:           # 항목에 해시를 함께 저장
             title: "트리와 이진 탐색 트리",
             level: 2,
             mins: 15,
+            pre: ["data-structures/ds-array-list"],
+            checked: "2026-11-16",
             key: [
                 "트리(tree): 루트(root)에서 갈라지는 계층 · 연산 비용은 **높이(height)** h 에 비례",
                 "이진 탐색 트리(binary search tree): 왼쪽 < 노드 < 오른쪽 → **중위 순회(in-order traversal)** = 정렬 순서",
@@ -600,7 +640,7 @@ random.shuffle(keys)
 t2 = None
 for k in keys:
     t2 = insert(t2, k)               # 무작위 입력
-print(height(t1), height(t2))        # 2000  vs  보통 22~26 (log₂2000 ≈ 11)`,
+print(height(t1), height(t2))        # 2000  vs  보통 22~27 (log₂2000 ≈ 11)`,
                     note: "무작위 순서면 기대 높이 O(log n) · 타임스탬프·ID 처럼 정렬된 데이터가 흔해서 실전은 균형 트리"
                 }
             ],
@@ -639,11 +679,15 @@ bool hit = it != table.end() && it->first == key;` },
                 { term: "B+ 트리", en: "B+ tree", def: "값은 잎에만 두고 잎끼리 연결한 B-트리 변형 · 범위 조회가 빠름 · 데이터베이스 인덱스" }
             ],
             quiz: [
-                { q: "빈 BST 에 1, 2, 3, 4, 5 를 순서대로 넣으면 높이(노드 수 기준)는?", options: ["5 — 오른쪽으로만 늘어진 사슬", "3", "2", "1"], a: 0, why: "매번 오른쪽 끝에 붙음 → 연결 리스트와 같음" },
-                { q: "BST 를 중위 순회하면?", options: ["키가 오름차순으로 나옴", "삽입 순서대로", "층별 순서대로", "무작위"], a: 0, why: "왼쪽 < 노드 < 오른쪽 을 그 순서로 방문" },
-                { q: "자식이 둘인 노드를 지울 때 쓰는 후속자는?", options: ["오른쪽 서브트리의 가장 왼쪽 노드", "왼쪽 자식", "부모", "루트"], a: 0, why: "다음으로 큰 키 · 왼쪽 자식이 없어 쉽게 뺄 수 있음" },
-                { q: "Rust `BTreeMap` 이 이진 트리 대신 B-트리를 쓰는 주된 이유는?", options: ["노드에 키를 여러 개 연속으로 담아 할당·캐시 미스를 줄이려고", "최악 O(1) 이라서", "해시보다 항상 빨라서", "코드가 짧아서"], a: 0, why: "Rust 문서: 비교 횟수와 캐시 효율 사이의 절충" },
-                { q: "n 개 노드인 레드-블랙 트리 높이의 상한은?", options: ["2·log₂(n+1)", "n", "log₂n / 2", "√n"], a: 0, why: "빨강은 연속 불가 + 검은 높이 동일 → 최장 경로 ≤ 최단 × 2" }
+                { q: "빈 BST 에 1, 2, 3, 4, 5 를 순서대로 넣으면 높이(노드 수 기준)는?", options: ["5", "3", "4", "2"], a: 0, why: "매번 오른쪽 끝에 붙어 사슬이 됨 · 3 은 같은 키를 3, 2, 4, 1, 5 처럼 넣었을 때" },
+                { q: "BST 를 중위 순회하면?", options: ["키 오름차순", "삽입한 순서", "층별(BFS) 순서", "루트 먼저, 잎 나중"], a: 0, why: "왼쪽 < 노드 < 오른쪽 을 그 순서로 방문 · 루트 먼저는 전위 순회" },
+                { q: "자식이 둘인 노드를 지울 때 쓰는 후속자는?", options: ["오른쪽 서브트리의 가장 왼쪽", "왼쪽 서브트리의 가장 오른쪽", "오른쪽 자식 (바로 아래)", "부모 노드 (바로 위)"], a: 0, why: "다음으로 큰 키 · 왼쪽 자식이 없어 쉽게 빠짐 · 왼쪽 서브트리의 가장 오른쪽은 선행자(바로 앞 키)" },
+                { q: "Rust `BTreeMap` 이 이진 트리 대신 B-트리를 쓰는 주된 이유는?", options: ["할당·캐시 미스를 줄이려고", "비교 횟수를 줄이려고", "최악 O(1) 검색을 위해", "해시 맵보다 늘 빨라서"], a: 0, why: "노드 하나에 키 여러 개를 연속으로 · Rust 문서: 비교는 오히려 **늘어남**, 캐시 효율과의 절충" },
+                { q: "n 개 노드인 레드-블랙 트리 높이의 상한은?", options: ["2·log₂(n+1)", "1.44·log₂(n+2)", "log₂(n+1)", "n / 2"], a: 0, why: "빨강 연속 불가 + 검은 높이 동일 → 최장 경로 ≤ 최단 × 2 · 1.44 배는 더 엄격한 AVL 의 상한" },
+                { type: "num", q: "빈 BST 에 50, 30, 70, 20, 40, 60, 80, 35, 45, 47 을 차례로 넣으면 높이(노드 수 기준)는?", answer: 5, why: "47 은 50 → 30 → 40 → 45 의 오른쪽 · 다섯째 층" },
+                { type: "text", q: "8, 3, 10, 1, 6, 14, 4, 7, 13 을 넣은 BST 에서 3 을 지운 뒤 전위 순회(노드 → 왼쪽 → 오른쪽) 결과는?", answer: ["8 4 1 6 7 10 14 13"], why: "3 은 자식 둘 → 후속자 4(6 의 왼쪽)를 복사하고 원래 4 를 지움" },
+                { type: "num", q: "B-트리 노드 하나가 자식 256 개를 가질 때, 키 10⁹ 개를 담는 트리의 높이(읽는 노드 수)는 최소?", answer: 4, why: "256³ ≈ 1.7×10⁷ < 10⁹ ≤ 256⁴ · log₂₅₆(10⁹) ≈ 3.7 → 4 · 이진 트리면 30" },
+                { type: "order", q: "자식이 둘인 노드 x 를 삭제하는 순서", items: ["x 를 찾아 내려감", "x 의 오른쪽 자식으로 한 칸", "왼쪽 끝까지 내려가 후속자 찾기", "후속자 키를 x 에 복사", "원래 후속자 노드를 삭제"], why: "후속자는 왼쪽 자식이 없어 마지막 삭제는 잎이나 자식 하나 경우로 끝남" }
             ],
             refs: [
                 { title: "Organization and maintenance of large ordered indexes", by: "Bayer et al.", year: 1972, url: "https://doi.org/10.1007/BF00288683", kind: "paper" },
@@ -657,6 +701,8 @@ bool hit = it != table.end() && it->first == key;` },
             title: "힙과 우선순위 큐",
             level: 2,
             mins: 14,
+            pre: ["data-structures/ds-bst"],
+            checked: "2026-11-16",
             key: [
                 "이진 힙(binary heap): **힙 속성(heap property)** 부모 ≤ 자식 + **완전 이진 트리(complete binary tree)**",
                 "배열에 층 순서로: 자식 `2i+1`·`2i+2`, 부모 `(i−1)/2` → 포인터가 필요 없음",
@@ -765,11 +811,19 @@ heapq.heapify(h)              # 마지막 부모부터 sift down: O(n)` },
                 { term: "decrease-key", en: "Decrease-key operation", def: "힙 안 원소의 우선순위를 높임 · 이진 힙은 위치를 알아야 O(log n) sift up" }
             ],
             quiz: [
-                { q: "0 기반 배열 힙에서 인덱스 5 의 부모와 자식은?", options: ["부모 2, 자식 11·12", "부모 2, 자식 10·11", "부모 3, 자식 10·11", "부모 4, 자식 6·7"], a: 0, why: "부모 (5−1)/2 = 2 · 자식 2·5+1 = 11, 2·5+2 = 12" },
-                { q: "최소 힙에서 최솟값 확인 / 꺼내기 비용은?", options: ["O(1) / O(log n)", "O(log n) / O(log n)", "O(1) / O(1)", "O(n) / O(n)"], a: 0, why: "루트를 보면 끝 · 꺼낸 뒤 sift down 은 높이만큼" },
-                { q: "상향식 heapify 가 O(n) 인 이유는?", options: ["노드 절반은 잎이라 0회, 깊이 내려가는 노드는 소수", "비교를 하지 않아서", "입력이 이미 정렬돼 있어서", "해시를 써서"], a: 0, why: "높이 h 인 노드 수 ≈ n/2^(h+1) → 합이 O(n)" },
-                { q: "최소 힙 배열을 앞에서부터 읽으면?", options: ["정렬 보장 없음 — 부모 ≤ 자식만 보장", "오름차순", "내림차순", "삽입 순서"], a: 0, why: "형제·사촌끼리는 순서가 없음" },
-                { q: "이진 힙을 쓴 Dijkstra 의 시간 복잡도는?", options: ["O((V + E) log V)", "O(V²)", "O(E)", "O(V + E)"], a: 0, why: "꺼내기 V 번 + 갱신 E 번, 각 O(log V) · 피보나치 힙이면 O(E + V log V)" }
+                { q: "0 기반 배열 힙에서 인덱스 5 의 부모와 자식은?", options: ["부모 2, 자식 11·12", "부모 2, 자식 10·11", "부모 3, 자식 10·11", "부모 2, 자식 12·13"], a: 0, why: "부모 (5−1)/2 = 2 · 자식 2·5+1 = 11, 2·5+2 = 12 · 10·11 은 1 기반 공식 `2i`, `2i+1`" },
+                { q: "최소 힙에서 최솟값 확인 / 꺼내기 비용은?", options: ["O(1) / O(log n)", "O(log n) / O(log n)", "O(1) / O(1)", "O(n) / O(log n)"], a: 0, why: "루트를 보면 끝 · 꺼낸 뒤 sift down 은 높이만큼" },
+                { q: "상향식 heapify 가 O(n) 인 이유는?", options: ["노드 대부분이 바닥 근처라서", "비교 없이 자리만 바꾸어서", "입력이 원래 반쯤 정렬돼 있어서", "sift up 만 써서"], a: 0, why: "높이 h 인 노드 ≈ n/2^(h+1) 개가 최대 h 층 → 합 O(n) · 하나씩 sift up 하면 O(n log n)" },
+                { q: "최소 힙 배열을 앞에서부터 읽으면?", options: ["순서 보장 없음", "오름차순", "층마다 오름차순", "삽입한 순서"], a: 0, why: "부모 ≤ 자식만 보장 · 형제·사촌끼리는 순서 없음 · 예: [1, 3, 2]" },
+                { q: "이진 힙을 쓴 Dijkstra 의 시간 복잡도는?", options: ["O((V+E) log V)", "O(E + V log V)", "O(V² log E)", "O(V·E log V)"], a: 0, why: "꺼내기 V 번 + 갱신 E 번, 각 O(log V) · O(E + V log V) 는 피보나치 힙" },
+                { type: "text", q: "출력은?", code: { lang: "python", src: `import heapq
+h = []
+for x in [7, 3, 9, 1, 5]:
+    heapq.heappush(h, x)
+print(h)` }, answer: ["[1, 3, 9, 7, 5]", "1 3 9 7 5"], why: "1 이 [3] → [1] → [0] 으로 sift up · 5 는 부모 3 보다 커서 [4] 에 그대로" },
+                { type: "num", q: "0 기반 배열 힙에서 인덱스 20 의 부모 인덱스는?", answer: 9, why: "(20 − 1) / 2 = 9 (정수 나눗셈) · 9 의 자식은 19, 20" },
+                { type: "num", q: "원소 1000 개인 이진 힙의 높이(간선 기준)는?", answer: 9, why: "⌊log₂1000⌋ = 9 · 삽입·꺼내기의 교환은 최대 9 번" },
+                { type: "order", q: "최소 힙에서 루트 꺼내기(pop) 순서", items: ["루트 값을 따로 저장", "마지막 원소를 루트 자리로", "두 자식 중 더 작은 쪽 고르기", "부모가 더 크면 교환하고 반복"], why: "끝 원소를 올려 빈틈을 없앤 뒤 sift down · 더 작은 자식과 바꿔야 속성이 유지됨" }
             ],
             refs: [
                 { title: "Algorithm 232: Heapsort", by: "Williams", year: 1964, url: "https://doi.org/10.1145/512274.3734138", kind: "paper" },
@@ -783,11 +837,13 @@ heapq.heapify(h)              # 마지막 부모부터 sift down: O(n)` },
             title: "정렬 알고리즘",
             level: 2,
             mins: 16,
+            pre: ["data-structures/ds-heap"],
+            checked: "2026-11-16",
             key: [
                 "삽입 정렬(insertion sort): O(n²) 지만 작거나 거의 정렬된 입력엔 가장 빠름",
                 "병합 정렬(merge sort): 항상 O(n log n) · **안정 정렬(stable sort)** · 보조 메모리 O(n)",
                 "퀵 정렬(quicksort): 평균 O(n log n) · **제자리 정렬(in-place sort)** · 나쁜 피벗(pivot)이면 O(n²)",
-                "`std::sort` = **인트로 정렬(introsort)**: 퀵 → 너무 깊으면 힙 정렬(heapsort) → 작은 구간은 삽입"
+                "libstdc++ `std::sort` = **인트로 정렬(introsort)**: 퀵 → 깊으면 힙 정렬(heapsort) → 작은 구간은 삽입"
             ],
             concepts: [
                 { term: "안정 정렬", en: "Stable sort", def: "같은 키의 원래 순서 유지 · 여러 키로 차례로 정렬할 때 필요 · Python `sorted`, `std::stable_sort`" },
@@ -885,14 +941,19 @@ files.sort(key=cmp_to_key(
                 { term: "계수 정렬", en: "Counting sort", def: "값마다 개수를 세어 누적합으로 자리를 정함 · O(n + k), k = 값의 범위 · 누적 방식은 안정" },
                 { term: "역순 쌍", en: "Inversion", def: "i < j 인데 a[i] > a[j] 인 쌍 · 삽입 정렬 비용 = O(n + 역순 쌍 수)" },
                 { term: "3중 분할", en: "Three-way partitioning (Dutch national flag)", def: "< p, = p, > p 세 구간으로 나눔 · 중복 키가 많을 때 퀵 정렬이 O(n²) 로 빠지는 것을 막음" },
-                { term: "Timsort", en: "Timsort (adaptive natural merge sort)", def: "이미 정렬된 구간(run)을 찾아 병합하는 안정 정렬 · 거의 정렬된 입력에 O(n) 근접 · CPython `list.sort`" }
+                { term: "Timsort", en: "Timsort (adaptive natural merge sort)", def: "이미 정렬된 구간(run)을 찾아 병합하는 안정 정렬 · 거의 정렬된 입력에 O(n) 근접 · CPython `list.sort` (3.11 부터 병합 순서는 Powersort)" }
             ],
             quiz: [
-                { q: "이미 정렬된 배열에 가장 빠른 것은?", options: ["삽입 정렬 — O(n)", "선택 정렬", "첫 원소를 피벗으로 쓰는 단순 퀵 정렬", "힙 정렬"], a: 0, why: "각 원소가 한 번 비교하고 멈춤 · 단순 퀵은 오히려 O(n²)" },
-                { q: "안정 정렬이 **아닌** 것은?", options: ["병합 정렬", "삽입 정렬", "힙 정렬", "누적 방식 계수 정렬"], a: 2, why: "루트와 끝을 바꾸며 같은 키의 순서가 뒤섞임" },
-                { q: "인트로 정렬이 힙 정렬로 바꾸는 시점은?", options: ["재귀 깊이가 약 2·log₂n 을 넘을 때", "n 이 1000 을 넘을 때", "매 단계마다", "메모리가 부족할 때"], a: 0, why: "깊어진다 = 분할이 계속 한쪽으로 쏠린다는 신호" },
-                { q: "비교 기반 정렬의 최악 비교 횟수 하한은?", options: ["Ω(n log n)", "Ω(n)", "Ω(n²)", "Ω(log n)"], a: 0, why: "n! 가지 순서를 구분하려면 결정 트리 높이 ≥ log₂n!" },
-                { q: "기수 정렬이 Ω(n log n) 하한에 걸리지 않는 이유는?", options: ["키끼리 비교하지 않고 자릿수로 분배해서", "병렬로 돌아서", "하한이 틀려서", "제자리 정렬이라서"], a: 0, why: "하한은 '비교'만 쓰는 정렬에 대한 것" }
+                { q: "이미 정렬된 배열에 가장 빠른 것은?", options: ["삽입 정렬", "선택 정렬", "끝 원소 피벗 퀵 정렬", "힙 정렬"], a: 0, why: "원소마다 비교 1번 후 멈춤 → O(n) · 끝 원소 피벗 퀵은 오히려 O(n²)" },
+                { q: "안정 정렬이 **아닌** 것은?", options: ["병합 정렬", "삽입 정렬", "힙 정렬", "누적 방식 계수 정렬"], a: 2, why: "루트와 끝을 바꾸며 같은 키의 순서가 뒤섞임 · 계수 정렬은 뒤에서부터 채우면 안정" },
+                { q: "인트로 정렬이 힙 정렬로 바꾸는 시점은?", options: ["재귀 깊이 > 2·⌊log₂n⌋", "구간이 16개 이하로 줄었을 때", "피벗이 최솟값일 때마다", "입력이 이미 정렬됐을 때"], a: 0, why: "깊어진다 = 분할이 계속 쏠린다는 신호 · 16개 이하는 삽입 정렬로 넘기는 조건" },
+                { q: "비교 기반 정렬의 최악 비교 횟수 하한은?", options: ["Ω(n log n)", "Ω(n + k)", "Ω(n²/2)", "Ω(n log k)"], a: 0, why: "n! 가지 순서를 가르는 결정 트리 높이 ≥ log₂n! · n + k 는 비교하지 않는 계수 정렬" },
+                { q: "기수 정렬이 Ω(n log n) 하한에 걸리지 않는 이유는?", options: ["키를 비교 없이 자릿수로 분배", "여러 코어에서 병렬로 실행해서", "보조 배열로 메모리를 더 써서", "정렬된 run 을 찾아 병합"], a: 0, why: "하한은 '비교'만 쓰는 정렬에 대한 것 · 메모리를 더 써도 비교 정렬이면 하한은 그대로" },
+                { type: "num", q: "삽입 정렬로 [5, 2, 4, 6, 1, 3] 을 정렬할 때 원소 이동(한 칸 밀기) 횟수는?", answer: 9, unit: "번", why: "이동 1번 = 역순 쌍 1개 제거 · 역순 쌍 9개: (5,2) (5,4) (5,1) (5,3) (2,1) (4,1) (4,3) (6,1) (6,3)" },
+                { type: "num", q: "끝 원소를 피벗으로 쓰는 퀵 정렬(Lomuto)에 이미 정렬된 [1..10] 을 넣으면 비교 횟수는?", answer: 45, unit: "번", why: "피벗이 매번 최댓값 → 9 + 8 + … + 1 = n(n−1)/2 = 45" },
+                { type: "text", q: "출력은?", code: { lang: "python", src: `rows = [("b", 2), ("a", 1), ("c", 2), ("d", 1)]
+print(" ".join(n for n, _ in sorted(rows, key=lambda r: r[1])))` }, answer: ["a d b c"], why: "안정 정렬: 같은 점수 안에서는 원래 순서(a 다음 d, b 다음 c)를 유지" },
+                { type: "order", q: "삽입 정렬로 [4, 3, 1, 2] 를 정렬할 때 각 패스가 끝난 배열", items: ["3 4 1 2", "1 3 4 2", "1 2 3 4"], why: "패스 i 는 a[i] 를 왼쪽 정렬 구간의 제자리로 · 3 → 1 → 2 순서로 끼움" }
             ],
             refs: [
                 { title: "Quicksort", by: "Hoare", year: 1962, url: "https://doi.org/10.1093/comjnl/5.1.10", kind: "paper" },
@@ -906,6 +967,8 @@ files.sort(key=cmp_to_key(
             title: "그래프와 탐색",
             level: 3,
             mins: 18,
+            pre: ["data-structures/ds-ring", "data-structures/ds-heap"],
+            checked: "2026-11-16",
             key: [
                 "그래프(graph) = 정점(vertex) + 간선(edge) · 도로망, 빌드 의존성, 상태 공간",
                 "인접 리스트(adjacency list) 메모리 O(V+E) · 인접 행렬(adjacency matrix) O(V²) · 희소하면 리스트",
@@ -1062,11 +1125,23 @@ for (uint32_t i = off[u]; i < off[u + 1]; i++) visit(dst[i]);` },
                 { term: "연결 요소", en: "Connected component", def: "서로 경로로 이어진 정점들의 최대 묶음 · BFS/DFS 를 정점마다 한 번씩 돌려 O(V+E) 에 찾음" }
             ],
             quiz: [
-                { q: "정점 10만, 간선 30만인 도로망에 맞는 표현은?", options: ["인접 리스트", "인접 행렬", "정렬 안 한 간선 목록만", "완전 그래프로 변환"], a: 0, why: "행렬은 10¹⁰ 칸 · 리스트는 V + 2E ≈ 7×10⁵" },
-                { q: "가중치 없는 그래프에서 간선 수 기준 최단 경로를 찾는 것은?", options: ["BFS", "DFS", "위상 정렬", "힙 정렬"], a: 0, why: "가까운 층부터 퍼지므로 처음 닿은 거리가 최단" },
-                { q: "Dijkstra 가 틀릴 수 있는 경우는?", options: ["음수 가중치 간선이 있을 때", "그래프가 희소할 때", "정점이 100개를 넘을 때", "무방향 그래프일 때"], a: 0, why: "확정한 정점이 나중에 음수 간선으로 더 짧아질 수 있음 → Bellman-Ford" },
-                { q: "Kahn 위상 정렬이 모든 정점을 출력하지 못했다면?", options: ["그래프에 사이클이 있다", "그래프가 희소하다", "가중치가 음수다", "정상 — 순서가 여러 개라서"], a: 0, why: "사이클 위 정점은 진입 차수가 끝까지 0 이 안 됨" },
-                { q: "BFS 에서 방문 표시를 '꺼낼 때'가 아니라 '넣을 때' 하는 이유는?", options: ["같은 정점이 큐에 여러 번 들어가는 것을 막으려고", "DFS 순서를 만들려고", "큐를 스택으로 바꾸려고", "간선 가중치를 반영하려고"], a: 0, why: "꺼낼 때 표시하면 그 사이 다른 이웃이 같은 정점을 또 넣음" }
+                { q: "정점 10만, 간선 30만인 도로망에 맞는 표현은?", options: ["인접 리스트", "인접 행렬", "간선 목록 배열만", "완전 그래프로 변환"], a: 0, why: "행렬은 10¹⁰ 칸 · 리스트는 V + 2E ≈ 7×10⁵ · 간선 목록만으로는 이웃 찾기가 O(E)" },
+                { q: "가중치 없는 그래프에서 간선 수 기준 최단 경로를 찾는 것은?", options: ["BFS (큐)", "DFS (스택)", "위상 정렬", "Dijkstra 만 가능"], a: 0, why: "가까운 층부터 퍼지므로 처음 닿은 거리가 최단 · Dijkstra 도 되지만 힙이 필요 없음" },
+                { q: "Dijkstra 가 틀릴 수 있는 경우는?", options: ["음수 가중치 간선이 있을 때", "사이클이 있는 그래프일 때", "간선 가중치가 모두 같을 때", "무방향 그래프일 때"], a: 0, why: "확정한 정점이 나중에 음수 간선으로 더 짧아질 수 있음 → Bellman-Ford · 양수 사이클은 문제없음" },
+                { q: "Kahn 위상 정렬이 모든 정점을 출력하지 못했다면?", options: ["그래프에 사이클이 있다", "그래프가 희소하다", "가중치가 음수다", "정상 — 순서가 여러 개라서"], a: 0, why: "사이클 위 정점은 진입 차수가 끝까지 0 이 안 됨 · 순서가 여럿이어도 정점은 모두 나옴" },
+                { q: "BFS 에서 방문 표시를 '꺼낼 때'가 아니라 '넣을 때' 하는 이유는?", options: ["같은 정점을 큐에 두 번 넣지 않게", "DFS 와 같은 방문 순서를 얻으려고", "큐 대신 스택으로도 돌게 하려고", "간선 가중치를 거리에 넣으려고"], a: 0, why: "꺼낼 때 표시하면 그 사이 다른 이웃이 같은 정점을 또 넣음 · 거리는 어느 쪽이든 맞음" },
+                { type: "num", q: "무방향 간선 1–2, 1–3, 2–4, 3–4, 4–5, 5–6, 3–6 인 그래프에서 정점 1 → 6 의 BFS 거리(간선 수)는?", answer: 2, why: "1 → 3 → 6 · 1 → 2 → 4 → 5 → 6 은 4 로 더 김" },
+                { type: "num", q: "레슨 코드의 그래프에서 C→B 가중치만 2 → 4 로 바꾸면 Dijkstra 의 `dist[D]` 는?", answer: 5, why: "B = min(4, 1 + 4) = 4 → D = min(4 + 1, 1 + 5) = 5 (A→B→D)" },
+                { type: "text", q: "출력은?", code: { lang: "python", src: `G = {"A": ["B", "C"], "B": ["D"], "C": ["D", "E"], "D": [], "E": []}
+seen, out = set(), []
+def dfs(u):
+    seen.add(u); out.append(u)
+    for v in G[u]:
+        if v not in seen:
+            dfs(v)
+dfs("A")
+print(" ".join(out))` }, answer: ["A B D C E"], why: "B 로 끝까지(D) 들어갔다가 돌아와 C · D 는 이미 방문이라 E 만" },
+                { type: "order", q: "인접 리스트 A: [D, B], B: [E], D: [C, E], C: [F], E: [F] 에서 A 부터 BFS 로 방문(꺼내는) 순서", items: ["A", "D", "B", "C", "E", "F"], why: "이웃은 리스트 순서대로 넣음 · 1층 D, B → 2층 C, E (E 는 D 가 먼저 넣음) → 3층 F" }
             ],
             refs: [
                 { title: "A note on two problems in connexion with graphs", by: "Dijkstra", year: 1959, url: "https://doi.org/10.1007/BF01386390", kind: "paper" },

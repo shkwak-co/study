@@ -9,39 +9,58 @@ LAB.track({
             title: "Free-threaded Python",
             when: "2025–2026",
             points: [
-                "3.13 실험 → 3.14 (2025-10) **공식 지원** (PEP 779) · 아직 선택형(opt-in) 별도 빌드",
-                "3.15 (2026-10): free-threaded 용 안정(stable) ABI `abi3t` (PEP 803)",
-                "C 확장(extension module) 호환 확인 필요 · 단일 스레드는 기본 빌드보다 약간 느릴 수 있음"
+                "3.13 실험 → 3.14 (2025-10) **공식 지원** (PEP 779) · 여전히 선택형(opt-in) 별도 빌드",
+                "3.15 (2026-10-09): free-threaded 용 안정 ABI(stable ABI) `abi3t` (PEP 803) · macOS 설치본에 기본 포함",
+                "기본 빌드 전환(Phase III)은 미정 · 단일 스레드 오버헤드 평균 약 1–8% (공식 문서)"
             ],
             refs: [
                 { title: "PEP 779 – Criteria for supported status for free-threaded Python", by: "Wouters et al.", year: 2025, url: "https://peps.python.org/pep-0779/", kind: "spec" },
-                { title: "PEP 803 – “abi3t”: Stable ABI for Free-Threaded Builds", by: "Viktorin et al.", year: 2025, url: "https://peps.python.org/pep-0803/", kind: "spec" }
+                { title: "PEP 803 – “abi3t”: Stable ABI for Free-Threaded Builds", by: "Viktorin et al.", year: 2025, url: "https://peps.python.org/pep-0803/", kind: "spec" },
+                { title: "What's New In Python 3.15", by: "Python Software Foundation", year: 2026, url: "https://docs.python.org/3.15/whatsnew/3.15.html", kind: "doc" },
+                { title: "Python support for free threading", by: "Python Software Foundation", url: "https://docs.python.org/3/howto/free-threading-python.html", kind: "doc" }
             ]
         },
         {
             title: "Rust, 리눅스 커널 정식 언어로",
             when: "2025–2026",
             points: [
-                "2025-12 Maintainers Summit: 커널 Rust 지원의 '실험'(experimental) 꼬리표 제거",
-                "Android 16 (커널 6.12) 의 ashmem 등 Rust 코드가 실기기에서 동작",
-                "모든 아키텍처·툴체인(toolchain) 조합이 완성된 건 아님 · 새 드라이버부터 확대"
+                "2025-12 Maintainers Summit: 커널 Rust 의 '실험'(experimental) 꼬리표 제거",
+                "Android 16 (커널 6.12) 기기가 Rust 로 쓴 ashmem 모듈을 탑재해 출하",
+                "2026: 커널 최소 rustc 1.78 → **1.85** (Debian stable 기준) · 일부 아키텍처는 아직 미지수",
+                "Rust 2024 에디션(edition, 1.85): `if let` 임시값(temporary)이 `else` 전에 drop 되는 등 해제 시점 변화"
             ],
             refs: [
-                { title: "Rust — The Linux Kernel documentation", by: "Linux kernel community", url: "https://docs.kernel.org/rust/index.html", kind: "doc" },
-                { title: "The (successful) end of the kernel Rust experiment", by: "LWN.net", year: 2025, url: "https://lwn.net/Articles/1049831/", kind: "doc" }
+                { title: "The state of the kernel Rust experiment", by: "LWN.net", year: 2025, url: "https://lwn.net/Articles/1050174/", kind: "doc" },
+                { title: "Minimal requirements to compile the Kernel", by: "Linux kernel community", url: "https://docs.kernel.org/process/changes.html", kind: "doc" },
+                { title: "Rust 2024 — The Rust Edition Guide", by: "Rust Project", url: "https://doc.rust-lang.org/edition-guide/rust-2024/index.html", kind: "doc" }
             ]
         },
         {
             title: "C++26 확정",
             when: "2026",
             points: [
-                "2026-03 런던 회의에서 기술 작업 완료 · 정적 리플렉션(static reflection), contracts, `std::execution`",
-                "초기화 안 된 지역 변수(local variable) 읽기: UB → **erroneous behavior** (P2795)",
-                "표준 라이브러리 hardening (P3471) · 컴파일러 지원은 순차 진행 중"
+                "2026-03 런던(Croydon) 회의에서 기술 작업 완료 → DIS 투표 후 ISO 발행",
+                "리플렉션(reflection), contracts, `std::execution` · 초기화 안 된 지역 변수(local variable) 읽기: UB → **erroneous behaviour** (P2795)",
+                "표준 라이브러리 hardening (P3471) · GCC 16 이 리플렉션(`-freflection`)·contracts 구현"
             ],
             refs: [
+                { title: "C++26 is done! — Trip report: March 2026 ISO C++ standards meeting (London Croydon, UK)", by: "Sutter", year: 2026, url: "https://herbsutter.com/2026/03/29/c26-is-done-trip-report-march-2026-iso-c-standards-meeting-london-croydon-uk/", kind: "doc" },
                 { title: "P2795R5: Erroneous behaviour for uninitialized reads", by: "Köppe", year: 2024, url: "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2795r5.html", kind: "paper" },
-                { title: "P3471R4: Standard library hardening", by: "Varlamov et al.", year: 2025, url: "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3471r4.html", kind: "paper" }
+                { title: "P3471R4: Standard library hardening", by: "Varlamov et al.", year: 2025, url: "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3471r4.html", kind: "paper" },
+                { title: "GCC 16 Release Series — Changes, New Features, and Fixes", by: "GNU Project", year: 2026, url: "https://gcc.gnu.org/gcc-16/changes.html", kind: "doc" }
+            ]
+        },
+        {
+            title: "C: C23 기본값, C2y 진행 중",
+            when: "2025–2026",
+            points: [
+                "GCC 15: C 기본 표준 `gnu17` → `gnu23` · named loops, `if` 선언 등 C2y 일부 선구현",
+                "C2y 작업 초안(working draft) N3998 (2026-10) · 아직 발행 전",
+                "`defer` 자원 정리(resource cleanup)는 별도 TS 25755 로 작업 중"
+            ],
+            refs: [
+                { title: "WG14 — Projects (C2y working draft, TS 25755)", by: "ISO/IEC JTC1/SC22/WG14", url: "https://www.open-std.org/jtc1/sc22/wg14/www/projects", kind: "spec" },
+                { title: "GCC 15 Release Series — Changes, New Features, and Fixes", by: "GNU Project", year: 2025, url: "https://gcc.gnu.org/gcc-15/changes.html", kind: "doc" }
             ]
         },
         {
@@ -49,12 +68,14 @@ LAB.track({
             when: "2025–2026",
             points: [
                 "NSA·CISA 2025-06 공동 지침: 메모리 안전 언어(MSL) 채택 권고",
-                "CISA: 기존 C/C++ 제품은 2026-01-01 까지 메모리 안전 로드맵 공개 권고",
+                "CISA: 기존 C/C++ 제품은 2025 년 말까지 메모리 안전 로드맵 공개 권고",
+                "C++29 (2026-03 일정 채택): 메모리 안전이 주 목표 · 안전 프로파일(safety profile) 작업",
                 "현실적 경로: 새 코드는 MSL, 기존 코드는 hardening·sanitizer 로 점진 전환"
             ],
             refs: [
                 { title: "Memory Safe Languages: Reducing Vulnerabilities in Modern Software Development", by: "NSA & CISA", year: 2025, url: "https://www.cisa.gov/resources-tools/resources/memory-safe-languages-reducing-vulnerabilities-modern-software-development", kind: "doc" },
-                { title: "Product Security Bad Practices", by: "CISA", year: 2025, url: "https://www.cisa.gov/resources-tools/resources/product-security-bad-practices", kind: "doc" }
+                { title: "Product Security Bad Practices", by: "CISA", year: 2025, url: "https://www.cisa.gov/resources-tools/resources/product-security-bad-practices", kind: "doc" },
+                { title: "C++26 is done! — Trip report: March 2026 ISO C++ standards meeting (London Croydon, UK)", by: "Sutter", year: 2026, url: "https://herbsutter.com/2026/03/29/c26-is-done-trip-report-march-2026-iso-c-standards-meeting-london-croydon-uk/", kind: "doc" }
             ]
         }
     ],
@@ -64,6 +85,7 @@ LAB.track({
             title: "C 포인터와 메모리",
             level: 1,
             mins: 14,
+            checked: "2026-11-16",
             key: [
                 "포인터(pointer) = **주소(address)를 담은 변수** · `*p` 는 그 주소의 값",
                 "지역 변수(local variable)는 스택(stack): 함수 끝나면 소멸 · `malloc` 은 힙(heap): 직접 `free`",
@@ -189,14 +211,18 @@ buf[n++] = x;                   // 분할상환 O(1)` },
                 { term: "Double free", en: "Double free", def: "같은 블록을 두 번 해제 · 힙 관리 정보 파괴" }
             ],
             quiz: [
-                { q: "`int a[4]; int *p = a;` 일 때 `p + 2` 가 가리키는 곳은?", options: ["a[1]", "a 시작 + 2바이트", "a[2] (시작 + 2×sizeof(int))", "컴파일 에러"], a: 2, why: "포인터 산술은 원소 크기 단위" },
-                { q: "`free(p)` 직후의 p 에 대해 옳은 것은?", options: ["자동으로 NULL 이 된다", "옛 주소가 남아 있지만 역참조하면 UB", "다음 malloc 전까지는 안전하게 읽을 수 있다", "가리키던 값이 0 으로 지워진다"], a: 1, why: "free 는 변수를 바꾸지 않음 · 직접 `p = NULL`" },
-                { q: "함수가 지역 변수의 주소를 반환하면?", options: ["반환 후 사용하면 UB (dangling)", "자동으로 힙에 복사된다", "static 으로 승격된다", "항상 컴파일 에러"], a: 0, why: "프레임은 return 과 함께 소멸 · 컴파일러는 경고만 줄 수 있음" },
-                { q: "64bit 에서 `void f(int a[10]) { sizeof a; }` 의 값은?", options: ["40", "10", "8", "4"], a: 2, why: "배열 매개변수는 포인터로 decay → 포인터 크기" },
-                { q: "메모리 누수가 생기는 코드는?", options: ["`free(NULL);`", "`int x; int *q = &x;`", "`p = malloc(8); free(p);`", "`p = malloc(8); p = malloc(16);`"], a: 3, why: "첫 블록 주소를 잃어 해제할 방법이 없음" }
+                { q: "`int a[4]; int *p = a;` 일 때 `p + 2` 가 가리키는 곳은?", options: ["`a[1]`", "a 시작 + 2바이트", "`a[2]`", "a 시작 + 2×`sizeof(int *)`"], a: 2, why: "가리키는 타입(`int`) 크기 단위로 이동 · 바이트 단위나 포인터 크기 단위로 착각하기 쉬움" },
+                { q: "`free(p)` 직후의 p 에 대해 옳은 것은?", options: ["자동으로 NULL 이 된다", "옛 주소가 남지만 역참조는 UB", "다음 malloc 전까진 읽어도 안전", "가리키던 값이 0 으로 지워진다"], a: 1, why: "free 는 변수 p 를 바꾸지 않음 · '다음 malloc 전엔 안전'도 틀림, 해제 직후부터 접근은 UB" },
+                { q: "함수가 지역 변수의 주소를 반환하면?", options: ["반환 후 역참조하면 UB", "값이 자동으로 힙에 복사됨", "컴파일러가 static 으로 승격", "표준상 항상 컴파일 에러"], a: 0, why: "프레임은 return 과 함께 소멸 · 에러가 아니라 경고(`-Wreturn-local-addr`)만 나올 수 있음" },
+                { q: "LP64 (x86-64 Linux) 에서 `void f(int a[10]) { sizeof a; }` 의 값은?", options: ["40", "10", "8", "4"], a: 2, why: "배열 매개변수는 `int *` 로 바뀜 → 포인터 크기 8 · 40 은 호출자 쪽 진짜 배열의 크기" },
+                { q: "메모리 누수가 생기는 코드는?", options: ["`free(NULL);`", "`p = malloc(8); free(p); p = NULL;`", "`char *s = \"hi\"; s = NULL;`", "`p = malloc(8); p = malloc(16);`"], a: 3, why: "첫 블록 주소를 잃어 해제할 방법이 없음 · 문자열 리터럴은 정적 저장 기간이라 누수 아님" },
+                { type: "num", q: "`int *p` 의 값이 `0x1000` 이면 `p + 3` 의 주소는? (`int` 4 B, 16진 입력 가능)", answer: 0x100C, why: "3 × 4 = 12 = `0xC` 바이트 → `0x100C` · `0x1003` 은 바이트 단위로 착각한 값" },
+                { type: "text", q: "x86-64 Linux 에서 출력은?", code: { lang: "c", src: "int a[10];\nint *p = a;\nprintf(\"%zu %zu %zu\\n\", sizeof a, sizeof p, sizeof *p);" }, answer: ["40 8 4"], why: "배열 그 자체는 decay 되지 않아 10 × 4 · `p` 는 포인터 8 · `*p` 는 `int` 4" },
+                { type: "text", q: "출력은?", code: { lang: "c", src: "int a[] = {10, 20, 30, 40};\nint *p = a + 1;\np++;\nprintf(\"%d %d %td\\n\", *p, p[-2], p - a);" }, answer: ["30 10 2"], why: "`p` 는 `a[2]` · `p[-2]` = `*(p - 2)` = `a[0]` · 포인터 차는 바이트가 아니라 원소 수" },
+                { type: "num", q: "`double d[4]; char *c = (char *)d;` 일 때 `(char *)(d + 2) - (c + 2)` 는? (`double` 8 B)", answer: 14, why: "`d + 2` 는 16 바이트 뒤, `c + 2` 는 2 바이트 뒤 → 16 − 2 = 14 · 산술 단위는 포인터 타입이 정함" }
             ],
             refs: [
-                { title: "ISO/IEC 9899:2024 (C23) — N3220 working draft", by: "ISO/IEC JTC1/SC22/WG14", year: 2024, url: "https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3220.pdf", kind: "spec" },
+                { title: "ISO/IEC 9899:2024 (C23) — N3220 working draft (C23 text, early C2y)", by: "ISO/IEC JTC1/SC22/WG14", year: 2024, url: "https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3220.pdf", kind: "spec" },
                 { title: "The C Programming Language, Second Edition", by: "Kernighan et al.", year: 1988, url: "https://www.cs.princeton.edu/~bwk/cbook.html", kind: "book" },
                 { title: "AddressSanitizer: A Fast Address Sanity Checker", by: "Serebryany et al.", year: 2012, url: "https://www.usenix.org/conference/atc12/technical-sessions/presentation/serebryany", kind: "paper" }
             ]
@@ -206,6 +232,8 @@ buf[n++] = x;                   // 분할상환 O(1)` },
             title: "C++ RAII와 move",
             level: 2,
             mins: 14,
+            pre: ["languages/c-pointer"],
+            checked: "2026-11-16",
             key: [
                 "RAII: 자원(resource) 획득 = 객체 생성, 해제 = **소멸자**(destructor) · 스코프 끝 자동",
                 "`unique_ptr` = 단독 소유(unique ownership) · 복사 불가, `std::move` 로 이전",
@@ -338,11 +366,16 @@ names.push_back(s);                // 버퍼 전체 복사` },
                 { term: "Rule of zero", en: "Rule of zero", def: "자원은 멤버 타입에 맡기고 특수 멤버 함수를 직접 정의하지 않기" }
             ],
             quiz: [
-                { q: "`auto b = a;` (a 는 `unique_ptr`) 의 결과는?", options: ["깊은 복사", "참조 카운트 증가", "컴파일 에러 (복사 생성자 삭제)", "a 가 null 이 됨"], a: 2, why: "단독 소유 · 이전은 `std::move` 로 명시" },
-                { q: "`std::move(x)` 가 실제로 하는 일은?", options: ["x 의 메모리를 옮긴다", "x 를 rvalue 로 캐스트할 뿐", "x 를 null 로 만든다", "x 를 복사한다"], a: 1, why: "실제 이동은 선택된 move 생성자/대입이 수행" },
-                { q: "예외가 잡히는 곳까지 전파될 때, 지나가는 스코프의 지역 객체는?", options: ["생성 역순으로 소멸자 호출 (스택 풀기)", "소멸자가 호출되지 않음", "프로그램 종료까지 유지", "힙으로 옮겨짐"], a: 0, why: "stack unwinding · RAII 가 예외 안전한 이유" },
-                { q: "`shared_ptr` 대비 `unique_ptr` 의 장점은?", options: ["여러 소유자 가능", "순환 참조 자동 해결", "가리키는 객체 접근을 자동 동기화", "참조 카운트 없음 · 보통 raw 포인터 크기"], a: 3, why: "제어 블록·원자적 카운트 비용이 없음" },
-                { q: "move 된 `std::string s` 에 대해 안전한 것은?", options: ["`s.size()` 가 0 이라고 가정", "`s = \"new\";` 로 재대입", "`s[0]` 읽기", "아무것도 할 수 없음"], a: 1, why: "유효하지만 미지정 · 재대입·소멸은 안전, 값 가정은 금지" }
+                { q: "`auto b = a;` (a 는 `unique_ptr`) 의 결과는?", options: ["힙 객체를 깊은 복사", "참조 카운트가 1 증가", "컴파일 에러", "a 는 null, b 가 소유"], a: 2, why: "복사 생성자가 `= delete` · 몰래 소유권을 넘기던 옛 `auto_ptr` 와 달리 이전은 `std::move` 로 명시" },
+                { q: "`std::move(x)` 가 실제로 하는 일은?", options: ["x 의 내용을 새 위치로 옮김", "x 를 rvalue 로 캐스트", "x 를 비우고 null 로 만듦", "x 를 복사한 뒤 원본 삭제"], a: 1, why: "`static_cast<T&&>` 일 뿐 · 실제 이동과 원본 비우기는 그로 인해 선택된 move 생성자/대입이 함" },
+                { q: "예외가 잡히는 곳까지 전파될 때, 지나가는 스코프의 지역 객체는?", options: ["생성 역순으로 소멸", "catch 가 끝난 뒤 한꺼번에 소멸", "소멸자 없이 메모리만 회수", "선언 순서대로 소멸"], a: 0, why: "스택 풀기(stack unwinding) 중 프레임마다 역순 소멸 · catch 에 들어가기 전에 이미 정리됨" },
+                { q: "`shared_ptr` 대비 `unique_ptr` 의 장점은?", options: ["여러 소유자를 둘 수 있음", "순환 참조를 자동으로 끊음", "객체 접근을 자동 동기화", "카운트·제어 블록이 없음"], a: 3, why: "원자적 카운트 비용이 없고 보통 raw 포인터 크기 · 순환을 끊는 것은 `weak_ptr` 의 몫" },
+                { q: "move 된 `std::string s` 에 대해 안전한 것은?", options: ["`s.size()` 가 0 이라고 가정", "`s = \"new\";` 로 재대입", "`s[0]` 읽기", "아무것도 할 수 없음"], a: 1, why: "유효하지만 미지정 · 재대입·소멸은 안전, 빈 문자열이라는 가정은 금지" },
+                { type: "text", q: "출력은?", code: { lang: "cpp", src: "struct T { char c; ~T() { std::printf(\"%c\", c); } };\nint main() {\n    T a{'a'};\n    { T b{'b'}; T c{'c'}; }\n    T d{'d'};\n}" }, answer: ["cbda"], why: "안쪽 블록 끝에서 c → b (역순) · main 끝에서 d → a · 스코프마다 생성 역순" },
+                { type: "order", q: "`throw` 부터 처리가 끝날 때까지 순서대로", items: ["예외 객체 생성 (`throw`)", "지나가는 프레임의 지역 객체 소멸 (역순)", "맞는 `catch` 블록 실행", "`catch` 끝에서 예외 객체 소멸"], why: "스택 풀기가 먼저 끝나야 핸들러에 들어감 · 예외 객체는 핸들러가 끝날 때까지 살아 있음" },
+                { type: "text", q: "출력은? (g++ 13, libstdc++)", code: { lang: "cpp", src: "struct S {\n    S() = default;\n    S(const S &) { std::puts(\"copy\"); }\n    S(S &&) { std::puts(\"move\"); }   // noexcept 없음\n};\nint main() {\n    std::vector<S> v(1);\n    v.reserve(4);\n}" }, answer: ["copy"], why: "`move_if_noexcept`: 이동이 예외를 던질 수 있고 복사가 가능하면 복사 · `noexcept` 를 붙이면 `move`" },
+                { type: "text", q: "출력은?", code: { lang: "cpp", src: "auto p = std::make_shared<int>(1);\nauto q = p;\n{ auto r = p; std::cout << p.use_count(); }\nstd::cout << p.use_count();\nstd::weak_ptr<int> w = p;\nstd::cout << p.use_count();" }, answer: ["322"], why: "p·q·r = 3 → 블록 끝에 r 소멸 → 2 · `weak_ptr` 는 강한 카운트를 올리지 않음" },
+                { type: "num", q: "x86-64 Linux (libstdc++) 에서 `sizeof(std::shared_ptr<int>)` 는 몇 B?", answer: 16, unit: "B", why: "객체 포인터 + 제어 블록 포인터 = 8 + 8 · `unique_ptr<int>` 는 8" }
             ],
             refs: [
                 { title: "A Proposal to Add Move Semantics Support to the C++ Language (N1377)", by: "Hinnant et al.", year: 2002, url: "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2002/n1377.htm", kind: "paper" },
@@ -356,6 +389,8 @@ names.push_back(s);                // 버퍼 전체 복사` },
             title: "Rust 소유권과 빌림",
             level: 2,
             mins: 15,
+            pre: ["languages/cpp-raii"],
+            checked: "2026-11-16",
             key: [
                 "값마다 **소유자(owner) 하나** · 소유자가 스코프를 벗어나면 `drop`",
                 "대입·전달은 기본이 **move** · 원본 사용은 컴파일 에러",
@@ -482,11 +517,15 @@ greet(&owned);               // &String → &str 자동 변환 (deref)` },
                 { term: "내부 가변성", en: "Interior mutability", def: "`&` 로도 수정 허용 · `RefCell`·`Mutex` 가 런타임에 규칙 검사" }
             ],
             quiz: [
-                { q: "`let b = a;` (a: String) 다음 `println!(\"{a}\")` 는?", options: ["\"hi\" 출력", "컴파일 에러: move 된 값 사용", "런타임 패닉", "빈 문자열 출력"], a: 1, why: "소유권이 b 로 이동 · a 는 더 이상 유효하지 않음 (E0382)" },
-                { q: "동시에 살아 있어도 되는 조합은?", options: ["`&mut` 두 개", "`&` 하나와 `&mut` 하나", "`&` 여러 개", "`&mut` 하나와 소유자의 직접 수정"], a: 2, why: "공유(읽기)는 여럿, 수정은 단독" },
-                { q: "`let x = 5; let y = x;` 다음 x 사용은?", options: ["가능 (i32 는 Copy)", "컴파일 에러", "런타임 에러", "`unsafe` 필요"], a: 0, why: "`Copy` 타입은 비트 복사 · 원본 유지" },
-                { q: "스코프 끝에서 지역 변수들이 drop 되는 순서는?", options: ["선언 순서", "GC 가 결정", "무작위", "선언 역순"], a: 3, why: "나중에 만든 값이 먼저 만든 값을 참조할 수 있으므로" },
-                { q: "Safe Rust 가 데이터 경쟁을 컴파일 타임에 막는 근거는?", options: ["런타임 락 자동 삽입", "모든 값이 불변", "`&mut` 단독 규칙 + `Send`/`Sync` 트레잇", "GIL 같은 전역 락"], a: 2, why: "공유 가변 상태는 `Mutex` 등 `Sync` 타입을 거쳐야만 가능" }
+                { q: "`let b = a;` (a: String) 다음 `println!(\"{a}\")` 는?", options: ["\"hi\" 출력 (얕은 복사)", "컴파일 에러 E0382", "런타임 패닉 (dangling)", "빈 문자열 출력"], a: 1, why: "소유권이 b 로 이동해 a 는 초기화 안 된 변수 취급 · 검사는 컴파일 타임이라 런타임 패닉이 아님" },
+                { q: "동시에 살아 있어도 되는 조합은?", options: ["`&mut` 두 개", "`&` 하나와 `&mut` 하나", "`&` 여러 개", "`&mut` 하나와 소유자의 직접 수정"], a: 2, why: "공유(읽기)는 여럿, 수정은 단독 · `&` 와 `&mut` 공존은 E0502" },
+                { q: "`let x = 5; let y = x;` 다음 x 사용은?", options: ["가능 (i32 는 Copy)", "컴파일 에러 (x 는 move 됨)", "가능하지만 x 는 0", "`x.clone()` 해야 가능"], a: 0, why: "`Copy` 타입은 비트 복사 · 원본 유지 · move 규칙은 `String` 처럼 `Copy` 가 아닌 타입에만" },
+                { q: "스코프 끝에서 지역 변수들이 drop 되는 순서는?", options: ["선언 순서", "GC 가 결정", "무작위", "선언 역순"], a: 3, why: "나중에 만든 값이 먼저 만든 값을 빌릴 수 있으므로 · 구조체 필드는 반대로 선언 순서" },
+                { q: "Safe Rust 가 데이터 경쟁을 컴파일 타임에 막는 근거는?", options: ["컴파일러가 공유 변수마다 락을 삽입", "공유되는 값은 전부 불변으로 강제", "빌림 규칙 + Send/Sync 트레잇", "런타임이 스레드를 한 번에 하나씩 실행"], a: 2, why: "공유 가변 상태는 `Mutex` 등 `Sync` 타입을 거쳐야만 가능 · 락을 넣는 것은 개발자" },
+                { type: "text", q: "출력은?", code: { lang: "rust", src: "struct D(&'static str);\nimpl Drop for D {\n    fn drop(&mut self) { print!(\"{} \", self.0); }\n}\nfn main() {\n    let _a = D(\"a\");\n    let _b = D(\"b\");\n    { let _c = D(\"c\"); }\n    print!(\"end \");\n}" }, answer: ["c end b a"], why: "안쪽 블록 끝에서 c · main 끝에서 선언 역순으로 b → a" },
+                { type: "text", q: "출력은? (위의 `D` 사용)", code: { lang: "rust", src: "fn main() {\n    let _ = D(\"x\");\n    let _y = D(\"y\");\n    print!(\"main \");\n}" }, answer: ["x main y"], why: "`_` 패턴은 바인딩하지 않아 임시값이 문장 끝에서 바로 drop · `_y` 는 변수라 스코프 끝까지 산다" },
+                { type: "text", q: "출력은?", code: { lang: "rust", src: "use std::rc::Rc;\nfn main() {\n    let a = Rc::new(5);\n    let b = Rc::clone(&a);\n    {\n        let _c = Rc::clone(&a);\n        print!(\"{} \", Rc::strong_count(&a));\n    }\n    drop(b);\n    print!(\"{}\", Rc::strong_count(&a));\n}" }, answer: ["3 1"], why: "a·b·_c = 3 → 블록 끝 `_c` drop → `drop(b)` → 1 · 값은 마지막 `Rc` 가 사라질 때 해제" },
+                { type: "num", q: "64bit 타깃에서 `std::mem::size_of::<String>()` 은 몇 B?", answer: 24, unit: "B", why: "스택 쪽은 (ptr, len, cap) 3워드 = 24 · 문자 데이터는 힙에 있어 크기에 안 들어감" }
             ],
             refs: [
                 { title: "The Rust Programming Language — Understanding Ownership", by: "Klabnik et al.", url: "https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html", kind: "book" },
@@ -499,6 +538,7 @@ greet(&owned);               // &String → &str 자동 변환 (deref)` },
             title: "Python 내부: 객체·GIL·제너레이터",
             level: 2,
             mins: 14,
+            checked: "2026-11-16",
             key: [
                 "모든 값은 힙(heap)의 **객체**(object) · 변수는 객체를 가리키는 이름표",
                 "CPython: 참조 카운트(reference counting)로 즉시 해제 + 순환 참조(reference cycle)는 GC 가 수거",
@@ -624,11 +664,15 @@ with ProcessPoolExecutor() as ex:
                 { term: "Free-threaded 빌드", en: "Free-threaded build", def: "GIL 없이 스레드가 병렬 실행되는 CPython 빌드 (PEP 703/779)" }
             ],
             quiz: [
-                { q: "`a = [1, 2, 3]; b = a; b.append(4)` 후 `a` 는?", options: ["[1, 2, 3]", "[1, 2, 3, 4]", "에러", "[4]"], a: 1, why: "a 와 b 는 같은 리스트 객체" },
-                { q: "기본(GIL) CPython 에서 순수 Python CPU 작업을 스레드 8개로 나누면?", options: ["≈ 8배 빨라짐", "GIL 이 자동 해제돼 병렬", "프로세스로 자동 전환", "대체로 빨라지지 않음 (한 번에 한 스레드)"], a: 3, why: "바이트코드 실행은 GIL 보유 스레드 하나뿐" },
-                { q: "Python 3.14 의 free-threaded 빌드 상태는?", options: ["기본 빌드가 됨", "공식 지원되지만 별도 선택형 빌드", "여전히 실험 단계", "제거됨"], a: 1, why: "PEP 779 로 실험 꼬리표 제거 · 기본은 여전히 GIL 빌드" },
+                { q: "`a = [1, 2, 3]; b = a; b.append(4)` 후 `a` 는?", options: ["[1, 2, 3]", "[1, 2, 3, 4]", "[1, 2, 3, [4]]", "`AttributeError`"], a: 1, why: "`b = a` 는 복사가 아니라 이름 추가 · a 와 b 는 같은 리스트 객체" },
+                { q: "기본(GIL) CPython 에서 순수 Python CPU 작업을 스레드 8개로 나누면?", options: ["≈ 8배 빨라짐", "GIL 이 자동 해제돼 8코어 병렬", "프로세스로 자동 전환되어 병렬", "대체로 빨라지지 않음"], a: 3, why: "바이트코드 실행은 GIL 보유 스레드 하나뿐 · GIL 은 I/O 대기 때만 놓임" },
+                { q: "Python 3.15 (2026-10) 에서 free-threaded 빌드의 위치는?", options: ["기본 빌드가 되어 GIL 제거", "공식 지원이지만 선택형 빌드", "다시 실험 단계로 격하", "3.15 에서 지원 중단"], a: 1, why: "3.14 부터 지원 단계(PEP 779) · 기본 빌드 전환은 아직 별도 결정 · 3.15 는 `abi3t`(PEP 803) 추가" },
                 { q: "순환 참조(`a.me = a`) 객체는 어떻게 해제되나?", options: ["순환 GC 가 탐지해 수거", "참조 카운트가 0 이 되어 즉시", "영원히 누수", "프로세스 종료 때만"], a: 0, why: "서로 참조해 카운트가 0 이 안 됨 → gc 모듈이 처리" },
-                { q: "제너레이터에 대해 틀린 것은?", options: ["`yield` 에서 실행 상태를 보존", "끝나면 `StopIteration`", "다 소비하면 자동으로 처음부터 재시작", "전체 결과를 메모리에 두지 않음"], a: 2, why: "한 번 소진되면 끝 · 다시 쓰려면 새로 생성" }
+                { q: "제너레이터에 대해 틀린 것은?", options: ["`yield` 에서 지역 변수·위치 보존", "끝나면 `StopIteration`", "다 소비하면 처음부터 재시작", "전체 결과를 메모리에 두지 않음"], a: 2, why: "한 번 소진되면 빈 결과만 냄 · 다시 쓰려면 제너레이터 함수를 다시 호출" },
+                { type: "text", q: "출력은?", code: { lang: "python", src: "t = (1, [2])\ntry:\n    t[1] += [3]\nexcept TypeError:\n    pass\nprint(t)" }, answer: ["(1, [2, 3])"], why: "`list.__iadd__` 로 제자리 확장이 먼저 성공 → 튜플 항목 대입에서 TypeError · 예외가 나도 리스트는 바뀜" },
+                { type: "text", q: "출력은?", code: { lang: "python", src: "def add(item, bucket=[]):\n    bucket.append(item)\n    return bucket\n\nprint(add(1), add(2))" }, answer: ["[1, 2] [1, 2]"], why: "기본값 리스트는 `def` 때 한 번만 생성 · 두 호출이 같은 객체를 반환해 둘 다 최종 상태로 출력" },
+                { type: "order", q: "`g = countdown(3); next(g); next(g); g.close()` 에서 일어나는 순서대로 (`countdown` 은 `try`/`finally` 안에서 `yield`)", items: ["`countdown(3)` 호출: 본문 실행 없이 제너레이터 반환", "첫 `next()`: 본문 시작 → `yield 3` 에서 멈춤", "두 번째 `next()`: 멈춘 지점부터 재개 → `yield 2`", "`close()`: 멈춘 `yield` 에 `GeneratorExit`", "`finally` 정리 코드 실행"], why: "제너레이터 함수 호출은 프레임만 만듦 · `close()` 덕분에 버려진 제너레이터의 정리 코드도 실행" },
+                { type: "num", q: "아래 뒤 리스트 객체를 가리키는 참조는 몇 개? (`getrefcount` 인자 임시 참조 제외)", code: { lang: "python", src: "x = [1, 2]\ny = x\nz = [x, x]\ndel y" }, answer: 3, why: "이름 x + z 안의 원소 2개 = 3 · `del y` 는 이름 하나를 지울 뿐 · 3.14 의 `sys.getrefcount(x) - 1` 도 3" }
             ],
             refs: [
                 { title: "dis — Disassembler for Python bytecode", by: "Python Software Foundation", url: "https://docs.python.org/3/library/dis.html", kind: "doc" },
@@ -642,6 +686,8 @@ with ProcessPoolExecutor() as ex:
             title: "동시성: 스레드·async·경쟁 조건",
             level: 3,
             mins: 16,
+            pre: ["languages/cpp-raii", "languages/python-internals"],
+            checked: "2026-11-16",
             key: [
                 "`count++` = 읽기 → 더하기 → 쓰기 · 사이에 끼어들면 **lost update**",
                 "C/C++ 에서 비원자(non-atomic) 변수의 데이터 경쟁(data race)은 **UB** · Rust 는 컴파일 거부",
@@ -759,11 +805,15 @@ total += local;                          // 스레드당 1번` },
                 { term: "이벤트 루프", en: "Event loop", def: "준비된 I/O 이벤트를 골라 해당 코루틴을 재개하는 스케줄러" }
             ],
             quiz: [
-                { q: "두 스레드가 동기화 없이 `int` 에 `++` 를 10만 번씩. C++ 에서 맞는 말은?", options: ["항상 200000", "항상 100000", "데이터 경쟁 → UB · 흔히 200000 미만", "컴파일 에러"], a: 2, why: "비원자 변수 동시 쓰기는 표준상 UB" },
-                { q: "`std::atomic<int>::fetch_add` 가 보장하는 것은?", options: ["증가가 분할 불가 → 갱신 손실 없음", "다른 스레드를 모두 일시정지", "OS 시스템콜로 락을 건다", "값이 절대 오버플로하지 않음"], a: 0, why: "하드웨어 원자 명령(예: `lock xadd`)으로 RMW 를 한 번에" },
-                { q: "asyncio 코루틴 안에서 `time.sleep(1)` 을 호출하면?", options: ["그 코루틴만 1초 멈춤", "이벤트 루프 전체가 1초 멈춤", "자동으로 await 로 바뀜", "예외 발생"], a: 1, why: "`await` 가 없으면 루프로 제어가 돌아가지 않음" },
-                { q: "교착 상태를 막는 대표 규칙은?", options: ["락 대신 sleep 으로 타이밍 조절", "락을 최대한 오래 잡기", "스레드 수 늘리기", "모든 스레드가 같은 순서로 락 획득"], a: 3, why: "순환 대기 조건이 생기지 않음" },
-                { q: "I/O 대기가 대부분인 연결 1만 개를 처리할 때 가장 가벼운 모델은?", options: ["연결당 OS 스레드", "연결당 프로세스", "이벤트 루프 + 코루틴", "바쁜 대기 폴링"], a: 2, why: "대기 중인 연결은 스택·스레드를 차지하지 않음" }
+                { q: "두 스레드가 동기화 없이 `int` 에 `++` 를 10만 번씩. C++ 에서 맞는 말은?", options: ["항상 200000 (`int` 쓰기는 원자적)", "항상 100000", "UB · 실제론 흔히 200000 미만", "컴파일 에러 (동기화 누락)"], a: 2, why: "비원자 변수의 동시 쓰기는 데이터 경쟁 = UB · 정렬된 `int` 저장이 하드웨어에서 원자적이어도 `++` 는 읽기·쓰기 두 번" },
+                { q: "`std::atomic<int>::fetch_add` 가 보장하는 것은?", options: ["읽기·더하기·쓰기를 한 번에", "다른 스레드를 모두 일시정지", "매번 OS 시스템콜로 락", "오버플로 대신 최댓값에서 포화"], a: 0, why: "하드웨어 원자 명령(예: `lock xadd`)으로 RMW 를 분할 불가하게 · 다른 스레드를 멈추거나 커널에 들어가지 않음" },
+                { q: "asyncio 코루틴 안에서 `time.sleep(1)` 을 호출하면?", options: ["그 코루틴만 1초 멈춤", "이벤트 루프 전체가 멈춤", "자동으로 `await` 처럼 동작", "`RuntimeWarning` 후 무시"], a: 1, why: "`await` 가 없으면 루프로 제어가 돌아가지 않음 · 코루틴만 멈추려면 `await asyncio.sleep(1)`" },
+                { q: "교착 상태를 막는 대표 규칙은?", options: ["락 대신 sleep 으로 타이밍 조절", "락을 잡은 채 오래 일하기", "스레드 수를 코어 수에 맞추기", "모두 같은 순서로 락 획득"], a: 3, why: "순환 대기 조건이 생기지 않음 · sleep 은 타이밍만 바꿀 뿐 교착을 없애지 못함" },
+                { q: "I/O 대기가 대부분인 연결 1만 개를 처리할 때 가장 가벼운 모델은?", options: ["연결당 OS 스레드 1개", "연결당 프로세스 1개", "이벤트 루프 + 코루틴", "바쁜 대기(busy-wait) 폴링"], a: 2, why: "대기 중인 코루틴은 작은 상태 객체뿐 · 스레드는 연결마다 스택·커널 객체를 차지" },
+                { type: "order", q: "출력되는 줄을 순서대로", code: { lang: "python", src: "async def fetch(name, delay):\n    print(f\"{name} 시작\")\n    await asyncio.sleep(delay)\n    print(f\"{name} 끝\")\n    return delay\n\nasync def main():\n    print(await asyncio.gather(fetch(\"A\", 1), fetch(\"B\", 2)))\n\nasyncio.run(main())" }, items: ["A 시작", "B 시작", "A 끝", "B 끝", "[1, 2]"], why: "A 가 `await` 에서 양보하자 루프가 B 를 시작 · 1초 뒤 A, 2초 뒤 B 재개 · 결과는 인자 순서" },
+                { type: "text", q: "출력은?", code: { lang: "python", src: "balance = 100\n\nasync def withdraw(amount):\n    global balance\n    if balance >= amount:\n        await asyncio.sleep(0)\n        balance -= amount\n\nasync def main():\n    await asyncio.gather(withdraw(80), withdraw(80))\n    print(balance)\n\nasyncio.run(main())" }, answer: ["-60"], why: "둘 다 100 을 보고 확인 통과 → `await` 에서 전환 → 둘 다 출금 · 단일 스레드여도 `await` 사이는 경쟁" },
+                { type: "num", q: "초기값 0, 두 스레드가 `count++` (load → add → store) 를 **각 1번** 할 때 나올 수 있는 최솟값은?", answer: 1, why: "둘 다 0 을 읽고 각자 1 을 저장하면 1 · 하나의 증가가 사라지는 lost update" },
+                { type: "order", q: "release/acquire 로 데이터를 넘길 때 보장되는 순서대로", items: ["생산자: `data = 42`", "생산자: `ready.store(true, release)`", "소비자: `ready.load(acquire)` 가 true", "소비자: `data` 를 읽으면 42"], why: "release 이전의 쓰기는 그 값을 acquire 로 읽은 스레드에 모두 보임 (happens-before)" }
             ],
             refs: [
                 { title: "How to Make a Multiprocessor Computer That Correctly Executes Multiprocess Programs", by: "Lamport", year: 1979, url: "https://lamport.azurewebsites.net/pubs/multi.pdf", kind: "paper" },
@@ -776,6 +826,7 @@ total += local;                          // 스레드당 1번` },
             title: "컴파일과 링크",
             level: 1,
             mins: 12,
+            checked: "2026-11-16",
             key: [
                 "`.c` → 전처리(preprocessing) → 컴파일 → 어셈블 → `.o` → **링크**(linking) → 실행 파일(executable)",
                 "컴파일은 파일 단위 · 다른 파일 함수는 **선언**(declaration)만 알면 됨",
@@ -893,11 +944,15 @@ gcc -O2 -flto a.o b.o -o app    # 링크 때 전체를 보고 인라인·죽은 
                 { term: "동적 링크", en: "Dynamic linking", def: "실행 시 로더가 공유 라이브러리(`.so`/`.dll`)를 연결" }
             ],
             quiz: [
-                { q: "`undefined reference to 'add'` 는 어느 단계의 에러?", options: ["전처리", "컴파일", "링크", "실행"], a: 2, why: "선언은 있어 컴파일은 통과 · 정의를 못 찾은 것은 링커" },
-                { q: "헤더에 `int counter = 0;` 을 두고 두 `.c` 에서 include 하면?", options: ["문제 없음 (자동 공유)", "링크 때 다중 정의 에러", "전처리 에러", "실행 시 크래시"], a: 1, why: "번역 단위마다 정의가 생김 · 헤더엔 `extern` 선언만" },
-                { q: "`nm main.o` 의 `U printf` 의 의미는?", options: ["printf 를 정의함", "인라인됨", "사용되지 않음", "미정의: 링크/로드 때 다른 곳에서 찾음"], a: 3, why: "U = undefined · libc 에서 해결" },
-                { q: "`static int helper(void)` 의 `static` 효과는?", options: ["내부 링크: 이 번역 단위 밖에선 안 보임", "스택에 저장", "인라인 강제", "함수가 한 번만 실행"], a: 0, why: "다른 파일의 같은 이름과 충돌하지 않음" },
-                { q: "동적 링크의 장점이 **아닌** 것은?", options: ["여러 프로세스가 라이브러리 메모리 공유", "라이브러리만 교체해 보안 패치", "배포 환경에 라이브러리가 없어도 실행됨", "실행 파일 크기 감소"], a: 2, why: "없으면 로더가 실패 · 그 경우엔 정적 링크" }
+                { q: "`undefined reference to 'add'` 는 어느 단계의 에러?", options: ["전처리", "컴파일", "링크", "실행"], a: 2, why: "선언은 있어 컴파일은 통과 · 정의를 못 찾은 것은 링커 · 실행 시 .so 를 못 찾는 에러는 메시지가 다름" },
+                { q: "헤더에 `int counter = 0;` 을 두고 두 `.c` 에서 include 하면?", options: ["문제 없음 (자동 공유)", "링크 때 다중 정의 에러", "include guard 가 막아 줌", "실행 시 크래시"], a: 1, why: "번역 단위마다 정의가 생김 · include guard 는 한 번역 단위 안의 중복만 막음 · 헤더엔 `extern` 선언만" },
+                { q: "`nm main.o` 의 `U printf` 의 의미는?", options: ["이 파일이 printf 를 정의함", "인라인되어 호출이 사라짐", "선언만 있고 안 쓰임", "미정의 · 링크/로드 때 해결"], a: 3, why: "U = undefined · 이 파일이 쓰지만 정의는 없음 → libc 에서 해결" },
+                { q: "`static int helper(void)` 의 `static` 효과는?", options: ["내부 링크 (이 파일 전용)", "함수 코드가 정적 메모리에 배치", "호출될 때마다 인라인을 강제", "프로그램에서 한 번만 실행"], a: 0, why: "다른 번역 단위에서 안 보여 같은 이름과 충돌하지 않음 · 저장 위치나 실행 횟수와는 무관" },
+                { q: "동적 링크의 장점이 **아닌** 것은?", options: ["여러 프로세스가 라이브러리 코드 페이지 공유", "라이브러리만 교체해 보안 패치", "대상에 `.so` 가 없어도 실행됨", "실행 파일 크기가 작아짐"], a: 2, why: "없으면 로더가 `cannot open shared object file` 로 실패 · 그 경우엔 정적 링크" },
+                { type: "order", q: "`gcc main.c util.c -o app` 후 `./app` 까지, 단계를 순서대로", items: ["전처리 (`-E` → `.i`)", "컴파일 (`-S` → `.s`)", "어셈블 (`-c` → `.o`)", "링크 (`ld` → 실행 파일)", "로드 (`ld.so` 가 `.so` 연결)"], why: "링크 전까지는 파일 단위로 독립 · 동적 라이브러리 연결은 실행할 때 로더가 함" },
+                { type: "num", q: "아래 `main.c` 를 `gcc -c` 한 뒤 `nm main.o` 에서 `U` 로 표시되는 심볼은 몇 개?", code: { lang: "c", src: "#include <stdio.h>\n#include \"util.h\"   // int add(int, int); extern int counter;\nint main(void) {\n    printf(\"%d\\n\", add(2, 3));\n    printf(\"calls=%d\\n\", counter);\n    return 0;\n}" }, answer: 3, why: "`add`, `counter`, `printf` 가 U · `main` 은 이 파일이 정의하므로 T" },
+                { type: "text", q: "출력은?", code: { lang: "c", src: "#define SQ_BAD(x) x * x\nprintf(\"%d\\n\", SQ_BAD(1 + 2));" }, answer: ["5"], why: "텍스트 치환 → `1 + 2 * 1 + 2` = 5 · 인자와 전체를 괄호로 감싸야 9" },
+                { type: "text", q: "g++ (Itanium C++ ABI) 에서 `int add(int, int)` 의 심볼 이름은?", answer: ["_Z3addii"], why: "`_Z` + 이름 길이 3 + `add` + 인자 `i`·`i` · C 라이브러리를 부를 땐 `extern \"C\"` 로 맹글링을 끔" }
             ],
             refs: [
                 { title: "Using the GNU Compiler Collection — Options Controlling the Kind of Output", by: "GNU Project", url: "https://gcc.gnu.org/onlinedocs/gcc/Overall-Options.html", kind: "doc" },
@@ -911,6 +966,8 @@ gcc -O2 -flto a.o b.o -o app    # 링크 때 전체를 보고 인라인·죽은 
             title: "부동소수점 IEEE 754",
             level: 2,
             mins: 15,
+            pre: ["embedded/bits"],
+            checked: "2026-11-16",
             key: [
                 "값 = (−1)^부호 × 2^(지수 − bias) × 1.가수(significand) · fp32 = 1 + 8 + 23 bit",
                 "`0.1` 은 2진수로 끝나지 않음 → 반올림해 저장 → `0.1 + 0.2 != 0.3`",
@@ -998,10 +1055,14 @@ for x in xs:
             ],
             quiz: [
                 { q: "fp32 지수 비트가 `01111011`(123)이면 실제 지수는?", options: ["123", "−4", "−3", "4"], a: 1, why: "123 − bias 127 = −4 · 0.1 ≈ 1.6 × 2⁻⁴" },
-                { q: "`0.1 + 0.2 == 0.3` 이 거짓인 이유는?", options: ["CPU 버그", "세 수 모두 2진수로 정확히 표현 불가", "덧셈 결합법칙 때문", "정수로 변환되어서"], a: 1, why: "각각 반올림된 값끼리 더한 결과가 0.3 의 반올림 값과 마지막 비트에서 다름" },
-                { q: "fp16 으로 70000 을 저장하면?", options: ["70000", "65504", "+∞", "0"], a: 2, why: "최대 정규값 65504 를 넘어 반올림 결과가 무한대" },
-                { q: "bf16 과 fp16 의 차이로 맞는 것은?", options: ["bf16 정밀도가 더 높다", "bf16 은 fp32 와 지수 폭이 같아 범위가 넓다", "둘 다 지수 5bit", "fp16 은 부호 비트가 없다"], a: 1, why: "bf16 지수 8bit = fp32 범위 · 대신 가수 7bit 로 정밀도는 낮음" },
-                { q: "fp64 에서 `1e16 + 1.0` 의 결과는?", options: ["10000000000000001", "1e16", "오버플로", "NaN"], a: 1, why: "1e16 근처 ULP 는 2 · 1 은 정확히 절반 → 짝수 쪽으로 반올림되어 사라짐" }
+                { q: "`0.1 + 0.2 == 0.3` 이 거짓인 이유는?", options: ["x87 FPU 의 오래된 설계 버그", "셋 다 2진수로 정확히 못 담음", "덧셈 결합법칙이 깨져서", "비교 전에 fp32 로 줄어서"], a: 1, why: "각각 반올림된 값끼리 더한 결과가 0.3 의 반올림 값과 마지막 비트에서 다름 · 결합법칙은 항이 셋 이상일 때 이야기" },
+                { q: "fp16 으로 70000 을 저장하면? (최근접 반올림)", options: ["70000", "65504", "+∞", "0"], a: 2, why: "65504 + ULP/2 = 65520 이상은 무한대로 반올림 · 최댓값에 멈추는(포화) 것은 IEEE 기본 동작이 아님" },
+                { q: "bf16 과 fp16 의 차이로 맞는 것은?", options: ["bf16 이 가수가 길어 더 정밀함", "bf16 은 fp32 와 범위가 같음", "둘 다 지수 5bit 이고 가수만 다름", "fp16 은 부호 비트가 없음"], a: 1, why: "bf16 은 범위를 지키고 가수 7bit 로 정밀도를 포기 · 더 정밀한 쪽은 가수 10bit 인 fp16" },
+                { q: "fp64 에서 `1e16 + 1.0` 의 결과는?", options: ["10000000000000001", "1e16", "오버플로", "NaN"], a: 1, why: "1e16 근처 ULP 는 2 · 1 은 정확히 절반 → 짝수 쪽으로 반올림되어 사라짐" },
+                { type: "num", q: "fp32 로 `-2.5` 의 비트 패턴은? (16진 입력 가능)", answer: 0xC0200000, why: "−2.5 = −1.01₂ × 2¹ · 부호 1, 지수 1 + 127 = 128 (`10000000`), 가수 `010…0` → `0xC0200000`" },
+                { type: "num", q: "fp32 에서 1.7e9 (Unix 시간, 초) 근처의 ULP 는 몇 초?", answer: 128, unit: "초", why: "1.7e9 는 [2³⁰, 2³¹) 구간 → ULP = 2^(30 − 23) = 128 · 타임스탬프를 fp32 로 두면 2분 단위로 뭉개짐" },
+                { type: "text", q: "Python (fp64) 출력은?", code: { lang: "python", src: "print(0.1 + 0.2)" }, answer: ["0.30000000000000004"], why: "두 반올림 값의 합이 0.3 에 가장 가까운 fp64 보다 1 ULP 큼 · `repr` 은 그 값을 구분하는 최단 10진수로 출력" },
+                { type: "order", q: "0.1 을 fp32 로 저장하는 과정을 순서대로", items: ["2진 전개 `0.000110011…` (무한 반복)", "정규화 `1.10011…₂ × 2⁻⁴`", "지수 −4 + 127 = 123", "가수 23bit 에서 최근접 짝수 반올림", "`0x3DCCCCCD` 저장"], why: "정규화해야 숨은 비트와 지수가 정해지고, 남는 비트는 마지막에 반올림 · 결과는 0.1 보다 약 1.49e−9 큼" }
             ],
             refs: [
                 { title: "IEEE 754-2019 — IEEE Standard for Floating-Point Arithmetic", by: "IEEE", year: 2019, url: "https://standards.ieee.org/ieee/754/6210/", kind: "spec" },
@@ -1015,6 +1076,7 @@ for x in xs:
             title: "자료구조와 복잡도",
             level: 1,
             mins: 12,
+            checked: "2026-11-16",
             key: [
                 "Big-O = 입력이 커질 때의 **증가율**(growth rate) · 상수와 작은 항은 무시",
                 "배열(array): 인덱스 O(1), 중간 삽입 O(n) · 연결 리스트(linked list)는 반대지만 캐시에 약함",
@@ -1159,10 +1221,14 @@ while queue:
             ],
             quiz: [
                 { q: "정렬된 100만 개 배열을 이진 탐색할 때 최악 비교 횟수는 약?", options: ["20", "1000", "50만", "100만"], a: 0, why: "log2(10⁶) ≈ 20" },
-                { q: "동적 배열 `append` 가 분할상환 O(1) 인 이유는?", options: ["항상 빈 칸이 있어서", "내부가 연결 리스트라서", "OS 가 미리 할당해 둬서", "용량을 배수로 늘려 복사가 드물어서"], a: 3, why: "복사 총량이 n 에 비례 → 원소당 상수" },
-                { q: "해시 테이블이 최악 O(n) 이 되는 경우는?", options: ["버킷이 많을 때", "키가 정수일 때", "모든 키가 한 버킷에 충돌할 때", "리사이즈 직후"], a: 2, why: "체인 하나를 끝까지 비교해야 함" },
-                { q: "Python `list.pop(0)` 의 복잡도는?", options: ["O(1)", "O(n)", "O(log n)", "O(n log n)"], a: 1, why: "뒤 원소들을 한 칸씩 당겨야 함" },
-                { q: "같은 O(n) 순회인데 배열이 연결 리스트보다 빠른 주된 이유는?", options: ["캐시 지역성 (연속 메모리·프리페치)", "Big-O 가 다름", "포인터가 더 작아서", "연결 리스트는 정렬 불가"], a: 0, why: "노드가 흩어져 있으면 매번 캐시 미스 가능" }
+                { q: "동적 배열 `append` 가 분할상환 O(1) 인 이유는?", options: ["항상 여분 칸이 남아 있어서", "내부가 연결 리스트라서", "OS 가 페이지를 미리 할당해서", "용량을 배수로 늘려서"], a: 3, why: "복사 총량이 n 에 비례 → 원소당 상수 · 꽉 차면 여분 칸은 없고 그때 O(n) 복사가 일어남" },
+                { q: "해시 테이블이 최악 O(n) 이 되는 경우는?", options: ["버킷 수가 원소보다 많을 때", "키가 모두 정수일 때", "키가 한 버킷에 몰릴 때", "리사이즈 직후 첫 조회"], a: 2, why: "체인 하나를 끝까지 비교해야 함 · 리사이즈 자체는 그 삽입 한 번만 O(n)" },
+                { q: "Python `list.pop(0)` 의 복잡도는?", options: ["O(1)", "O(n)", "O(log n)", "O(n log n)"], a: 1, why: "뒤 원소들을 한 칸씩 당겨야 함 · 양끝 O(1) 이 필요하면 `deque.popleft()`" },
+                { q: "같은 O(n) 순회인데 배열이 연결 리스트보다 빠른 주된 이유는?", options: ["캐시 지역성", "배열의 Big-O 가 더 낮아서", "포인터가 원소보다 작아서", "리스트는 분기 예측이 안 돼서"], a: 0, why: "연속 메모리라 한 캐시 라인에 원소 여럿 + 프리페치 · Big-O 는 둘 다 O(n)" },
+                { type: "num", q: "용량 1 에서 시작해 꽉 차면 **2배**로 늘리는 동적 배열에 `append` 16번. 재할당 때 복사되는 원소는 총 몇 개?", answer: 15, why: "1 + 2 + 4 + 8 = 15 < n · 원소당 상수 → 분할상환 O(1)" },
+                { type: "num", q: "같은 조건에서 꽉 차면 용량을 **+1** 씩 늘리면 복사되는 원소는 총 몇 개?", answer: 120, why: "1 + 2 + … + 15 = 120 ≈ n²/2 · append 하나가 평균 O(n)" },
+                { type: "text", q: "출력은?", code: { lang: "python", src: "import bisect\na = [10, 20, 20, 30]\nprint(bisect.bisect_left(a, 20), bisect.bisect_right(a, 20))" }, answer: ["1 3"], why: "left 는 같은 값 중 가장 왼쪽 위치, right 는 마지막 20 의 다음 위치 · 차이 2 = 20 의 개수" },
+                { type: "order", q: "n = 10⁶ 일 때 연산 수가 작은 것부터", items: ["O(1)", "O(log n)", "O(n)", "O(n log n)", "O(n²)"], why: "1 · ≈ 20 · 10⁶ · ≈ 2×10⁷ · 10¹²" }
             ],
             refs: [
                 { title: "The Art of Computer Programming, Vol. 3: Sorting and Searching (2nd ed.)", by: "Knuth", year: 1998, url: "https://www-cs-faculty.stanford.edu/~knuth/taocp.html", kind: "book" },

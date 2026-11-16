@@ -66,6 +66,13 @@ function checkDemo(where, d) {
             (d.steps || []).forEach((s, i) => { if (!(s.line >= 1 && s.line <= lines)) err(where, `memory step ${i} line ${s.line} > ${lines}`); (s.stack || []).forEach((f) => { if (!str(f.fn) || !Array.isArray(f.vars)) err(where, `memory step ${i} frame shape`); }); });
             if (!(d.steps || []).length) err(where, "memory steps empty");
         }
+        if (d.name === "cpu") { // must assemble, run to the end, and match expect: { r0: 15, ... }
+            const r = LAB.asm.run(d.code, d.regs);
+            if (r.error) err(where, `cpu: ${r.error}`);
+            else Object.entries(d.expect || {}).forEach(([k, v]) => { const got = LAB.asm.reg(r.M, k); if (got !== v >>> 0) err(where, `cpu expect ${k}=${v} but got ${got | 0}`); });
+            if (!d.expect) warn(where, "cpu demo without expect");
+        }
+        if (d.name === "layout" && !(d.fields || []).every((f) => Array.isArray(f) && LAB.LAYOUT_TYPES && f[0] in LAB.LAYOUT_TYPES)) err(where, `layout fields must be [type, name] with type in ${Object.keys(LAB.LAYOUT_TYPES || {}).join(", ")}`);
         if (d.name === "attention" && d.tokens && d.weights && d.weights.length !== d.tokens.length) err(where, "attention weights size");
         if (d.name === "sampling" && d.tokens && (d.logits || []).length !== d.tokens.length) err(where, "sampling logits size");
     }
@@ -220,6 +227,57 @@ LAB.SIM_NAMES.forEach((n) => { if (!(LAB.SIM_INFO || {})[n]) err("anim.js", `SIM
     assert.equal(crc("123456789", "100000111"), 0xf4, "CRC-8/SMBUS check value");
     assert.equal(crc("123456789", "10001000000100001"), 0x31c3, "CRC-16/XMODEM check value");
     assert.equal(N.crcDiv([..."11010011101100"].map(Number), [1, 0, 1, 1]).rem.join(""), "100", "CRC-3 textbook example");
+}
+
+// cpu lab: loops, calls + stack, flags, bytes, faults
+{
+    const A = LAB.asm;
+    const run = (src) => { const r = A.run(src); return r.error ? { error: r.error } : r.M; };
+    const sum = run(".data\narr: .word 3, 1, 4, 1, 5\n.text\nldr r1, =arr\nmovs r2, #5\nmovs r0, #0\nloop: ldr r3, [r1], #4\nadds r0, r0, r3\nsubs r2, r2, #1\nbne loop\nbx lr");
+    assert.equal(A.reg(sum, "r0"), 14, "cpu array sum");
+    const fact = run("push {r4, lr}\nmovs r0, #5\nbl fact\npop {r4, pc}\nfact: cmp r0, #1\nble base\npush {r0, lr}\nsubs r0, r0, #1\nbl fact\npop {r1, lr}\nmuls r0, r0, r1\nbx lr\nbase: movs r0, #1\nbx lr");
+    assert.equal(A.reg(fact, "r0"), 120, "cpu recursive factorial");
+    assert.equal(A.reg(fact, "sp"), A.RAM_BASE + A.RAM_SIZE, "cpu stack balanced");
+    const fl = run("movs r0, #0x7f\nlsls r0, r0, #24\nadds r1, r0, r0\nbx lr");
+    assert.deepEqual([fl.n, fl.z, fl.c, fl.v], [1, 0, 0, 1], "cpu signed overflow flags");
+    const cmpu = run("mov r2, #-1\nmovs r3, #0\nmovs r4, #0\ncmp r2, #1\nblo a\nmovs r3, #1\na: cmp r2, #1\nblt b\nmovs r4, #1\nb: bx lr");
+    assert.deepEqual([A.reg(cmpu, "r3"), A.reg(cmpu, "r4")], [1, 0], "cpu unsigned vs signed branch");
+    const by = run(".data\nv: .word 0x12345678\n.text\nldr r0, =v\nldrb r1, [r0]\nmovs r5, #0xFF\nstrb r5, [r0, #1]\nldr r6, [r0]\nldrsb r7, [r0, #1]\nbx lr");
+    assert.deepEqual([A.reg(by, "r1"), A.reg(by, "r6"), A.reg(by, "r7")], [0x78, 0x1234ff78, 0xffffffff], "cpu little-endian bytes");
+    assert.match(run("movs r0, #0\nldr r1, [r0]\nbx lr").error, /HardFault/, "cpu null deref faults");
+    assert.match(run("x: b x").error, /단계/, "cpu infinite loop guard");
+    assert.match(run("b nowhere").error, /없는 레이블/, "cpu unknown label");
+}
+
+// memory + data-structure labs
+{
+    const D = LAB.ds;
+    const hits = (p, size, block, ways) => D.cacheSim(D.CACHE_PATTERNS[p][1](size), size, block, ways).frames.at(-1).hits;
+    assert.equal(hits("conflict", 64, 16, 1), 0, "cache: direct-mapped conflict thrashes");
+    assert.equal(hits("conflict", 64, 16, 2), 12, "cache: 2-way fixes the conflict");
+    assert.equal(hits("seq", 64, 16, 1), 24, "cache: sequential = 1 miss per block");
+    const lay = D.structLayout([["char", "a"], ["int", "b"], ["char", "c"], ["double", "d"]].map(([t, n]) => ({ t, n })), 32, false);
+    assert.deepEqual([lay.items.map((x) => x.off), lay.size], [[0, 4, 8, 16], 24], "struct padding (AAPCS)");
+    const r = D.ring.make(4, "spare");
+    for (let i = 1; i <= 5; i++) D.ring.put(r, i, false);
+    assert.deepEqual([D.ring.size(r), r.lost], [3, 2], "ring buffer keeps one slot empty");
+    const h = D.hashT.make(8, "linear");
+    [12, 20, 7, 15, 3, 28].forEach((k) => D.hashT.insert(h, k));
+    D.hashT.remove(h, 20);
+    assert.ok(D.hashT.find(h, 28).ok, "hash: tombstone keeps the probe chain");
+    const hp = [9, 4, 7, 1, 8, 2];
+    D.heapT.heapify(hp, "min");
+    assert.ok(D.heapT.ok(hp, "min"), "heapify");
+    let t = null;
+    [50, 30, 70, 20, 40, 60, 80, 35].forEach((v) => { t = D.bstT.insert(t, v).root; });
+    t = D.bstT.remove(t, 30).root;
+    assert.equal(D.bstT.inorder(t).join(" "), "20 35 40 50 60 70 80", "bst delete with two children");
+    for (const algo of ["bubble", "insertion", "selection", "merge", "quick", "heap"]) {
+        for (const kind of ["random", "nearly", "reversed", "few"]) {
+            const out = D.sortFrames(algo, D.sortInput(kind, 16, 3)).at(-1).a;
+            assert.ok(out.every((v, i) => !i || out[i - 1] <= v), `sort ${algo} ${kind}`);
+        }
+    }
 }
 
 // merge: newest entry wins, quiz best keeps max, reset drops older entries

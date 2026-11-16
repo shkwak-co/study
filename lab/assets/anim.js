@@ -1734,6 +1734,380 @@
         return v === null || !Number.isSafeInteger(v) ? null : wrap(v, w);
     }
 
+    /* ---------- cpu: tiny Armv7-M (Thumb-2 UAL subset) interpreter — pure, tested by check.mjs ---------- */
+    // Simplifications: every instruction is 4 bytes, RAM is 4 KB at 0x20000000 (stack at the top), no IT blocks.
+    const CODE_BASE = 0x08000000;
+    const RAM_BASE = 0x20000000;
+    const RAM_SIZE = 0x1000;
+    const EXIT = 0xffffffff; // reset value of LR on Cortex-M: returning to it ends the program
+    const REGN = { sp: 13, lr: 14, pc: 15, ip: 12, fp: 11 };
+    const REG_NAMES = ["r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "r12", "sp", "lr", "pc"];
+    const regIdx = (t) => { t = String(t || "").trim().toLowerCase(); if (t in REGN) return REGN[t]; const m = /^r(\d|1[0-5])$/.exec(t); return m ? +m[1] : -1; };
+    const DP = new Set(["mov", "mvn", "add", "adc", "sub", "sbc", "rsb", "mul", "udiv", "sdiv", "and", "orr", "eor", "bic", "lsl", "lsr", "asr", "ror", "neg", "cmp", "cmn", "tst"]);
+    const NOS = new Set(["cmp", "cmn", "tst", "udiv", "sdiv"]);
+    const MEMOPS = { ldr: 4, str: 4, ldrb: 1, strb: 1, ldrh: 2, strh: 2, ldrsb: -1, ldrsh: -2 };
+    const COND = {
+        eq: (f) => f.z, ne: (f) => !f.z, cs: (f) => f.c, hs: (f) => f.c, cc: (f) => !f.c, lo: (f) => !f.c, mi: (f) => f.n, pl: (f) => !f.n,
+        vs: (f) => f.v, vc: (f) => !f.v, hi: (f) => f.c && !f.z, ls: (f) => !f.c || f.z, ge: (f) => f.n === f.v, lt: (f) => f.n !== f.v,
+        gt: (f) => !f.z && f.n === f.v, le: (f) => f.z || f.n !== f.v, al: () => true
+    };
+    const COND_WHY = { eq: "Z=1", ne: "Z=0", cs: "C=1", hs: "C=1", cc: "C=0", lo: "C=0", mi: "N=1", pl: "N=0", vs: "V=1", vc: "V=0", hi: "C=1 이고 Z=0", ls: "C=0 또는 Z=1", ge: "N=V", lt: "N≠V", gt: "Z=0 이고 N=V", le: "Z=1 또는 N≠V", al: "항상" };
+    const h8 = (v) => `0x${(v >>> 0).toString(16).toUpperCase().padStart(8, "0")}`;
+    const asmNum = (t) => {
+        const s = String(t || "").trim().replace(/^#/, "");
+        if (/^-?0x[0-9a-f]+$/i.test(s)) return parseInt(s, 16);
+        if (/^-?0b[01]+$/i.test(s)) return (s[0] === "-" ? -1 : 1) * parseInt(s.replace(/^-?0b/i, ""), 2);
+        if (/^-?\d+$/.test(s)) return parseInt(s, 10);
+        if (/^'.'$/.test(s)) return s.charCodeAt(1);
+        return null;
+    };
+    function splitOps(s) {
+        const out = [];
+        let depth = 0;
+        let cur = "";
+        for (const ch of String(s)) {
+            if (ch === "[" || ch === "{") depth++;
+            if (ch === "]" || ch === "}") depth--;
+            if (ch === "," && !depth) { out.push(cur.trim()); cur = ""; } else cur += ch;
+        }
+        if (cur.trim()) out.push(cur.trim());
+        return out;
+    }
+    function operand2(t, R) {
+        if (!t.length || !t[0]) throw "피연산자가 부족함";
+        const v = asmNum(t[0]);
+        if (v !== null) { if (t[1]) throw `즉시값에는 시프트를 붙일 수 없음: ${t[1]}`; return { imm: v >>> 0 }; }
+        const reg = R(t[0]);
+        if (!t[1]) return { reg };
+        const m = /^(lsl|lsr|asr|ror)\s+#?(\S+)$/i.exec(t[1]);
+        const a = m && asmNum(m[2]);
+        if (!m || a === null || a < 0 || a > 32) throw `시프트 형식: ${t[1]}`;
+        return { reg, sh: m[1].toLowerCase(), amt: a };
+    }
+    function reglist(t) {
+        const m = /^\{(.*)\}$/.exec(String(t || "").trim());
+        if (!m) throw `레지스터 목록은 {r4, lr} 형식: ${t}`;
+        const out = new Set();
+        for (const part of m[1].split(",").map((x) => x.trim()).filter(Boolean)) {
+            const [a, b] = part.split("-").map((x) => regIdx(x));
+            if (a < 0 || (part.includes("-") && b < a)) throw `레지스터 목록: ${part}`;
+            for (let r = a; r <= (part.includes("-") ? b : a); r++) out.add(r);
+        }
+        if (!out.size) throw "빈 레지스터 목록";
+        return [...out].sort((x, y) => x - y);
+    }
+    function decode(x, labels, dlabels) {
+        let mn = x.mn.replace(/\.[wn]$/, "");
+        const o = x.ops;
+        const R = (t) => { const r = regIdx(t); if (r < 0) throw `레지스터가 아님: ${t || "(없음)"}`; return r; };
+        const target = (t) => { if (!(t in labels)) throw `없는 레이블: ${t || "(없음)"}`; return labels[t]; };
+        if (mn === "nop") return { op: "nop" };
+        if (mn === "bl") return { op: "bl", to: target(o[0]) };
+        if (mn === "bx" || mn === "blx") return { op: mn, rm: R(o[0]) };
+        if (mn === "cbz" || mn === "cbnz") return { op: mn, rn: R(o[0]), to: target(o[1]) };
+        const b = /^b(eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al)?$/.exec(mn);
+        if (b) return { op: "b", cond: b[1] || "al", to: target(o[0]) };
+        if (mn === "push" || mn === "pop") return { op: mn, list: reglist(o[0]) };
+        if (mn in MEMOPS) {
+            const rt = R(o[0]);
+            const lit = /^=(.+)$/.exec(String(o[1] || "").trim());
+            if (lit) {
+                if (mn !== "ldr") throw "`=값` 은 ldr 에서만";
+                const v = asmNum(lit[1]);
+                if (v === null && !(lit[1] in dlabels)) throw `없는 데이터 레이블: ${lit[1]}`;
+                return { op: "ldrlit", rd: rt, val: (v !== null ? v : dlabels[lit[1]]) >>> 0, name: lit[1] };
+            }
+            const m = /^\[([^\]]*)\](!?)$/.exec(String(o[1] || "").trim());
+            if (!m) throw `주소 형식은 [rn], [rn, #4], [rn, r2]: ${o[1] || "(없음)"}`;
+            const parts = splitOps(m[1]);
+            let off = parts.length > 1 ? operand2(parts.slice(1), R) : { imm: 0 };
+            let wb = m[2] ? "pre" : "";
+            if (o[2]) { if (parts.length > 1) throw "post-index 는 [rn], #4 형식"; off = operand2(o.slice(2), R); wb = "post"; }
+            return { op: "mem", load: mn.startsWith("ldr"), size: Math.abs(MEMOPS[mn]), signed: MEMOPS[mn] < 0, rt, base: R(parts[0]), off, wb };
+        }
+        let s = false;
+        if (!DP.has(mn) && mn.endsWith("s") && DP.has(mn.slice(0, -1)) && !NOS.has(mn.slice(0, -1))) { s = true; mn = mn.slice(0, -1); }
+        if (!DP.has(mn)) throw `지원하지 않는 명령: ${x.mn}`;
+        if (["cmp", "cmn", "tst"].includes(mn)) return { op: mn, s: true, rn: R(o[0]), op2: operand2(o.slice(1), R) };
+        if (mn === "mov" || mn === "mvn") return { op: mn, s, rd: R(o[0]), op2: operand2(o.slice(1), R) };
+        if (mn === "neg") return { op: "rsb", s, rd: R(o[0]), rn: R(o[1]), op2: { imm: 0 } };
+        if (["lsl", "lsr", "asr", "ror"].includes(mn)) {
+            const three = o.length >= 3;
+            return { op: "shift", kind: mn, s, rd: R(o[0]), rn: R(three ? o[1] : o[0]), amt: operand2([three ? o[2] : o[1]], R) };
+        }
+        if (["mul", "udiv", "sdiv"].includes(mn)) {
+            const three = o.length >= 3;
+            return { op: mn, s, rd: R(o[0]), rn: R(three ? o[1] : o[0]), op2: { reg: R(three ? o[2] : o[1]) } };
+        }
+        if (o.length === 2) return { op: mn, s, rd: R(o[0]), rn: R(o[0]), op2: operand2([o[1]], R) };
+        return { op: mn, s, rd: R(o[0]), rn: R(o[1]), op2: operand2(o.slice(2), R) };
+    }
+    // source → { ins, labels, dlabels, data, error: { line, msg } | null }
+    function assemble(src) {
+        const ins = [];
+        const labels = {};
+        const dlabels = {};
+        const data = [];
+        let pending = [];
+        const lines = String(src || "").split("\n");
+        const fail = (line, msg) => ({ ins, labels, dlabels, data, error: { line, msg } });
+        for (let i = 0; i < lines.length; i++) {
+            const ln = i + 1;
+            let s = lines[i].replace(/(@|;|\/\/).*$/, "").trim();
+            let m;
+            while ((m = /^([A-Za-z_.$][\w.$]*):\s*/.exec(s))) {
+                if (m[1] in labels || m[1] in dlabels || pending.includes(m[1])) return fail(ln, `레이블 중복: ${m[1]}`);
+                pending.push(m[1]);
+                s = s.slice(m[0].length);
+            }
+            if (!s) continue;
+            if (s[0] === ".") {
+                const d = /^\.(\w+)\s*(.*)$/.exec(s) || [];
+                const size = { word: 4, hword: 2, short: 2, byte: 1 }[d[1]];
+                const isData = size || ["space", "skip", "ascii", "asciz", "string"].includes(d[1]);
+                if (!isData) continue; // .data .text .global .align .thumb .syntax ...
+                if (size > 1) while (data.length % size) data.push(0);
+                pending.forEach((p) => { dlabels[p] = RAM_BASE + data.length; });
+                pending = [];
+                if (size) {
+                    for (const t of splitOps(d[2])) {
+                        const v = asmNum(t);
+                        if (v === null) return fail(ln, `숫자가 아님: ${t}`);
+                        for (let k = 0; k < size; k++) data.push(Math.floor(((v % 2 ** 32) + 2 ** 32) / 2 ** (8 * k)) % 256);
+                    }
+                } else if (d[1] === "space" || d[1] === "skip") {
+                    const n = asmNum(d[2]);
+                    if (n === null || n < 0) return fail(ln, `.space 크기: ${d[2]}`);
+                    for (let k = 0; k < n; k++) data.push(0);
+                } else {
+                    const q = /^"(.*)"$/.exec(d[2].trim());
+                    if (!q) return fail(ln, "문자열은 \"...\" 로");
+                    for (const ch of q[1]) data.push(ch.charCodeAt(0) & 255);
+                    if (d[1] !== "ascii") data.push(0);
+                }
+                if (data.length > RAM_SIZE / 2) return fail(ln, "데이터가 2 KB 를 넘음");
+                continue;
+            }
+            pending.forEach((p) => { labels[p] = ins.length; });
+            pending = [];
+            const t = /^(\S+)\s*(.*)$/.exec(s);
+            ins.push({ mn: t[1].toLowerCase(), ops: splitOps(t[2]), line: ln, text: s });
+        }
+        pending.forEach((p) => { labels[p] = ins.length; });
+        if (!ins.length) return fail(1, "명령이 없음");
+        for (const x of ins) {
+            try { Object.assign(x, decode(x, labels, dlabels)); } catch (e) { return fail(x.line, String(e)); }
+        }
+        return { ins, labels, dlabels, data, error: null };
+    }
+    function machine(prog, init = {}) {
+        const M = { prog, regs: new Array(16).fill(0), n: 0, z: 0, c: 0, v: 0, pc: 0, mem: new Uint8Array(RAM_SIZE), steps: 0, halted: false, error: null };
+        M.mem.set(prog.data);
+        M.regs[13] = RAM_BASE + RAM_SIZE;
+        M.regs[14] = EXIT;
+        Object.entries(init || {}).forEach(([k, v]) => { const r = regIdx(k); if (r >= 0 && r < 15) M.regs[r] = v >>> 0; });
+        M.regs[15] = CODE_BASE;
+        return M;
+    }
+    function shiftC(kind, a, n, c) {
+        n &= 255;
+        if (n === 0) return [a, c];
+        if (kind === "lsl") return n < 32 ? [(a << n) >>> 0, bitAt(a, 32 - n)] : [0, n === 32 ? a & 1 : 0];
+        if (kind === "lsr") return n < 32 ? [a >>> n, bitAt(a, n - 1)] : [0, n === 32 ? a >>> 31 : 0];
+        if (kind === "asr") return n < 32 ? [(a >> n) >>> 0, bitAt(a, n - 1)] : [a >>> 31 ? 0xffffffff : 0, a >>> 31];
+        const k = n % 32;
+        const r = k ? ((a >>> k) | (a << (32 - k))) >>> 0 : a;
+        return [r, r >>> 31];
+    }
+    const addc = (a, b, cin) => { const s = a + b + cin; const r = s >>> 0; return { r, c: s > 0xffffffff ? 1 : 0, v: ((a ^ r) & (b ^ r)) >>> 31 }; };
+    const sv = (v) => { const s = v | 0; return s >= -99999 && s <= 999999 ? String(s) : h8(v); };
+    // execute one instruction; returns { text, regs:Set, mem:[addr], undo } — throws are caught into M.error
+    function cpuStep(M) {
+        if (M.halted) return null;
+        const R = M.regs;
+        const x = M.prog.ins[M.pc];
+        const undo = { regs: R.slice(), f: [M.n, M.z, M.c, M.v], pc: M.pc, mem: [], halted: M.halted };
+        const changed = new Set();
+        const memW = [];
+        let next = M.pc + 1;
+        let text = "";
+        const rn = (r) => REG_NAMES[r];
+        const jump = (addr) => {
+            if (addr >>> 0 === EXIT) { M.halted = true; return "LR = 0xFFFFFFFF → main 이 반환, 프로그램 종료"; }
+            const i = ((addr & ~1) >>> 0) - CODE_BASE;
+            if (i < 0 || i % 4 || i / 4 > M.prog.ins.length) throw `잘못된 분기 주소 ${h8(addr)} → HardFault`;
+            next = i / 4;
+            return "";
+        };
+        const wr = (r, v) => { if (r === 15) { jump(v >>> 0); return; } R[r] = v >>> 0; changed.add(r); };
+        const at = (addr, n) => {
+            const off = addr - RAM_BASE;
+            if (off < 0 || off + n > RAM_SIZE) throw `메모리 범위 밖 ${h8(addr)} 접근 → HardFault`;
+            return off;
+        };
+        const load = (addr, n) => { const o = at(addr, n); let v = 0; for (let k = n - 1; k >= 0; k--) v = v * 256 + M.mem[o + k]; return v; };
+        const store = (addr, n, v) => {
+            const o = at(addr, n);
+            for (let k = 0; k < n; k++) { undo.mem.push([o + k, M.mem[o + k]]); M.mem[o + k] = Math.floor(v / 2 ** (8 * k)) % 256; }
+            memW.push(addr);
+        };
+        const opv = (o) => (o.imm !== undefined ? [o.imm, M.c] : o.sh ? shiftC(o.sh, R[o.reg], o.amt, M.c) : [R[o.reg], M.c]);
+        const opName = (o) => (o.imm !== undefined ? `#${sv(o.imm)}` : o.sh ? `${rn(o.reg)}, ${o.sh} #${o.amt}` : rn(o.reg));
+        const nz = (r) => { M.n = r >>> 31; M.z = r === 0 ? 1 : 0; };
+        const flags = () => `N=${M.n} Z=${M.z} C=${M.c} V=${M.v}`;
+        try {
+            switch (x.op) {
+                case "nop": text = "아무것도 안 함"; break;
+                case "mov": case "mvn": {
+                    let [v, c] = opv(x.op2);
+                    if (x.op === "mvn") v = ~v >>> 0;
+                    wr(x.rd, v);
+                    if (x.s) { nz(v); M.c = c; }
+                    text = `${rn(x.rd)} ← ${x.op === "mvn" ? "~" : ""}${opName(x.op2)} = ${sv(v)}${x.s ? ` · ${flags()}` : ""}`;
+                    break;
+                }
+                case "add": case "adc": case "sub": case "sbc": case "rsb": case "cmp": case "cmn": {
+                    const a = R[x.rn];
+                    const [b] = opv(x.op2);
+                    const r = x.op === "add" || x.op === "cmn" ? addc(a, b, 0) : x.op === "adc" ? addc(a, b, M.c)
+                        : x.op === "rsb" ? addc(b, ~a >>> 0, 1) : x.op === "sbc" ? addc(a, ~b >>> 0, M.c) : addc(a, ~b >>> 0, 1);
+                    const sym = { add: "+", adc: "+", cmn: "+", sub: "−", sbc: "−", cmp: "−", rsb: "−" }[x.op];
+                    const expr = x.op === "rsb" ? `${sv(b)} − ${sv(a)}` : `${sv(a)} ${sym} ${sv(b)}${x.op === "adc" ? ` + C(${undo.f[2]})` : x.op === "sbc" ? ` − !C(${1 - undo.f[2]})` : ""}`;
+                    if (x.s) { nz(r.r); M.c = r.c; M.v = r.v; }
+                    if (x.op === "cmp" || x.op === "cmn") text = `${rn(x.rn)} ${sym} ${opName(x.op2)} = ${expr} = ${sv(r.r)} → 결과는 버리고 플래그만 · ${flags()}`;
+                    else { wr(x.rd, r.r); text = `${rn(x.rd)} ← ${expr} = ${sv(r.r)}${x.s ? ` · ${flags()}` : ""}`; }
+                    break;
+                }
+                case "and": case "orr": case "eor": case "bic": case "tst": {
+                    const a = R[x.rn];
+                    const [b, c] = opv(x.op2);
+                    const r = (x.op === "orr" ? a | b : x.op === "eor" ? a ^ b : x.op === "bic" ? a & ~b : a & b) >>> 0;
+                    if (x.s) { nz(r); M.c = c; }
+                    const sym = { and: "&", tst: "&", orr: "|", eor: "^", bic: "& ~" }[x.op];
+                    if (x.op === "tst") text = `${h8(a)} & ${h8(b)} = ${h8(r)} → 플래그만 · ${flags()}`;
+                    else { wr(x.rd, r); text = `${rn(x.rd)} ← ${h8(a)} ${sym} ${h8(b)} = ${h8(r)}${x.s ? ` · ${flags()}` : ""}`; }
+                    break;
+                }
+                case "shift": {
+                    const a = R[x.rn];
+                    const n = x.amt.imm !== undefined ? x.amt.imm : R[x.amt.reg] & 255;
+                    const [r, c] = shiftC(x.kind, a, n, M.c);
+                    wr(x.rd, r);
+                    if (x.s) { nz(r); M.c = c; }
+                    text = `${rn(x.rd)} ← ${h8(a)} ${x.kind} ${n} = ${h8(r)}${x.s ? ` · ${flags()}` : ""}`;
+                    break;
+                }
+                case "mul": {
+                    const r = Math.imul(R[x.rn], R[x.op2.reg]) >>> 0;
+                    wr(x.rd, r);
+                    if (x.s) nz(r);
+                    text = `${rn(x.rd)} ← ${sv(R[x.rn])} × ${sv(R[x.op2.reg])} = ${sv(r)} (하위 32bit)`;
+                    break;
+                }
+                case "udiv": case "sdiv": {
+                    const a = R[x.rn];
+                    const b = R[x.op2.reg];
+                    const r = b === 0 ? 0 : x.op === "udiv" ? Math.floor(a / b) : Math.trunc((a | 0) / (b | 0)) >>> 0;
+                    wr(x.rd, r);
+                    text = `${rn(x.rd)} ← ${sv(a)} ÷ ${sv(b)} = ${sv(r)}${b === 0 ? " (0으로 나누기 → 0)" : " (0 쪽으로 버림)"}`;
+                    break;
+                }
+                case "b": {
+                    const ok = !!COND[x.cond](M);
+                    if (ok) next = x.to;
+                    const lbl = Object.keys(M.prog.labels).find((k) => M.prog.labels[k] === x.to) || "";
+                    text = x.cond === "al" ? `${lbl} 로 분기` : `${x.cond.toUpperCase()}: ${COND_WHY[x.cond]} ${ok ? "→ 참, " + lbl + " 로 분기" : "→ 거짓, 다음 줄"}`;
+                    break;
+                }
+                case "cbz": case "cbnz": {
+                    const z = R[x.rn] === 0;
+                    const ok = x.op === "cbz" ? z : !z;
+                    if (ok) next = x.to;
+                    text = `${rn(x.rn)} = ${sv(R[x.rn])} ${ok ? "→ 분기" : "→ 다음 줄"} (플래그 안 씀)`;
+                    break;
+                }
+                case "bl": {
+                    const ret = (CODE_BASE + 4 * (M.pc + 1)) | 1;
+                    wr(14, ret);
+                    next = x.to;
+                    const lbl = Object.keys(M.prog.labels).find((k) => M.prog.labels[k] === x.to) || "";
+                    text = `LR ← ${h8(ret)} (돌아올 주소, bit0=1 은 Thumb) · ${lbl} 호출`;
+                    break;
+                }
+                case "bx": case "blx": {
+                    const t = R[x.rm];
+                    if (x.op === "blx") wr(14, (CODE_BASE + 4 * (M.pc + 1)) | 1);
+                    text = jump(t) || `PC ← ${rn(x.rm)} = ${h8(t)} → ${x.op === "bx" ? "복귀" : "호출"}`;
+                    break;
+                }
+                case "push": {
+                    const sp = R[13] - 4 * x.list.length;
+                    x.list.forEach((r, k) => store(sp + 4 * k, 4, R[r]));
+                    wr(13, sp);
+                    text = `SP ${h8(undo.regs[13])} → ${h8(sp)} · ${x.list.map(rn).join(", ")} 저장 (번호 작은 레지스터가 낮은 주소)`;
+                    break;
+                }
+                case "pop": {
+                    const sp = R[13];
+                    const vals = x.list.map((r, k) => load(sp + 4 * k, 4));
+                    wr(13, sp + 4 * x.list.length);
+                    let ret = "";
+                    x.list.forEach((r, k) => { if (r === 15) ret = jump(vals[k]) || " · PC 로 꺼내서 복귀"; else wr(r, vals[k]); });
+                    text = `${x.list.map(rn).join(", ")} ← 스택 · SP ${h8(sp)} → ${h8(sp + 4 * x.list.length)}${ret.startsWith(" ·") ? ret : ret ? ` · ${ret}` : ""}`;
+                    break;
+                }
+                case "ldrlit": wr(x.rd, x.val); text = `${rn(x.rd)} ← ${x.name in M.prog.dlabels ? `${x.name} 의 주소 ` : ""}${sv(x.val)} (리터럴 풀에서 읽음)`; break;
+                case "mem": {
+                    const base = R[x.base];
+                    const [off] = opv(x.off);
+                    const addr = (x.wb === "post" ? base : base + off) >>> 0;
+                    if (x.load) {
+                        let v = load(addr, x.size);
+                        if (x.signed && v >= 2 ** (8 * x.size - 1)) v = v - 2 ** (8 * x.size);
+                        wr(x.rt, v >>> 0);
+                        text = `${rn(x.rt)} ← [${h8(addr)}] = ${sv(v >>> 0)}${x.size < 4 ? ` (${x.size}바이트${x.signed ? ", 부호 확장" : ", 0 확장"})` : ""}`;
+                    } else {
+                        store(addr, x.size, x.size === 4 ? R[x.rt] : R[x.rt] % 2 ** (8 * x.size));
+                        text = `[${h8(addr)}] ← ${rn(x.rt)} = ${sv(x.size === 4 ? R[x.rt] : R[x.rt] % 2 ** (8 * x.size))}${x.size < 4 ? ` (하위 ${x.size}바이트)` : ""}`;
+                    }
+                    if (x.wb) { wr(x.base, (base + off) >>> 0); text += ` · ${rn(x.base)} ← ${h8((base + off) >>> 0)} (${x.wb === "pre" ? "pre" : "post"}-index)`; }
+                    break;
+                }
+                default: throw `실행할 수 없음: ${x.mn}`;
+            }
+        } catch (e) {
+            M.error = String(e);
+            M.halted = true;
+            return { text: `⚠ ${M.error}`, regs: changed, mem: memW, undo, line: x.line, error: true };
+        }
+        M.pc = next;
+        M.steps++;
+        R[15] = CODE_BASE + 4 * M.pc;
+        if (!M.halted && M.pc >= M.prog.ins.length) { M.halted = true; text += " · 마지막 명령 다음 → 종료"; }
+        return { text, regs: changed, mem: memW, undo, line: x.line };
+    }
+    function cpuUndo(M, u) {
+        M.regs = u.regs.slice();
+        [M.n, M.z, M.c, M.v] = u.f;
+        M.pc = u.pc;
+        for (let k = u.mem.length - 1; k >= 0; k--) M.mem[u.mem[k][0]] = u.mem[k][1];
+        M.halted = false;
+        M.error = null;
+        M.steps = Math.max(0, M.steps - 1);
+    }
+    function cpuRun(src, init, max = 20000) {
+        const prog = assemble(src);
+        if (prog.error) return { error: `${prog.error.line}행: ${prog.error.msg}` };
+        const M = machine(prog, init);
+        while (!M.halted && M.steps < max) cpuStep(M);
+        if (M.error) return { M, error: M.error };
+        if (!M.halted) return { M, error: `${max} 단계를 넘음 (무한 루프?)` };
+        return { M, error: null };
+    }
+    const cpuReg = (M, name) => M.regs[regIdx(name)];
+    const cpuWord = (M, addr) => { const o = addr - RAM_BASE; return o >= 0 && o + 4 <= RAM_SIZE ? (M.mem[o] | (M.mem[o + 1] << 8) | (M.mem[o + 2] << 16) | (M.mem[o + 3] << 24)) >>> 0 : null; };
+    LAB.asm = { assemble, machine, step: cpuStep, undo: cpuUndo, run: cpuRun, reg: cpuReg, word: cpuWord, RAM_BASE, RAM_SIZE, CODE_BASE, REG_NAMES };
+
     // 32-bit register: preview MASK and RESULT rows, then run set / clear / toggle / field write / field read
     SIMS.reg = (host, spec) => {
         const name = spec.reg || "GPIOA->ODR";
@@ -2071,6 +2445,749 @@
         load();
     };
 
+    // CPU: step through Thumb-2 assembly, registers / flags / stack / data memory; editable source
+    SIMS.cpu = (host, spec) => {
+        const A = LAB.asm;
+        let src = String(spec.code || "").replace(/^\n+/, "").replace(/\s+$/, "");
+        let prog = null;
+        let M = null;
+        let hist = [];
+        let last = null;
+        let timer = 0;
+        let editing = false;
+        let base = "dec";
+        const st = stage(host, true);
+        st.innerHTML = `<div class="cpu">
+          <div class="cpu-code">${spec.c ? `<h4>C</h4>${LAB.codeBox({ lang: "c", title: spec.cTitle || "원본", src: spec.c })}<h4>어셈블리</h4>` : "<h4>어셈블리 · Thumb-2</h4>"}<div class="asm-host"></div><textarea class="asm-edit" spellcheck="false" hidden></textarea></div>
+          <div><h4>레지스터</h4><div class="regs"></div><h4>플래그 (xPSR)</h4><div class="flags"></div></div>
+          <div><h4>메모리 (RAM)</h4><div class="memv"></div></div>
+        </div><div class="cpu-cap"></div>`;
+        const bar = ctlBar(host);
+        const out = readout(host);
+        const $q = (s) => st.querySelector(s);
+        const cap = $q(".cpu-cap");
+        const ta = $q(".asm-edit");
+        const fmtR = (r, v) => (base === "hex" || r >= 13 ? h8(v) : String(r === 13 ? v : v | 0));
+        const say = (t, bad) => { cap.innerHTML = fmt(t || ""); cap.classList.toggle("err", !!bad); };
+        const stop = () => { clearInterval(timer); timer = 0; runBtn.textContent = "▶▶ 실행"; };
+        const load = () => {
+            stop();
+            prog = A.assemble(src);
+            $q(".asm-host").innerHTML = LAB.codeBox({ lang: "asm", title: spec.title || "", src });
+            if (prog.error) {
+                M = null;
+                const ln = $q(`.asm-host .ln[data-n="${prog.error.line}"]`);
+                if (ln) ln.classList.add("err");
+                say(`⚠ ${prog.error.line}행: ${prog.error.msg}`, true);
+                draw();
+                return;
+            }
+            M = A.machine(prog, spec.regs);
+            hist = [];
+            last = null;
+            say(spec.intro || "▶ 한 줄 을 눌러 한 명령씩 실행 · 하이라이트 = 다음에 실행할 줄");
+            draw();
+        };
+        const draw = () => {
+            $q(".asm-host").querySelectorAll(".ln").forEach((l) => l.classList.remove("cur", "prev"));
+            if (!M) { out([["상태", "어셈블 오류", "bad"]]); $q(".regs").innerHTML = ""; $q(".flags").innerHTML = ""; $q(".memv").innerHTML = ""; return; }
+            const x = prog.ins[M.pc];
+            if (!M.halted && x) { const l = $q(`.asm-host .ln[data-n="${x.line}"]`); if (l) l.classList.add("cur"); }
+            if (last && last.line) { const l = $q(`.asm-host .ln[data-n="${last.line}"]`); if (l && !l.classList.contains("cur")) l.classList.add("prev"); }
+            $q(".regs").innerHTML = A.REG_NAMES.map((n, r) => `<div class="cell${last && last.regs.has(r) ? " hot" : ""}"><span>${n}</span><b>${fmtR(r, M.regs[r])}</b></div>`).join("");
+            $q(".flags").innerHTML = ["n", "z", "c", "v"].map((f) => `<span class="${M[f] ? "on" : ""}" title="${{ n: "음수", z: "0", c: "자리올림 / 빌림 없음", v: "부호 있는 넘침" }[f]}">${f.toUpperCase()} ${M[f]}</span>`).join("");
+            // words to show: data area, written words, stack from SP to the top
+            const sp = M.regs[13];
+            const top = A.RAM_BASE + A.RAM_SIZE;
+            const words = new Set();
+            for (let a = A.RAM_BASE; a < A.RAM_BASE + Math.min(prog.data.length, 64); a += 4) words.add(a);
+            (last ? last.mem : []).forEach((a) => words.add(a - (a % 4)));
+            for (let a = Math.max(sp - 8, A.RAM_BASE) - (sp % 4); a < top && a < sp + 4 * 14; a += 4) words.add(a);
+            const lbl = {};
+            Object.entries(prog.dlabels).forEach(([k, a]) => { lbl[a] = (lbl[a] ? `${lbl[a]} ` : "") + k; });
+            const hot = new Set((last ? last.mem : []).map((a) => a - (a % 4)));
+            const list = [...words].filter((a) => a >= A.RAM_BASE && a < top).sort((p, q) => p - q);
+            $q(".memv").innerHTML = list.map((a, i) => {
+                const v = A.word(M, a);
+                const gap = i && a - list[i - 1] > 4 ? `<div class="cell gap"><span>⋮</span></div>` : "";
+                return `${gap}<div class="cell${hot.has(a) ? " hot" : ""}${a === sp ? " sp" : ""}"><span>${h8(a).slice(2)}${lbl[a] ? ` <i class="lb">${esc(lbl[a])}</i>` : ""}${a === sp ? ` <i class="lb sp">← SP</i>` : ""}</span><b>${base === "hex" ? h8(v) : String(v | 0)}</b></div>`;
+            }).join("") || `<div class="cell"><span>비어 있음</span></div>`;
+            const exp = spec.expect ? Object.entries(spec.expect).every(([k, v]) => A.reg(M, k) === v >>> 0) : null;
+            out([
+                ["단계", M.steps],
+                ["상태", M.error ? "HardFault" : M.halted ? "종료" : "실행 중", M.error ? "bad" : M.halted ? "good" : ""],
+                ["PC", h8(M.regs[15])],
+                ...(spec.expect && M.halted && !M.error ? [["기대값", exp ? `✓ ${Object.entries(spec.expect).map(([k, v]) => `${k}=${sv(v >>> 0)}`).join(" ")}` : "✗ 다름", exp ? "good" : "bad"]] : [])
+            ]);
+        };
+        const step = () => {
+            if (!M || M.halted) { stop(); return false; }
+            last = A.step(M);
+            if (last) { hist.push(last.undo); if (hist.length > 5000) hist.shift(); say(last.text, last.error); }
+            draw();
+            if (M.halted) stop();
+            return !M.halted;
+        };
+        button(bar, "↺ 처음", load);
+        button(bar, "◀ 되돌리기", () => { stop(); if (!M || !hist.length) return; A.undo(M, hist.pop()); last = null; say("한 단계 되돌림"); draw(); });
+        button(bar, "▶ 한 줄", () => { stop(); step(); }, true);
+        const runBtn = button(bar, "▶▶ 실행", () => {
+            if (timer) { stop(); return; }
+            if (!M || M.halted) return;
+            runBtn.textContent = "⏸ 정지";
+            timer = setInterval(() => { if (!step()) stop(); }, spec.speed || 450);
+        });
+        button(bar, "⏭ 끝까지", () => { stop(); let n = 0; while (M && !M.halted && n++ < 20000) { last = A.step(M); hist.push(last.undo); } if (hist.length > 5000) hist = hist.slice(-5000); if (last) say(M.halted ? `${last.text}` : "2만 단계 넘음 · 무한 루프?", !!(last && last.error)); draw(); });
+        const editBtn = button(bar, "✎ 편집", () => {
+            stop();
+            editing = !editing;
+            if (editing) { ta.value = src; ta.hidden = false; $q(".asm-host").hidden = true; editBtn.textContent = "✓ 적용"; ta.focus(); say("코드를 고친 뒤 ✓ 적용 · 지원 명령은 README 참고 (mov add sub cmp b<cond> bl bx ldr str push pop …)"); return; }
+            src = ta.value.replace(/\s+$/, "");
+            ta.hidden = true;
+            $q(".asm-host").hidden = false;
+            editBtn.textContent = "✎ 편집";
+            load();
+        });
+        seg(bar, "값", [["dec", "10진"], ["hex", "16진"]], base, (v) => { base = v; draw(); });
+        load();
+    };
+
+    // struct layout types: [size, align] on 32-bit Arm (AAPCS) and 64-bit LP64
+    LAB.LAYOUT_TYPES = {
+        char: [1, 1, 1, 1], bool: [1, 1, 1, 1], uint8_t: [1, 1, 1, 1],
+        short: [2, 2, 2, 2], uint16_t: [2, 2, 2, 2],
+        int: [4, 4, 4, 4], uint32_t: [4, 4, 4, 4], float: [4, 4, 4, 4],
+        long: [4, 4, 8, 8], "void*": [4, 4, 8, 8],
+        int64_t: [8, 8, 8, 8], double: [8, 8, 8, 8]
+    };
+    /* ---------- memory + data-structure labs: pure models (tested by check.mjs) ---------- */
+    const range = (n) => Array.from({ length: n }, (_, i) => i);
+    // cache with LRU; returns one frame per access
+    function cacheSim(addrs, size, block, ways) {
+        const sets = Math.max(1, Math.floor(size / (block * ways)));
+        const S = range(sets).map(() => []);
+        const frames = [];
+        let hits = 0;
+        let t = 0;
+        addrs.forEach((a) => {
+            const off = a % block;
+            const idx = Math.floor(a / block) % sets;
+            const tag = Math.floor(a / block / sets);
+            const set = S[idx];
+            let w = set.findIndex((l) => l.tag === tag);
+            const hit = w >= 0;
+            let evict = null;
+            if (hit) hits++;
+            else if (set.length < ways) { set.push({ tag }); w = set.length - 1; }
+            else { w = set.reduce((m, l, k) => (l.used < set[m].used ? k : m), 0); evict = set[w].tag; set[w] = { tag }; }
+            set[w].used = ++t;
+            frames.push({ a, off, idx, tag, hit, w, evict, hits, n: frames.length + 1, snap: S.map((s) => s.map((l) => ({ ...l }))) });
+        });
+        return { frames, sets, ob: Math.log2(block), ib: Math.log2(sets) };
+    }
+    const CACHE_PATTERNS = {
+        seq: ["순차 int[32]", () => range(32).map((i) => 0x1000 + 4 * i)],
+        stride: ["보폭 64B", () => range(16).map((i) => 0x1000 + 64 * i)],
+        row: ["8×8 행 순회", () => range(64).map((k) => 0x1000 + 4 * k)],
+        col: ["8×8 열 순회", () => range(64).map((k) => 0x1000 + 4 * ((k % 8) * 8 + Math.floor(k / 8)))],
+        conflict: ["a[i], b[i] 번갈아", (size) => range(8).flatMap((i) => [0x1000 + 4 * i, 0x1000 + size * 4 + 4 * i])],
+        reuse: ["작은 배열 두 번", () => [...range(16), ...range(16)].map((i) => 0x1000 + 4 * i)]
+    };
+    // struct layout: [{ t, n, off, size, pad }], size, align, tail padding
+    function structLayout(fields, arch, packed) {
+        const T = LAB.LAYOUT_TYPES;
+        const k = arch === 64 ? 2 : 0;
+        let off = 0;
+        let maxA = 1;
+        const items = fields.map((f) => {
+            const a = packed ? 1 : T[f.t][k + 1];
+            const pad = (a - (off % a)) % a;
+            off += pad;
+            const it = { ...f, off, size: T[f.t][k], pad, align: T[f.t][k + 1] };
+            off += it.size;
+            maxA = Math.max(maxA, a);
+            return it;
+        });
+        const tail = (maxA - (off % maxA)) % maxA;
+        return { items, size: off + tail, align: maxA, tail, padding: items.reduce((s, x) => s + x.pad, 0) + tail };
+    }
+    // ring buffer: state + put/get returning a message
+    const ring = {
+        make: (n, mode) => ({ n, mode, buf: Array(n).fill(null), head: 0, tail: 0, count: 0, lost: 0 }),
+        idx: (s, i) => (s.mode === "free" ? i & (s.n - 1) : i),
+        full: (s) => (s.mode === "spare" ? (s.head + 1) % s.n === s.tail : s.mode === "count" ? s.count === s.n : s.head - s.tail === s.n),
+        empty: (s) => (s.mode === "count" ? s.count === 0 : s.head === s.tail),
+        size: (s) => (s.mode === "count" ? s.count : s.mode === "free" ? s.head - s.tail : (s.head - s.tail + s.n) % s.n),
+        cap: (s) => (s.mode === "spare" ? s.n - 1 : s.n),
+        adv: (s, i) => (s.mode === "free" ? i + 1 : (i + 1) % s.n),
+        put(s, v, overwrite) {
+            if (ring.full(s)) {
+                if (!overwrite) { s.lost++; return `가득 참 → ${v} 버림 (손실 ${s.lost})`; }
+                const old = s.buf[ring.idx(s, s.tail)];
+                s.tail = ring.adv(s, s.tail);
+                if (s.mode === "count") s.count--;
+                s.lost++;
+                s.buf[ring.idx(s, s.head)] = v;
+                s.head = ring.adv(s, s.head);
+                if (s.mode === "count") s.count++;
+                return `가득 참 → 가장 오래된 ${old} 를 덮어쓰고 ${v} 저장`;
+            }
+            const i = ring.idx(s, s.head);
+            s.buf[i] = v;
+            s.head = ring.adv(s, s.head);
+            if (s.mode === "count") s.count++;
+            return `buf[${i}] ← ${v} · head → ${s.head}`;
+        },
+        get(s) {
+            if (ring.empty(s)) return [null, "비어 있음 → 읽을 것 없음"];
+            const i = ring.idx(s, s.tail);
+            const v = s.buf[i];
+            s.buf[i] = null;
+            s.tail = ring.adv(s, s.tail);
+            if (s.mode === "count") s.count--;
+            return [v, `buf[${i}] → ${v} · tail → ${s.tail}`];
+        }
+    };
+    // hash table: chaining or linear probing; ops return { path, at, ok, text }
+    const TOMB = "⌫";
+    const hashT = {
+        make: (m, mode) => ({ m, mode, t: mode === "chain" ? range(m).map(() => []) : Array(m).fill(null), n: 0 }),
+        h: (s, k) => ((k % s.m) + s.m) % s.m,
+        find(s, k) {
+            const h = hashT.h(s, k);
+            if (s.mode === "chain") { const i = s.t[h].indexOf(k); return { path: [h], at: h, pos: i, ok: i >= 0, probes: i >= 0 ? i + 1 : s.t[h].length + 1 }; }
+            const path = [];
+            for (let p = 0; p < s.m; p++) {
+                const i = (h + p) % s.m;
+                path.push(i);
+                if (s.t[i] === null) return { path, at: i, ok: false, probes: p + 1 };
+                if (s.t[i] === k) return { path, at: i, ok: true, probes: p + 1 };
+            }
+            return { path, at: -1, ok: false, probes: s.m };
+        },
+        insert(s, k) {
+            const h = hashT.h(s, k);
+            const f = hashT.find(s, k);
+            if (f.ok) return { ...f, text: `${k} 는 이미 있음` };
+            if (s.mode === "chain") { s.t[h].push(k); s.n++; return { ...f, ok: true, text: `h(${k}) = ${k} mod ${s.m} = ${h} → 체인 ${s.t[h].length}번째에 추가` }; }
+            const slot = f.path.find((i) => s.t[i] === TOMB);
+            const at = slot !== undefined ? slot : f.at;
+            if (at < 0) return { ...f, ok: false, text: "빈 칸 없음 → 재해시 필요" };
+            s.t[at] = k;
+            s.n++;
+            return { ...f, at, ok: true, text: `h(${k}) = ${k} mod ${s.m} = ${h}${f.path.length > 1 ? ` → 충돌 ${f.path.length - 1}번, 다음 칸으로` : ""} → [${at}] 저장 · 탐사 ${f.path.length}` };
+        },
+        remove(s, k) {
+            const f = hashT.find(s, k);
+            if (!f.ok) return { ...f, text: `${k} 없음` };
+            if (s.mode === "chain") s.t[f.at].splice(f.pos, 1);
+            else s.t[f.at] = TOMB;
+            s.n--;
+            return { ...f, text: s.mode === "chain" ? `체인에서 ${k} 제거` : `[${f.at}] 에 묘비(tombstone) 표시 · 비우면 뒤쪽 키를 못 찾음` };
+        },
+        keys: (s) => (s.mode === "chain" ? s.t.flat() : s.t.filter((x) => x !== null && x !== TOMB)),
+        avgProbes: (s) => { const ks = hashT.keys(s); return ks.length ? ks.reduce((a, k) => a + hashT.find(s, k).probes, 0) / ks.length : 0; }
+    };
+    // binary heap: ops return frames [{ a, hl:[i..], text }]
+    const heapT = {
+        better: (kind, x, y) => (kind === "min" ? x < y : x > y),
+        up(a, i, kind, fr) {
+            while (i > 0) {
+                const p = (i - 1) >> 1;
+                fr.push({ a: a.slice(), hl: [i, p], text: `[${i}]=${a[i]} vs 부모 [${p}]=${a[p]}` });
+                if (!heapT.better(kind, a[i], a[p])) { fr.push({ a: a.slice(), hl: [i], text: "부모가 더 우선 → 멈춤" }); return; }
+                [a[i], a[p]] = [a[p], a[i]];
+                fr.push({ a: a.slice(), hl: [p], text: `교환 → [${p}]` });
+                i = p;
+            }
+            fr.push({ a: a.slice(), hl: [0], text: "루트 도달" });
+        },
+        down(a, i, kind, fr) {
+            for (;;) {
+                const l = 2 * i + 1;
+                const r = l + 1;
+                let b = i;
+                if (l < a.length && heapT.better(kind, a[l], a[b])) b = l;
+                if (r < a.length && heapT.better(kind, a[r], a[b])) b = r;
+                fr.push({ a: a.slice(), hl: [i, l, r].filter((x) => x < a.length), text: `[${i}]=${a[i]} 와 자식 비교` });
+                if (b === i) { fr.push({ a: a.slice(), hl: [i], text: "자식보다 우선 → 멈춤" }); return; }
+                [a[i], a[b]] = [a[b], a[i]];
+                fr.push({ a: a.slice(), hl: [b], text: `교환 → [${b}]` });
+                i = b;
+            }
+        },
+        push(a, v, kind) { const fr = []; a.push(v); fr.push({ a: a.slice(), hl: [a.length - 1], text: `${v} 를 맨 끝 [${a.length - 1}] 에 추가` }); heapT.up(a, a.length - 1, kind, fr); return fr; },
+        pop(a, kind) {
+            const fr = [];
+            if (!a.length) return [{ a: [], hl: [], text: "비어 있음" }];
+            const top = a[0];
+            const last = a.pop();
+            if (a.length) { a[0] = last; fr.push({ a: a.slice(), hl: [0], text: `루트 ${top} 꺼냄 · 마지막 ${last} 를 루트로` }); heapT.down(a, 0, kind, fr); }
+            else fr.push({ a: [], hl: [], text: `루트 ${top} 꺼냄 · 비었음` });
+            fr[fr.length - 1].text += ` → 꺼낸 값 ${top}`;
+            return fr;
+        },
+        heapify(a, kind) { const fr = [{ a: a.slice(), hl: [], text: "무작위 배열 · 마지막 부모부터 sift down" }]; for (let i = (a.length >> 1) - 1; i >= 0; i--) heapT.down(a, i, kind, fr); return fr; },
+        ok: (a, kind) => a.every((v, i) => !i || !heapT.better(kind, v, a[(i - 1) >> 1]))
+    };
+    // binary search tree on plain objects { v, l, r }
+    const bstT = {
+        insert(root, v) {
+            const path = [];
+            if (!root) return { root: { v, l: null, r: null }, path: [v], text: `빈 트리 → ${v} 가 루트` };
+            let n = root;
+            for (;;) {
+                path.push(n.v);
+                if (v === n.v) return { root, path, text: `${v} 는 이미 있음` };
+                const side = v < n.v ? "l" : "r";
+                if (!n[side]) { n[side] = { v, l: null, r: null }; path.push(v); return { root, path, text: `${path.slice(0, -1).join(" → ")} → ${side === "l" ? "왼쪽" : "오른쪽"} 빈자리에 ${v}` }; }
+                n = n[side];
+            }
+        },
+        search(root, v) {
+            const path = [];
+            for (let n = root; n; n = v < n.v ? n.l : n.r) { path.push(n.v); if (n.v === v) return { path, ok: true, text: `${path.join(" → ")} · 찾음 (비교 ${path.length}번)` }; }
+            return { path, ok: false, text: `${path.join(" → ") || "빈 트리"} · 없음 (비교 ${path.length}번)` };
+        },
+        remove(root, v) {
+            const path = [];
+            let p = null;
+            let n = root;
+            while (n && n.v !== v) { path.push(n.v); p = n; n = v < n.v ? n.l : n.r; }
+            if (!n) return { root, path, text: `${v} 없음` };
+            path.push(n.v);
+            let text;
+            if (n.l && n.r) {
+                let sp = n;
+                let s = n.r;
+                while (s.l) { sp = s; s = s.l; }
+                text = `자식 둘 → 오른쪽 서브트리의 최솟값 ${s.v} (중위 후계자)로 바꾸고 그 자리 삭제`;
+                path.push(s.v);
+                n.v = s.v;
+                if (sp === n) sp.r = s.r; else sp.l = s.r;
+                return { root, path, text };
+            }
+            const child = n.l || n.r;
+            text = child ? `자식 하나 → ${child.v} 를 끌어올림` : "잎 노드 → 그냥 삭제";
+            if (!p) return { root: child, path, text };
+            if (p.l === n) p.l = child; else p.r = child;
+            return { root, path, text };
+        },
+        height: (n) => (n ? 1 + Math.max(bstT.height(n.l), bstT.height(n.r)) : 0),
+        inorder: (n, out = []) => { if (n) { bstT.inorder(n.l, out); out.push(n.v); bstT.inorder(n.r, out); } return out; }
+    };
+    // sorting: frames { a, cmp:[i,j], sw:[i,j], done: index ≥ this (or set) is final, c, s, text }
+    function sortFrames(algo, input) {
+        const a = input.slice();
+        const fr = [];
+        let c = 0;
+        let s = 0;
+        const done = new Set();
+        const snap = (cmp, sw, text) => fr.push({ a: a.slice(), cmp: cmp || [], sw: sw || [], done: new Set(done), c, s, text });
+        const less = (i, j) => { c++; snap([i, j], null, `비교 a[${i}]=${a[i]} vs a[${j}]=${a[j]}`); return a[i] < a[j]; };
+        const swap = (i, j) => { if (i === j) return; [a[i], a[j]] = [a[j], a[i]]; s++; snap(null, [i, j], `교환 a[${i}] ↔ a[${j}]`); };
+        const n = a.length;
+        if (algo === "bubble") {
+            for (let i = 0; i < n - 1; i++) {
+                let any = false;
+                for (let j = 0; j < n - 1 - i; j++) if (less(j + 1, j)) { swap(j, j + 1); any = true; }
+                done.add(n - 1 - i);
+                if (!any) { range(n).forEach((k) => done.add(k)); break; }
+            }
+        } else if (algo === "insertion") {
+            for (let i = 1; i < n; i++) for (let j = i; j > 0 && less(j, j - 1); j--) swap(j, j - 1);
+        } else if (algo === "selection") {
+            for (let i = 0; i < n - 1; i++) {
+                let m = i;
+                for (let j = i + 1; j < n; j++) if (less(j, m)) m = j;
+                swap(i, m);
+                done.add(i);
+            }
+        } else if (algo === "merge") {
+            const aux = a.slice();
+            const sortR = (lo, hi) => {
+                if (hi - lo < 1) return;
+                const mid = (lo + hi) >> 1;
+                sortR(lo, mid);
+                sortR(mid + 1, hi);
+                for (let k = lo; k <= hi; k++) aux[k] = a[k];
+                let i = lo;
+                let j = mid + 1;
+                for (let k = lo; k <= hi; k++) {
+                    if (i > mid) a[k] = aux[j++];
+                    else if (j > hi) a[k] = aux[i++];
+                    else { c++; if (aux[j] < aux[i]) a[k] = aux[j++]; else a[k] = aux[i++]; }
+                    s++;
+                    snap([], [k], `병합 [${lo}..${hi}] → a[${k}] = ${a[k]}`);
+                }
+            };
+            sortR(0, n - 1);
+        } else if (algo === "quick") {
+            const st = [[0, n - 1]];
+            while (st.length) {
+                const [lo, hi] = st.pop();
+                if (lo >= hi) { if (lo === hi) done.add(lo); continue; }
+                let i = lo;
+                for (let j = lo; j < hi; j++) if (less(j, hi)) { swap(i, j); i++; }
+                swap(i, hi);
+                done.add(i);
+                snap([], [i], `피벗 ${a[i]} 자리 확정 [${i}]`);
+                st.push([i + 1, hi], [lo, i - 1]);
+            }
+        } else if (algo === "heap") {
+            const down = (i, end) => {
+                for (;;) {
+                    const l = 2 * i + 1;
+                    let b = i;
+                    if (l < end && less(b, l)) b = l;
+                    if (l + 1 < end && less(b, l + 1)) b = l + 1;
+                    if (b === i) return;
+                    swap(i, b);
+                    i = b;
+                }
+            };
+            for (let i = (n >> 1) - 1; i >= 0; i--) down(i, n);
+            for (let end = n - 1; end > 0; end--) { swap(0, end); done.add(end); down(0, end); }
+        }
+        range(n).forEach((k) => done.add(k));
+        snap([], [], `완료 · 비교 ${c} · 교환/쓰기 ${s}`);
+        return fr;
+    }
+    const sortInput = (kind, n, seed) => {
+        const r = rng(seed);
+        let a = range(n).map((i) => i + 1);
+        if (kind === "reversed") return a.reverse();
+        if (kind === "few") return range(n).map(() => 1 + Math.floor(r() * 4) * Math.ceil(n / 4));
+        for (let i = n - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+        if (kind === "nearly") { a = range(n).map((i) => i + 1); for (let k = 0; k < Math.max(1, n >> 3); k++) { const i = Math.floor(r() * (n - 1)); [a[i], a[i + 1]] = [a[i + 1], a[i]]; } }
+        return a;
+    };
+    LAB.ds = { cacheSim, structLayout, ring, hashT, heapT, bstT, sortFrames, sortInput, CACHE_PATTERNS };
+
+    // shared: draw a binary tree as SVG; nodes [{ id, v, x (0..1), d (depth), parent }]
+    function treeSvg(nodes, hl, cls) {
+        const depth = Math.max(0, ...nodes.map((n) => n.d)) + 1;
+        const W = 640;
+        const H = depth * 62 + 10;
+        const P = (n) => [24 + n.x * (W - 48), 26 + n.d * 62];
+        const by = new Map(nodes.map((n) => [n.id, n]));
+        return `<svg class="tree" viewBox="0 0 ${W} ${H}" style="max-width:${W}px;margin:0 auto">${nodes.filter((n) => by.has(n.parent)).map((n) => { const [x1, y1] = P(by.get(n.parent)); const [x2, y2] = P(n); return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`; }).join("")}
+          ${nodes.map((n) => { const [x, y] = P(n); return `<g class="${hl.has(n.id) ? cls || "hl" : ""}"><circle cx="${x}" cy="${y}" r="17"/><text x="${x}" y="${y}">${esc(n.v)}</text></g>`; }).join("")}</svg>`;
+    }
+
+    // cache: tag / index / offset, sets × ways, LRU
+    SIMS.cache = (host, spec) => {
+        let size = spec.size || 64;
+        let block = spec.block || 16;
+        let ways = spec.ways || 1;
+        let pat = CACHE_PATTERNS[spec.pattern] ? spec.pattern : "seq";
+        let stepCtl = null;
+        const bar = ctlBar(host);
+        const box = document.createElement("div");
+        host.append(box);
+        const out = readout(host);
+        const build = () => {
+            if (stepCtl) stepCtl.stop();
+            if (block * ways > size) { box.innerHTML = `<div class="empty">블록 × 웨이(${block * ways}B)가 캐시(${size}B)보다 큼 · 웨이나 블록을 줄이세요</div>`; out([]); return; }
+            const addrs = CACHE_PATTERNS[pat][1](size);
+            const { frames, sets, ob, ib } = cacheSim(addrs, size, block, ways);
+            const tb = 16 - ob - ib;
+            box.innerHTML = `<div class="demo-stage" style="padding:0"><div class="bits-lab">
+              <div class="flegend"><span class="fs">태그 ${tb}bit</span><span class="fe">인덱스 ${ib}bit (세트 ${sets})</span><span class="fm">오프셋 ${ob}bit (블록 ${block}B)</span></div>
+              <div class="rows"></div>
+              <div class="ctab" style="grid-template-columns:52px repeat(${ways}, minmax(0, 1fr))"><b></b>${range(ways).map((w) => `<b>웨이 ${w}</b>`).join("")}${range(sets).map((si) => `<b>세트 ${si}</b>${range(ways).map((w) => `<i data-c="${si}-${w}"></i>`).join("")}`).join("")}</div>
+              <div class="acc">${addrs.map((a, i) => `<span data-a="${i}">${a.toString(16).toUpperCase()}</span>`).join("")}</div>
+            </div></div>`;
+            const rows = box.querySelector(".rows");
+            idxRow(rows, 16, true);
+            const RA = bitRow(rows, "주소", 16, null, (k) => (k >= ob + ib ? "s" : k >= ob ? "e" : "m"));
+            const cells = new Map([...box.querySelectorAll("[data-c]")].map((el) => [el.dataset.c, el]));
+            const acc = [...box.querySelectorAll("[data-a]")];
+            stepCtl = stepper(box, frames.length, (i) => {
+                const f = frames[i];
+                RA.set(f.a, `<b>0x${f.a.toString(16).toUpperCase()}</b> · 태그 0x${f.tag.toString(16).toUpperCase()} · 세트 ${f.idx} · +${f.off}`);
+                cells.forEach((el, key) => {
+                    const [si, w] = key.split("-").map(Number);
+                    const l = f.snap[si][w];
+                    el.className = si === f.idx && w === f.w ? (f.hit ? "hit" : "miss") : l ? "" : "empty";
+                    el.innerHTML = l ? `태그 ${l.tag.toString(16).toUpperCase()}<small>0x${((l.tag * sets + si) * block).toString(16).toUpperCase()}–${((l.tag * sets + si) * block + block - 1).toString(16).toUpperCase()}</small>` : "—";
+                });
+                acc.forEach((el, k) => { el.className = k > i ? "" : `${frames[k].hit ? "hit" : "miss"}${k === i ? " cur" : ""}`; });
+                const rate = f.hits / f.n;
+                out([["접근", f.n], ["히트", f.hits, "good"], ["미스", f.n - f.hits, "bad"], ["히트율", `${(rate * 100).toFixed(0)}%`], ["평균 접근 시간", `${(1 + (1 - rate) * 50).toFixed(1)} 사이클 (히트 1, 미스 +50 가정)`]]);
+                return `0x${f.a.toString(16).toUpperCase()} → 세트 ${f.idx}, 태그 0x${f.tag.toString(16).toUpperCase()} → ${f.hit ? "**히트**" : f.evict !== null ? `**미스** · 태그 0x${f.evict.toString(16).toUpperCase()} 를 LRU 로 쫓아냄` : "**미스** · 빈 웨이에 채움"}`;
+            }, { interval: 650 });
+        };
+        seg(bar, "캐시", [32, 64, 128, 256].map((v) => [v, `${v}B`]), size, (v) => { size = +v; build(); });
+        seg(bar, "블록", [4, 8, 16, 32].map((v) => [v, `${v}B`]), block, (v) => { block = +v; build(); });
+        seg(bar, "웨이", [1, 2, 4].map((v) => [v, v === 1 ? "직접 사상" : `${v}-way`]), ways, (v) => { ways = +v; build(); });
+        seg(bar, "접근", Object.entries(CACHE_PATTERNS).map(([k, v]) => [k, v[0]]), pat, (v) => { pat = v; build(); });
+        build();
+    };
+
+    // struct layout: field order → padding, sizeof; endianness of a 32-bit value
+    SIMS.layout = (host, spec) => {
+        let arch = spec.arch === 64 ? 64 : 32;
+        let packed = false;
+        let fields = (spec.fields || [["char", "a"], ["int", "b"], ["char", "c"], ["double", "d"]]).map(([t, n]) => ({ t, n }));
+        let value = (spec.value ?? 0x12345678) >>> 0;
+        const types = Object.keys(LAB.LAYOUT_TYPES);
+        const st = stage(host, true);
+        st.innerHTML = `<div class="lay"><div><h4>필드</h4><div class="lay-f"></div></div><div><h4>메모리 배치</h4><div class="lay-map"></div><div class="lay-code"></div></div></div>
+          <div class="lay-end"><h4>엔디안 · 0x<input class="lay-v" spellcheck="false" maxlength="8"></h4><div class="lay-e"></div></div>`;
+        const bar = ctlBar(host);
+        const out = readout(host);
+        const $q = (s) => st.querySelector(s);
+        const col = (i) => PALETTE[i % PALETTE.length];
+        const draw = () => {
+            const L = structLayout(fields, arch, packed);
+            $q(".lay-f").innerHTML = fields.map((f, i) => `<div class="lay-row" style="--fc:${col(i)}"><i></i><select data-i="${i}">${types.map((t) => `<option${t === f.t ? " selected" : ""}>${t}</option>`).join("")}</select><input data-n="${i}" value="${esc(f.n)}" spellcheck="false"><button type="button" data-up="${i}" title="위로">↑</button><button type="button" data-dn="${i}" title="아래로">↓</button><button type="button" data-rm="${i}" title="삭제">✕</button></div>`).join("");
+            const owner = Array(L.size).fill(-1);
+            L.items.forEach((it, i) => { for (let b = 0; b < it.size; b++) owner[it.off + b] = i; });
+            const cols = 8;
+            $q(".lay-map").innerHTML = range(Math.ceil(L.size / cols)).map((r) => `<div class="lay-line"><span>+${r * cols}</span>${range(cols).map((c) => {
+                const b = r * cols + c;
+                if (b >= L.size) return `<i class="none"></i>`;
+                const o = owner[b];
+                return o < 0 ? `<i class="pad" title="패딩">pad</i>` : `<i style="--fc:${col(o)}" title="${esc(fields[o].n)} (${fields[o].t})">${b === L.items[o].off ? esc(fields[o].n) : ""}</i>`;
+            }).join("")}</div>`).join("");
+            $q(".lay-code").innerHTML = LAB.codeBox({ lang: "c", title: arch === 64 ? "LP64 (x86-64 · AArch64)" : "32bit Arm (AAPCS)", src: `struct s {\n${L.items.map((it) => `    ${it.t.padEnd(9)}${it.n};`.padEnd(26) + `/* offset ${it.off}${it.pad ? `, 앞 패딩 ${it.pad}` : ""} */`).join("\n")}\n}${packed ? " __attribute__((packed))" : ""};${L.tail ? `   /* 끝 패딩 ${L.tail} */` : ""}\n_Static_assert(sizeof(struct s) == ${L.size}, "size");` });
+            const raw = L.items.reduce((s, x) => s + x.size, 0);
+            out([["sizeof", `${L.size} B`], ["alignof", L.align], ["패딩", `${L.padding} B`, L.padding ? "bad" : "good"], ["효율", `${Math.round((raw / Math.max(1, L.size)) * 100)}%`], ...(packed && L.items.some((x) => x.off % x.align) ? [["주의", "정렬 안 된 필드 → M0 HardFault, M3/M4 느림", "bad"]] : [])]);
+            const bytes = range(4).map((k) => (value >>> (8 * k)) & 255);
+            const hx = (b) => b.toString(16).toUpperCase().padStart(2, "0");
+            const sig = range(4).map((k) => [bytes[k], k]); // [byte, significance]
+            $q(".lay-e").innerHTML = [["리틀 엔디안 (Cortex-M, x86)", sig], ["빅 엔디안 (네트워크 순서)", sig.slice().reverse()]].map(([t, bs]) => `<div class="lay-line"><span>${t}</span>${bs.map(([b, g], k) => `<i style="--fc:${PALETTE[3 - g]}"><small>+${k}</small>${hx(b)}</i>`).join("")}</div>`).join("");
+        };
+        $q(".lay-v").value = value.toString(16).toUpperCase().padStart(8, "0");
+        $q(".lay-v").addEventListener("change", (e) => { const v = parseInt(e.target.value, 16); if (Number.isNaN(v)) LAB.toast("16진수 8자리"); else value = v >>> 0; draw(); });
+        $q(".lay-f").addEventListener("change", (e) => {
+            const t = e.target;
+            if (t.dataset.i) fields[+t.dataset.i].t = t.value;
+            if (t.dataset.n) fields[+t.dataset.n].n = t.value.trim() || "x";
+            draw();
+        });
+        $q(".lay-f").addEventListener("click", (e) => {
+            const b = e.target.closest("button");
+            if (!b) return;
+            const i = +(b.dataset.up ?? b.dataset.dn ?? b.dataset.rm);
+            if (b.dataset.up !== undefined && i > 0) [fields[i - 1], fields[i]] = [fields[i], fields[i - 1]];
+            if (b.dataset.dn !== undefined && i < fields.length - 1) [fields[i + 1], fields[i]] = [fields[i], fields[i + 1]];
+            if (b.dataset.rm !== undefined && fields.length > 1) fields.splice(i, 1);
+            draw();
+        });
+        seg(bar, "", [["32", "32bit Arm"], ["64", "64bit LP64"]], String(arch), (v) => { arch = +v; draw(); });
+        seg(bar, "", [["0", "기본 정렬"], ["1", "packed"]], "0", (v) => { packed = v === "1"; draw(); });
+        button(bar, "+ 필드", () => { fields.push({ t: "char", n: `f${fields.length}` }); draw(); });
+        button(bar, "정렬 큰 순 재배치", () => { const T = LAB.LAYOUT_TYPES; const k = arch === 64 ? 3 : 1; fields = fields.map((f, i) => [f, i]).sort((x, y) => T[y[0].t][k] - T[x[0].t][k] || x[1] - y[1]).map((x) => x[0]); draw(); }, true);
+        button(bar, "원래대로", () => { fields = (spec.fields || [["char", "a"], ["int", "b"], ["char", "c"], ["double", "d"]]).map(([t, n]) => ({ t, n })); draw(); });
+        draw();
+    };
+
+    // ring buffer: put / get with head and tail on a circle
+    SIMS.ringbuf = (host, spec) => {
+        let N = [4, 8, 16].includes(spec.size) ? spec.size : 8;
+        let mode = ["spare", "count", "free"].includes(spec.mode) ? spec.mode : "spare";
+        let over = false;
+        let s;
+        let nextV;
+        let log;
+        const st = stage(host, true);
+        st.innerHTML = `<div class="ring"><div class="ring-svg"></div><div><div class="ring-arr"></div><div class="ring-code"></div></div></div><div class="cpu-cap"></div>`;
+        const bar = ctlBar(host);
+        const out = readout(host);
+        const $q = (x) => st.querySelector(x);
+        const CODE = {
+            spare: "#define N 8   // 2의 거듭제곱일 필요 없음\nbool put(uint8_t v) {\n    uint32_t next = (head + 1) % N;\n    if (next == tail) return false;   // 가득 참: 한 칸은 늘 비움\n    buf[head] = v; head = next; return true;\n}\nbool get(uint8_t *v) {\n    if (head == tail) return false;   // 비어 있음\n    *v = buf[tail]; tail = (tail + 1) % N; return true;\n}",
+            count: "bool put(uint8_t v) {\n    if (count == N) return false;     // 가득 참\n    buf[head] = v; head = (head + 1) % N;\n    count++;                          // ISR 과 main 이 같이 고침 → 임계 구역 필요\n    return true;\n}\nbool get(uint8_t *v) {\n    if (count == 0) return false;\n    *v = buf[tail]; tail = (tail + 1) % N; count--; return true;\n}",
+            free: "#define N 8                          // 반드시 2의 거듭제곱\nvolatile uint32_t head, tail;         // 계속 증가, 넘쳐도 OK\nbool put(uint8_t v) {\n    if (head - tail == N) return false;   // 가득 참 (부호 없는 뺄셈)\n    buf[head & (N - 1)] = v; head++; return true;\n}\nbool get(uint8_t *v) {\n    if (head == tail) return false;\n    *v = buf[tail & (N - 1)]; tail++; return true;\n}"
+        };
+        const reset = () => { s = ring.make(N, mode); nextV = 1; log = "put / get 을 눌러 보세요"; draw(); };
+        const draw = () => {
+            const R = 92;
+            const C = 120;
+            const hi = ring.idx(s, s.head);
+            const ti = ring.idx(s, s.tail);
+            $q(".ring-svg").innerHTML = `<svg viewBox="0 0 240 240">${range(N).map((i) => {
+                const a = (i / N) * Math.PI * 2 - Math.PI / 2;
+                const x = C + R * Math.cos(a);
+                const y = C + R * Math.sin(a);
+                const v = s.buf[i];
+                return `<g class="${v !== null ? "full" : ""}${i === hi ? " h" : ""}${i === ti ? " t" : ""}"><circle cx="${x}" cy="${y}" r="${N > 8 ? 13 : 17}"/><text x="${x}" y="${y}">${v ?? ""}</text><text class="ix" x="${C + (R + 27) * Math.cos(a)}" y="${C + (R + 27) * Math.sin(a)}">${i}</text></g>`;
+            }).join("")}<text class="lbl" x="${C}" y="${C - 8}">head ${hi}</text><text class="lbl t" x="${C}" y="${C + 12}">tail ${ti}</text></svg>`;
+            $q(".ring-arr").innerHTML = range(N).map((i) => `<i class="${s.buf[i] !== null ? "full" : ""}${i === hi ? " h" : ""}${i === ti ? " t" : ""}"><small>${i}</small>${s.buf[i] ?? ""}</i>`).join("");
+            $q(".ring-code").innerHTML = LAB.codeBox({ lang: "c", title: { spare: "한 칸 비우기", count: "count 변수", free: "자유 증가 인덱스" }[mode], src: CODE[mode] });
+            $q(".cpu-cap").innerHTML = fmt(log);
+            out([["head", s.head], ["tail", s.tail], ["저장", ring.size(s)], ["용량", ring.cap(s)], ["상태", ring.full(s) ? "가득 참" : ring.empty(s) ? "비어 있음" : "사용 중", ring.full(s) ? "bad" : ""], ["손실", s.lost, s.lost ? "bad" : ""]]);
+        };
+        const put = (k = 1) => { const m = []; for (let i = 0; i < k; i++) m.push(ring.put(s, nextV++, over)); log = m.join(" · "); draw(); };
+        const get = (all) => { const m = []; do { const [v, t] = ring.get(s); m.push(t); if (v === null) break; } while (all); log = m.join(" · "); draw(); };
+        button(bar, "put", () => put(1), true);
+        button(bar, "put ×3", () => put(3));
+        button(bar, "get", () => get(false), true);
+        button(bar, "모두 get", () => get(true));
+        button(bar, "↺", reset);
+        seg(bar, "크기", [4, 8, 16].map((v) => [v, v]), N, (v) => { N = +v; reset(); });
+        seg(bar, "가득 참 판정", [["spare", "한 칸 비우기"], ["count", "count"], ["free", "자유 증가"]], mode, (v) => { mode = v; reset(); });
+        seg(bar, "넘치면", [["0", "새 값 버림"], ["1", "덮어쓰기"]], "0", (v) => { over = v === "1"; });
+        reset();
+    };
+
+    // hash table: chaining vs linear probing
+    SIMS.hash = (host, spec) => {
+        let M = spec.size || 8;
+        let mode = spec.mode === "linear" ? "linear" : "chain";
+        let s;
+        let last = null;
+        const st = stage(host, true);
+        st.innerHTML = `<div class="hash"></div><div class="cpu-cap"></div>`;
+        const bar = ctlBar(host);
+        const out = readout(host);
+        const $q = (x) => st.querySelector(x);
+        const init = (keys) => { s = hashT.make(M, mode); keys.forEach((k) => hashT.insert(s, k)); last = null; draw(`${keys.length}개 키 삽입 · h(k) = k mod ${M}`); };
+        const draw = (text) => {
+            const path = new Set(last ? last.path : []);
+            $q(".hash").innerHTML = range(s.m).map((i) => {
+                const cls = last && i === last.at ? (last.ok ? "ok" : "no") : path.has(i) ? "probe" : "";
+                const body = s.mode === "chain"
+                    ? (s.t[i].length ? s.t[i].map((k) => `<b class="${last && last.key === k && i === last.at ? "me" : ""}">${k}</b>`).join("<em>→</em>") : "<span>NULL</span>")
+                    : s.t[i] === null ? "<span>빈칸</span>" : s.t[i] === TOMB ? `<span class="tomb">${TOMB} 묘비</span>` : `<b>${s.t[i]}</b>`;
+                return `<div class="hrow ${cls}"><i>${i}</i><div>${body}</div></div>`;
+            }).join("");
+            if (text) $q(".cpu-cap").innerHTML = fmt(text);
+            const a = s.n / s.m;
+            out([["키", s.n], ["칸", s.m], ["적재율 α", a.toFixed(2), s.mode === "linear" && a > 0.7 ? "bad" : ""], ["평균 탐사(찾기)", hashT.avgProbes(s).toFixed(2)], ...(last ? [["직전 탐사", last.path.length]] : [])]);
+        };
+        const key = () => { const v = parseInt(inp.value, 10); if (Number.isNaN(v)) { LAB.toast("정수 키를 입력"); return null; } return v; };
+        const act = (fn) => { const k = key(); if (k === null) return; last = { ...fn(s, k), key: k }; draw(last.text || (last.ok ? `찾음: [${last.at}] · 탐사 ${last.probes}` : `없음 · 탐사 ${last.probes}`)); };
+        const inp = textIn(bar, "키", String(spec.next ?? 23), () => act(hashT.insert));
+        button(bar, "삽입", () => act(hashT.insert), true);
+        button(bar, "검색", () => act(hashT.find));
+        button(bar, "삭제", () => act(hashT.remove));
+        button(bar, "랜덤 삽입", () => { const k = Math.floor(Math.random() * 100); inp.value = k; act(hashT.insert); });
+        button(bar, "2배 재해시", () => { const ks = hashT.keys(s); M = s.m * 2; init(ks); last = null; draw(`칸 ${M / 2} → ${M} · 키 ${ks.length}개를 전부 다시 넣음 (O(n))`); });
+        seg(bar, "충돌 처리", [["chain", "체이닝"], ["linear", "선형 탐사"]], mode, (v) => { mode = v; init(hashT.keys(s)); });
+        button(bar, "↺", () => { M = spec.size || 8; init(spec.keys || [12, 20, 7, 15, 3]); });
+        init(spec.keys || [12, 20, 7, 15, 3]);
+    };
+
+    // binary heap: tree + array, sift steps
+    SIMS.heap = (host, spec) => {
+        let kind = spec.kind === "max" ? "max" : "min";
+        let a = [];
+        let stepCtl = null;
+        const bar = ctlBar(host);
+        const box = document.createElement("div");
+        host.append(box);
+        const out = readout(host);
+        const show = (frames) => {
+            if (stepCtl) stepCtl.stop();
+            box.innerHTML = `<div class="demo-stage"><div class="tree-host"></div><div class="heap-arr"></div></div>`;
+            const th = box.querySelector(".tree-host");
+            const ah = box.querySelector(".heap-arr");
+            stepCtl = stepper(box, frames.length, (i) => {
+                const f = frames[i];
+                const hl = new Set(f.hl);
+                const nodes = f.a.map((v, k) => { const d = Math.floor(Math.log2(k + 1)); const j = k + 1 - 2 ** d; return { id: k, v, d, x: (j + 0.5) / 2 ** d, parent: k ? (k - 1) >> 1 : -1 }; });
+                th.innerHTML = f.a.length ? treeSvg(nodes, hl) : `<div class="empty">빈 힙</div>`;
+                ah.innerHTML = f.a.map((v, k) => `<i class="${hl.has(k) ? "hl" : ""}"><small>${k}</small>${v}</i>`).join("");
+                out([["크기", f.a.length], ["높이", f.a.length ? Math.floor(Math.log2(f.a.length)) + 1 : 0], [kind === "min" ? "최솟값" : "최댓값", f.a.length ? f.a[0] : "–"], ["부모 = (i−1)/2", "자식 = 2i+1, 2i+2"]]);
+                return f.text;
+            }, { interval: 700 });
+        };
+        const heapify = (vals) => { a = vals.slice(); show(heapT.heapify(a, kind)); };
+        const inp = textIn(bar, "값", "5", () => {});
+        button(bar, "삽입", () => { const v = parseInt(inp.value, 10); if (Number.isNaN(v)) return LAB.toast("정수"); show(heapT.push(a, v, kind)); inp.value = Math.floor(Math.random() * 99) + 1; }, true);
+        button(bar, "루트 꺼내기", () => show(heapT.pop(a, kind)));
+        button(bar, "랜덤 9개 heapify", () => heapify(range(9).map(() => Math.floor(Math.random() * 99) + 1)));
+        seg(bar, "", [["min", "최소 힙"], ["max", "최대 힙"]], kind, (v) => { kind = v; heapify(a); });
+        heapify(spec.values || [40, 15, 30, 8, 22, 5, 17]);
+    };
+
+    // binary search tree: insert / search / delete with the visited path
+    SIMS.bst = (host, spec) => {
+        let root = null;
+        let stepCtl = null;
+        const bar = ctlBar(host);
+        const box = document.createElement("div");
+        host.append(box);
+        const out = readout(host);
+        const nodesOf = () => {
+            const order = bstT.inorder(root);
+            const n = Math.max(1, order.length);
+            const out2 = [];
+            const walk = (x, d, parent) => { if (!x) return; out2.push({ id: x.v, v: x.v, d, x: (order.indexOf(x.v) + 0.5) / n, parent }); walk(x.l, d + 1, x.v); walk(x.r, d + 1, x.v); };
+            walk(root, 0, null);
+            return out2;
+        };
+        const show = (path, text, cls) => {
+            if (stepCtl) stepCtl.stop();
+            box.innerHTML = `<div class="demo-stage"><div class="tree-host"></div></div>`;
+            const th = box.querySelector(".tree-host");
+            const nodes = nodesOf();
+            const frames = path.length ? path.map((_, i) => i) : [0];
+            stepCtl = stepper(box, frames.length, (i) => {
+                const seen = new Set(path.slice(0, i + 1));
+                th.innerHTML = nodes.length ? treeSvg(nodes, seen, i === frames.length - 1 ? cls : "hl") : `<div class="empty">빈 트리</div>`;
+                const h = bstT.height(root);
+                const n = nodes.length;
+                out([["노드", n], ["높이", h], ["최소 가능 높이", n ? Math.ceil(Math.log2(n + 1)) : 0, h > Math.ceil(Math.log2(n + 1)) + 1 ? "bad" : "good"], ["중위 순회", bstT.inorder(root).join(" ") || "–"]]);
+                return i === frames.length - 1 ? text : `${path[i]} 와 비교 → ${path[i + 1] !== undefined ? (path[i + 1] < path[i] ? "왼쪽" : "오른쪽") : ""}`;
+            }, { interval: 650 });
+        };
+        const val = () => { const v = parseInt(inp.value, 10); if (Number.isNaN(v)) { LAB.toast("정수"); return null; } return v; };
+        const load = (vals) => { root = null; vals.forEach((v) => { root = bstT.insert(root, v).root; }); show([], `${vals.join(", ")} 순서로 삽입`); };
+        const inp = textIn(bar, "값", "37", () => {});
+        button(bar, "삽입", () => { const v = val(); if (v === null) return; const r = bstT.insert(root, v); root = r.root; show(r.path, r.text, "ok"); inp.value = Math.floor(Math.random() * 99) + 1; }, true);
+        button(bar, "검색", () => { const v = val(); if (v === null) return; const r = bstT.search(root, v); show(r.path, r.text, r.ok ? "ok" : "no"); });
+        button(bar, "삭제", () => { const v = val(); if (v === null) return; const r = bstT.remove(root, v); root = r.root; show(r.path, r.text, "ok"); });
+        button(bar, "정렬된 1…7", () => load([1, 2, 3, 4, 5, 6, 7]));
+        button(bar, "균형 순서", () => load([4, 2, 6, 1, 3, 5, 7]));
+        button(bar, "랜덤 10개", () => { const set = new Set(); while (set.size < 10) set.add(Math.floor(Math.random() * 99) + 1); load([...set]); });
+        load(spec.values || [50, 30, 70, 20, 40, 60, 80]);
+    };
+
+    // sorting: bars with compare / swap highlights
+    SIMS.sort = (host, spec) => {
+        const ALGOS = { bubble: "버블", insertion: "삽입", selection: "선택", merge: "병합", quick: "퀵", heap: "힙" };
+        let algo = ALGOS[spec.algo] ? spec.algo : "insertion";
+        let n = spec.n || 16;
+        let input = spec.input || "random";
+        let speed = 120;
+        let seed = 7;
+        let stepCtl = null;
+        const bar = ctlBar(host);
+        const box = document.createElement("div");
+        host.append(box);
+        const out = readout(host);
+        const build = () => {
+            if (stepCtl) stepCtl.stop();
+            const arr = sortInput(input, n, seed);
+            const frames = sortFrames(algo, arr);
+            const mx = Math.max(...arr);
+            box.innerHTML = `<div class="demo-stage"><div class="bars">${arr.map(() => "<i></i>").join("")}</div></div>`;
+            const bars = [...box.querySelectorAll(".bars i")];
+            stepCtl = stepper(box, frames.length, (i) => {
+                const f = frames[i];
+                const cmp = new Set(f.cmp);
+                const sw = new Set(f.sw);
+                bars.forEach((b, k) => {
+                    b.style.height = `${(f.a[k] / mx) * 100}%`;
+                    b.className = sw.has(k) ? "sw" : cmp.has(k) ? "cmp" : f.done.has(k) ? "done" : "";
+                    b.title = f.a[k];
+                });
+                out([["알고리즘", ALGOS[algo]], ["n", n], ["비교", f.c], ["교환·쓰기", f.s], ["n²/2", Math.round((n * n) / 2)], ["n·log₂n", Math.round(n * Math.log2(n))]]);
+                return f.text;
+            }, { interval: speed, auto: false });
+        };
+        seg(bar, "", Object.entries(ALGOS).map(([k, v]) => [k, v]), algo, (v) => { algo = v; build(); });
+        seg(bar, "입력", [["random", "무작위"], ["nearly", "거의 정렬"], ["reversed", "역순"], ["few", "중복 많음"]], input, (v) => { input = v; build(); });
+        seg(bar, "n", [8, 16, 32].map((v) => [v, v]), n, (v) => { n = +v; build(); });
+        seg(bar, "속도", [["400", "느림"], ["120", "보통"], ["30", "빠름"]], "120", (v) => { speed = +v; build(); });
+        button(bar, "새 배열", () => { seed++; build(); });
+        build();
+    };
+
     LAB.SIM_INFO = {
         reg: ["레지스터 비트", "MASK·결과 미리보기 · set/clear/toggle · 필드 읽기·쓰기", "비트"],
         bitops: ["비트 연산 ALU", "AND·OR·XOR·시프트·회전 · 2의 보수 · NZCV 플래그", "비트"],
@@ -2088,9 +3205,17 @@
         gd: ["옵티마이저 경주", "SGD · Momentum · Adam", "AI"],
         attention: ["어텐션 맵", "가중치 · 온도 · 인과 마스크", "AI"],
         sampling: ["LLM 디코딩", "온도 · top-k · top-p", "AI"],
-        conv: ["합성곱 커널", "stride · padding · 출력 크기", "AI"]
+        conv: ["합성곱 커널", "stride · padding · 출력 크기", "AI"],
+        cpu: ["CPU 실행기", "Thumb-2 어셈블리 한 줄씩 · 레지스터·플래그·스택 · 코드 편집", "CPU·메모리"],
+        cache: ["캐시 시뮬레이터", "태그·인덱스·오프셋 · 직접 사상 vs 연관 · 히트율", "CPU·메모리"],
+        layout: ["구조체 정렬·엔디안", "필드 배치 → 패딩·sizeof · 리틀/빅 엔디안", "CPU·메모리"],
+        ringbuf: ["링 버퍼", "head·tail · 가득 참 판정 3가지 · 덮어쓰기", "자료구조"],
+        hash: ["해시 테이블", "체이닝 vs 선형 탐사 · 적재율 · 재해시", "자료구조"],
+        heap: ["이진 힙", "삽입·꺼내기 · sift up/down · 배열 = 트리", "자료구조"],
+        bst: ["이진 탐색 트리", "삽입·검색·삭제 · 높이 · 정렬 입력의 함정", "자료구조"],
+        sort: ["정렬 알고리즘", "버블·삽입·선택·병합·퀵·힙 · 비교·교환 횟수", "자료구조"]
     };
-    LAB.SIM_TAGS = ["비트", "신호", "제어·로봇", "시스템", "AI"];
+    LAB.SIM_TAGS = ["비트", "CPU·메모리", "자료구조", "신호", "제어·로봇", "시스템", "AI"];
 
     const TYPES = { steps, wave, seq, sim: (host, spec) => SIMS[spec.name](host, spec) };
     LAB.SIM_NAMES = Object.keys(SIMS);

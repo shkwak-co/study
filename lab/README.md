@@ -1,6 +1,6 @@
 # Study Lab
 
-Interactive study site: embedded, robotics, languages, protocols, deep learning, AI.
+Interactive study site: embedded, assembly, memory, robotics, languages, data structures, protocols, deep learning, AI.
 Plain HTML/CSS/JS, no build, no CDN — open `lab/index.html` directly (`file://`).
 
 ## Pages
@@ -105,6 +105,19 @@ References: `refs` on lessons and trends — original papers (arXiv/DOI), offici
 | `bitops` | `a b width n op` | 8/16/32-bit ALU: logic, shifts, rotates, add/sub/neg, bit tricks, NZCV flags · A/B accept `0x3C`, `0b1010`, `-4` |
 | `float` | `format value` | IEEE 754 fp32 / fp16 / bf16 / fp8 E5M2: click bits or type a value, stored value, error, ±1 ULP |
 | `crc` | `poly msg` | CRC long division step by step (`crc3`, `crc8`, `crc16`), receive check, click bits to inject errors |
+
+| `cpu` | `code expect regs? c? cTitle? title? intro? speed?` | Thumb-2 assembly stepper: registers, NZCV, RAM (data + stack), undo, edit. `expect: { r0: 14 }` is checked by `check.mjs` |
+| `cache` | `size block ways pattern` | cache sim: address → tag/index/offset bits, sets × ways, LRU, hit rate · pattern `seq` `stride` `row` `col` `conflict` `reuse` |
+| `layout` | `fields:[[type, name]] arch value?` | struct layout: padding, sizeof/alignof, reorder, packed · arch `32` (Arm AAPCS) / `64` (LP64) · types in `LAB.LAYOUT_TYPES` · endianness of `value` |
+| `ringbuf` | `size mode` | ring buffer put/get, head/tail · mode `spare` (one empty slot) `count` `free` (free-running indices) · overwrite policy |
+| `hash` | `size mode keys` | hash table insert/search/delete · mode `chain` / `linear` · load factor, probes, rehash |
+| `heap` | `kind values` | binary heap (`min` / `max`): insert, extract, heapify · tree + array view, sift steps |
+| `bst` | `values` | binary search tree insert/search/delete · path, height, in-order |
+| `sort` | `algo n input` | sorting animation · algo `bubble` `insertion` `selection` `merge` `quick` `heap` · input `random` `nearly` `reversed` `few` · comparisons / swaps |
+
+**cpu** program rules: Armv7-M Thumb-2 UAL subset — `mov mvn add adc sub sbc rsb neg mul udiv sdiv and orr eor bic lsl lsr asr ror cmp cmn tst` (+`s` suffix sets flags; operand 2 may be `#imm`, a register, or `rX, lsl #n`), `b` + condition (`eq ne cs/hs cc/lo mi pl vs vc hi ls ge lt gt le`), `cbz cbnz bl bx blx`, `push pop` (`{r4-r7, lr}`, `pop {.., pc}` returns), `ldr str ldrb strb ldrh strh ldrsb ldrsh` with `[rn]`, `[rn, #imm]`, `[rn, rm]`, `[rn, rm, lsl #2]`, pre-index `[rn, #4]!`, post-index `[rn], #4`, and `ldr rX, =label|imm`.
+Data: `.data` / `.text`, `label: .word 1, 2` · `.hword` `.byte` `.space n` `.asciz "s"` → RAM from `0x20000000`. Comments `@` `;` `//`.
+LR starts at `0xFFFFFFFF`: `bx lr` from the top level ends the program (or falling off the end). SP starts at `0x20001000`. Out-of-RAM access → HardFault. Simplified: 4 bytes per instruction, no IT blocks, no `ldm/stm`, no reading `pc`.
 
 Every sim also needs a line in `LAB.SIM_INFO` (`assets/anim.js`): `[title, one line, tag]` — it is listed on `labs.html`.
 The bit-lab math lives in `LAB.num` (`alu`, `fenc`/`fdec`, `crcDiv`) and is tested by `check.mjs`.

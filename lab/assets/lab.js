@@ -3,7 +3,7 @@
     "use strict";
 
     // Add a new track: create content/<id>.js and list the id here.
-    const TRACK_IDS = ["embedded", "robotics", "languages", "protocols", "deep-learning", "ai"];
+    const TRACK_IDS = ["embedded", "assembly", "memory", "robotics", "languages", "data-structures", "protocols", "deep-learning", "ai"];
     const EXTRA = [{
         id: "fpga",
         name: "FPGA / ASIC",
@@ -327,7 +327,8 @@
         js: words("async await break case catch class const continue default delete do else export extends false finally for function if import in instanceof let new null of return static super switch this throw true try typeof undefined var void while yield"),
         sh: words("if then else fi for do done while case esac function export echo cd sudo source"),
         yaml: words("true false null"),
-        v: words("module endmodule input output inout wire reg logic always always_ff always_comb assign begin end if else case endcase posedge negedge parameter localparam")
+        v: words("module endmodule input output inout wire reg logic always always_ff always_comb assign begin end if else case endcase posedge negedge parameter localparam"),
+        asm: new Set()
     };
     const FAM = (lang) => {
         const l = String(lang || "").toLowerCase();
@@ -337,8 +338,12 @@
         if (/^(js|ts|javascript|typescript|json)$/.test(l)) return "js";
         if (/^(yaml|yml|toml|ini)$/.test(l)) return "yaml";
         if (/^(v|sv|verilog|systemverilog)$/.test(l)) return "v";
+        if (/^(asm|s|arm|thumb|nasm|x86|riscv|rv|gas)$/.test(l)) return "asm";
         return "c";
     };
+    // assembly: mnemonics (with condition / size / S suffixes), registers of Arm, RISC-V and x86-64
+    const ASM_OP = /^(?:mov|mvn|add|adc|sub|sbc|rsb|neg|mul|mla|mls|[us]mull|udiv|sdiv|and|orr|eor|bic|lsl|lsr|asr|ror|cmp|cmn|tst|teq|b|bl|blx|bx|cbn?z|push|pop|ldr|str|ldm|stm|ldrex|strex|nop|svc|bkpt|it|ite|itt|cps[ie]d|wfi|wfe|dmb|dsb|isb|adr|mrs|msr|ubfx|sbfx|bfi|rev|clz|li|la|lui|auipc|addi|andi|ori|xori|slli|srli|srai|sll|srl|sra|slt|sltu|lw|sw|lb|sb|lh|sh|lbu|lhu|ld|sd|j|jal|jalr|ret|beqz|bnez|beq|bne|blt|bge|bltu|bgeu|ecall|call|lea|imul|idiv|div|jmp|j[a-z]{1,3}|inc|dec|xor|or|not|shl|shr|sar|test|syscall|leave|cmov[a-z]*|set[a-z]{1,3}|movzx|movsx|movsxd|cdq|cqo|enter|endbr64)(?:eq|ne|cs|cc|hs|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al)?(?:s|b|h|sb|sh|d|q|l|w)?(?:\.[wn])?$/i;
+    const ASM_REG = /^(?:r\d{1,2}|sp|lr|pc|ip|fp|xpsr|apsr|primask|msp|psp|x\d{1,2}|a[0-7]|t[0-6]|s\d{1,2}|ra|gp|tp|zero|[re]?(?:ax|bx|cx|dx|si|di|sp|bp)|r\d{1,2}[dwb]|[abcd][lh]|[re]ip|xmm\d+)$/i;
     const R = {
         cmtC: /\/\/.*|\/\*[\s\S]*?\*\//.source,
         cmtH: /#.*/.source,
@@ -352,8 +357,11 @@
     function hl(src, lang) {
         const fam = FAM(lang);
         const kw = KW[fam];
-        const cmt = ["py", "sh", "yaml"].includes(fam) ? R.cmtH : R.cmtC;
-        const pre = fam === "c" ? R.pre : "(?!)";
+        const asm = fam === "asm";
+        const x86 = asm && /x86|nasm/.test(String(lang).toLowerCase());
+        const cmt = ["py", "sh", "yaml"].includes(fam) || (asm && /riscv|rv/.test(String(lang).toLowerCase())) ? R.cmtH
+            : x86 ? /;.*|#.*/.source : asm ? /@.*|;.*|\/\/.*/.source : R.cmtC;
+        const pre = fam === "c" ? R.pre : asm ? /\.[A-Za-z_]\w*|^[ \t]*[A-Za-z_.$][\w.$]*:/.source : "(?!)";
         const str = ["c", "rs", "v"].includes(fam) ? R.strShort : R.strLong;
         const re = new RegExp(`(${cmt})|(${pre})|(${str})|(${R.num})|(${R.id})(\\s*\\()?`, "gm");
         let out = "";
@@ -367,7 +375,8 @@
             else if (s) out += span("s", s);
             else if (n) out += span("n", n);
             else if (id) {
-                const cls = kw.has(id) ? "k"
+                const cls = asm ? (x86 && ASM_REG.test(id) ? "t" : ASM_OP.test(id) ? "k" : ASM_REG.test(id) ? "t" : "") // bl/bx: Arm ops, x86 regs
+                    : kw.has(id) ? "k"
                     : /_t$|_TypeDef$/.test(id) || (fam !== "c" && /^[A-Z][a-z]\w*$/.test(id)) ? "t"
                         : /^[A-Z][A-Z0-9_]{2,}$/.test(id) ? "p"
                             : call ? "f" : "";
@@ -749,6 +758,9 @@ ${terms.length ? (() => {
             "GPIO 레지스터 비트를 직접 켜보기",
             "0.1 이 float 에서 어떻게 저장되는지 보기",
             "CRC 나눗셈을 한 단계씩 따라가기",
+            "어셈블리를 한 줄씩 돌리며 스택 보기",
+            "캐시 히트와 미스를 직접 세어 보기",
+            "해시 충돌이 어디로 밀려나는지 보기",
             "PID 게인을 돌려 오버슈트 잡기",
             "I2C 파형을 한 비트씩 따라가기",
             "어텐션 가중치를 눈으로 보기",

@@ -25,7 +25,7 @@ LAB.path({
     desc: "퍼셉트론과 역전파에서 Transformer, LLM, RAG, 엣지 배포까지",
     lessons: [
         "deep-learning/perceptron", "deep-learning/backprop", "deep-learning/optimizer", "deep-learning/regularization",
-        "deep-learning/cnn", "deep-learning/rnn", "deep-learning/transformer", "ai/llm", "ai/prompting", "ai/rag",
+        "deep-learning/cnn", "deep-learning/rnn", "deep-learning/transformer", "ai/llm", "ai/tokenizer", "ai/prompting", "ai/rag",
         "ai/agents", "ai/finetune", "deep-learning/quantization", "ai/edge-ai", "ai/eval"
     ]
 });

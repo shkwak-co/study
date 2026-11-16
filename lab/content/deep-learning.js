@@ -6,55 +6,62 @@ LAB.track({
     tagline: "뉴런 하나에서 Transformer까지 — 숫자가 학습되는 과정",
     trends: [
         {
-            title: "MoE 가 대형 모델의 기본 구조로",
-            when: "2025–2026",
+            title: "MoE 가 대형·중형 모델의 기본 구조로",
+            when: "2024–2026",
             points: [
-                "DeepSeek-V3(671B 중 토큰당 ~37B 활성), Qwen3-235B-A22B 등 오픈 MoE 확산",
+                "DeepSeek-V4(2026): Pro 1.6T 중 토큰당 49B, Flash 284B 중 13B 만 활성 · 1M 토큰 문맥",
+                "중형도 MoE: Gemma 4 는 26B 중 3.8B, Nemotron 3 Super 는 120.6B 중 12.7B 활성",
                 "라우터(router)가 토큰마다 top-k 전문가(expert)만 실행 → 연산은 **활성 파라미터**(active parameters) 기준",
-                "메모리는 **전체 파라미터**(total parameters) 기준 · 전문가 부하 균형(load balancing)과 통신이 과제"
+                "메모리는 **전체 파라미터**(total parameters) 기준 · 부하 균형(load balancing)과 전문가 간 통신이 과제"
             ],
             refs: [
                 { title: "Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer", by: "Shazeer et al.", year: 2017, url: "https://arxiv.org/abs/1701.06538", kind: "paper" },
-                { title: "DeepSeek-V3 Technical Report", by: "DeepSeek-AI", year: 2024, url: "https://arxiv.org/abs/2412.19437", kind: "paper" }
+                { title: "DeepSeek-V4: Towards Highly Efficient Million-Token Context Intelligence", by: "DeepSeek-AI", year: 2026, url: "https://arxiv.org/abs/2606.19348", kind: "paper" },
+                { title: "Gemma 4 Technical Report", by: "Gemma Team", year: 2026, url: "https://arxiv.org/abs/2607.02770", kind: "paper" }
             ]
         },
         {
             title: "FP8 → FP4 저비트(low-bit) 학습·추론(inference)",
             when: "2025–2026",
             points: [
-                "DeepSeek-V3: 초대형 모델을 FP8 혼합정밀(mixed precision)로 학습한 공개 사례",
-                "NVIDIA Blackwell `NVFP4`: 4bit(E2M1) 값 16개마다 FP8 스케일(scale) 공유",
-                "NVFP4 사전학습(pretraining)이 FP8 기준선(baseline)에 근접했다는 보고 · 일부 층은 고정밀 유지"
+                "NVFP4: 4bit(E2M1) 값 16개 블록마다 E4M3 스케일(scale) + 텐서별 FP32 스케일 · MXFP4 는 32개 블록",
+                "12B 모델을 10T 토큰 NVFP4 로 사전학습(pretraining) → FP8 기준선(baseline)에 근접 (2025)",
+                "Nemotron 3 Super(2026-04): NVFP4 로 사전학습한 120B 하이브리드 MoE 를 공개",
+                "DeepSeek-V4: 사후 학습에서 MoE 전문가 가중치를 FP4 QAT(quantization-aware training)로"
             ],
             refs: [
                 { title: "FP8 Formats for Deep Learning", by: "Micikevicius et al.", year: 2022, url: "https://arxiv.org/abs/2209.05433", kind: "paper" },
-                { title: "Pretraining Large Language Models with NVFP4", by: "NVIDIA", year: 2025, url: "https://arxiv.org/abs/2509.25149", kind: "paper" }
+                { title: "Pretraining Large Language Models with NVFP4", by: "NVIDIA", year: 2025, url: "https://arxiv.org/abs/2509.25149", kind: "paper" },
+                { title: "Nemotron 3 Super: Open, Efficient Mixture-of-Experts Hybrid Mamba-Transformer Model for Agentic Reasoning", by: "NVIDIA", year: 2026, url: "https://research.nvidia.com/labs/nemotron/files/NVIDIA-Nemotron-3-Super-Technical-Report.pdf", kind: "paper" }
             ]
         },
         {
-            title: "희소 어텐션(sparse attention)과 긴 컨텍스트(long context)",
-            when: "2025",
+            title: "희소·압축 어텐션(sparse attention)과 1M 토큰 문맥(long context)",
+            when: "2025–2026",
             points: [
-                "DeepSeek Sparse Attention(V3.2): 인덱서(indexer)가 고른 top-k 토큰(token)에만 어텐션",
-                "NSA: 압축(compression) · 선택(selection) · 슬라이딩 윈도우(sliding window) 세 갈래로 O(n²) 비용 회피",
-                "GQA · MLA 처럼 **KV 캐시(KV cache)를 줄이는** 어텐션 설계가 기본값으로"
+                "DeepSeek-V3.2 DSA(2025-12): 인덱서(indexer)가 고른 top-k 토큰(token)에만 어텐션",
+                "DeepSeek-V4: CSA(KV 4× 압축 + top-k 선택)와 HCA(128× 압축)를 층마다 교대",
+                "→ 1M 문맥에서 V3.2 대비 KV 캐시(KV cache) 10%, 토큰당 연산 27%",
+                "Gemma 4: 슬라이딩 윈도우(sliding window) 층 5 : 전역 층 1 · KV 캐시를 줄이는 설계가 기본값"
             ],
             refs: [
                 { title: "DeepSeek-V3.2: Pushing the Frontier of Open Large Language Models", by: "DeepSeek-AI", year: 2025, url: "https://arxiv.org/abs/2512.02556", kind: "paper" },
-                { title: "Native Sparse Attention: Hardware-Aligned and Natively Trainable Sparse Attention", by: "Yuan et al.", year: 2025, url: "https://arxiv.org/abs/2502.11089", kind: "paper" }
+                { title: "DeepSeek-V4: Towards Highly Efficient Million-Token Context Intelligence", by: "DeepSeek-AI", year: 2026, url: "https://arxiv.org/abs/2606.19348", kind: "paper" },
+                { title: "Gemma 4 Technical Report", by: "Gemma Team", year: 2026, url: "https://arxiv.org/abs/2607.02770", kind: "paper" }
             ]
         },
         {
-            title: "상태공간모델(state space model, SSM) 하이브리드(hybrid)",
+            title: "상태공간모델(state space model, SSM)·선형 어텐션 하이브리드(hybrid)",
             when: "2025–2026",
             points: [
-                "NVIDIA Nemotron-H: Mamba-2 층 위주 + 소수(약 8%)의 어텐션(attention) 층",
-                "고정 크기 상태 → 시퀀스(sequence) 길이에 선형 · 긴 생성에서 처리량(throughput)↑",
-                "Jamba, Falcon-H1 등 어텐션 + SSM 혼합 구조가 계속 등장"
+                "Nemotron 3 Super(2026): 88층 대부분이 Mamba-2 + MoE · 소수 어텐션(attention) 층은 전역 '앵커'",
+                "Kimi Linear: Gated DeltaNet 을 확장한 선형 어텐션(linear attention) KDA + MLA 혼합",
+                "→ KV 캐시 최대 75%↓, 1M 문맥 디코딩 최대 6× · 고정 크기 상태라 긴 생성에서 처리량(throughput)↑"
             ],
             refs: [
                 { title: "Mamba: Linear-Time Sequence Modeling with Selective State Spaces", by: "Gu et al.", year: 2023, url: "https://arxiv.org/abs/2312.00752", kind: "paper" },
-                { title: "Nemotron-H: A Family of Accurate and Efficient Hybrid Mamba-Transformer Models", by: "NVIDIA", year: 2025, url: "https://arxiv.org/abs/2504.03624", kind: "paper" }
+                { title: "Kimi Linear: An Expressive, Efficient Attention Architecture", by: "Kimi Team", year: 2025, url: "https://arxiv.org/abs/2510.26692", kind: "paper" },
+                { title: "Nemotron 3 Super: Open, Efficient Mixture-of-Experts Hybrid Mamba-Transformer Model for Agentic Reasoning", by: "NVIDIA", year: 2026, url: "https://research.nvidia.com/labs/nemotron/files/NVIDIA-Nemotron-3-Super-Technical-Report.pdf", kind: "paper" }
             ]
         }
     ],
@@ -64,6 +71,7 @@ LAB.track({
             title: "퍼셉트론과 활성함수",
             level: 1,
             mins: 12,
+            checked: "2026-11-16",
             key: [
                 "뉴런(neuron) = 가중합(weighted sum) `z = w·x + b` → 활성함수(activation function) `a = f(z)`",
                 "단일 퍼셉트론(perceptron)의 경계는 **직선 하나** · XOR 은 못 푼다",
@@ -103,7 +111,7 @@ for step in range(1000):
     opt.step()
 
 with torch.no_grad():
-    print(torch.sigmoid(model(X)).round().flatten())  # tensor([0., 1., 1., 0.])`,
+    print(torch.sigmoid(model(X)).round().flatten())  # 성공하면 tensor([0., 1., 1., 0.])`,
                     note: "은닉 3개는 빠듯해 시드(seed)에 따라 가끔 실패 · 8개로 늘리면 안정적"
                 },
                 {
@@ -154,15 +162,20 @@ out = np.stack(out)` },
                 { term: "범용 근사 정리", en: "Universal approximation theorem", def: "은닉층 하나라도 뉴런이 충분하면 연속 함수를 근사 가능" }
             ],
             quiz: [
-                { q: "단일 퍼셉트론이 XOR 을 못 푸는 이유는?", options: ["가중치가 너무 작아서", "학습률이 커서", "결정 경계가 직선 하나라서", "편향이 없어서"], a: 2, why: "XOR 의 두 클래스는 직선 하나로 나눌 수 없음" },
-                { q: "활성함수 없이 `Linear` 3개를 쌓으면?", options: ["선형 변환 하나와 같다", "3차 다항식이 된다", "XOR 을 풀 수 있다", "기울기 소실이 생긴다"], a: 0, why: "W₃(W₂(W₁x)) = Wx · 선형의 합성은 선형" },
-                { q: "`sigmoid(0)` 의 값은?", options: ["0", "1", "e", "0.5"], a: 3, why: "1 / (1 + e⁰) = 1/2" },
-                { q: "ReLU 에서 z = −2 일 때 기울기는?", options: ["1", "0", "−2", "0.5"], a: 1, why: "음수 영역은 출력 0, 기울기 0" },
-                { q: "이진 분류 출력층으로 권장되는 조합은?", options: ["ReLU + MSE", "softmax + L1", "로짓 그대로 + `BCEWithLogitsLoss`", "tanh + 손실 없음"], a: 2, why: "sigmoid 와 log 를 합쳐 계산해 수치적으로 안정" }
+                { q: "단일 퍼셉트론이 XOR 을 못 푸는 이유는?", options: ["가중치가 너무 작아서", "학습률이 너무 커서", "경계가 직선 하나라서", "편향 항이 없어서"], a: 2, why: "XOR 의 두 클래스는 직선 하나로 못 나눔 · 가중치·학습률·편향을 바꿔도 경계는 여전히 직선" },
+                { q: "활성함수 없이 `Linear` 3개를 쌓으면?", options: ["선형 변환 하나와 같다", "3차 다항식 함수가 된다", "XOR 도 풀 수 있다", "기울기 소실이 생긴다"], a: 0, why: "W₃W₂W₁ 이 행렬 하나로 접힘 · 곱셈만 있고 비선형이 없으니 다항식도 아님" },
+                { q: "`sigmoid(0)` 의 값은?", options: ["0", "1", "0.25", "0.5"], a: 3, why: "1 / (1 + e⁰) = 1/2 · 0.25 는 이 점의 미분값 σ(1 − σ)" },
+                { q: "ReLU 에서 z = −2 일 때 기울기는?", options: ["1", "0", "−2", "0.5"], a: 1, why: "음수 영역은 출력 0, 기울기 0 · 양수 영역에서만 1" },
+                { q: "이진 분류 출력층으로 권장되는 조합은?", options: ["ReLU + `MSELoss`", "softmax + `L1Loss`", "로짓 + `BCEWithLogitsLoss`", "sigmoid + `BCEWithLogitsLoss`"], a: 2, why: "sigmoid 와 log 를 한 번에 계산해 안정 · 앞에 sigmoid 를 또 두면 이중 sigmoid 로 확률이 0.5~0.73 에 갇힘" },
+                { type: "num", q: "`x = (1, 2)`, `w = (0.8, −0.2)`, `b = 0.1` 인 뉴런의 sigmoid 출력은? (소수 셋째 자리)", answer: 0.622, tol: 0.001, why: "z = 0.8 − 0.4 + 0.1 = 0.5 → 1 / (1 + e^−0.5) ≈ 0.622" },
+                { type: "num", q: "`nn.Linear(784, 128)` 의 파라미터 수 (bias 포함)는?", answer: 100480, why: "784·128 = 100,352 가중치 + bias 128" },
+                { type: "text", q: "출력되는 shape 은?", code: { lang: "python", src: "import numpy as np\nX = np.zeros((32, 784))     # 배치 32\nW = np.zeros((784, 128))\nprint((X @ W).shape)" }, answer: ["(32, 128)", "32, 128"], why: "(N, in) @ (in, out) = (N, out) · 배치 전체가 행렬곱 한 번" },
+                { type: "order", q: "퍼셉트론 학습 규칙으로 샘플 하나를 처리하는 순서", items: ["가중합 z = w·x + b", "계단 함수로 예측", "오차 t − pred 계산", "w, b 에 lr × 오차 반영"], why: "맞히면 오차 0 이라 갱신 없음 · 틀렸을 때만 경계가 움직임" }
             ],
             refs: [
                 { title: "The perceptron: A probabilistic model for information storage and organization in the brain", by: "Rosenblatt", year: 1958, url: "https://doi.org/10.1037/h0042519", kind: "paper" },
-                { title: "Deep Learning", by: "Goodfellow et al.", year: 2016, url: "https://www.deeplearningbook.org/", kind: "book" }
+                { title: "Deep Learning", by: "Goodfellow et al.", year: 2016, url: "https://www.deeplearningbook.org/", kind: "book" },
+                { title: "BCEWithLogitsLoss", by: "PyTorch", url: "https://docs.pytorch.org/docs/stable/generated/torch.nn.BCEWithLogitsLoss.html", kind: "doc" }
             ]
         },
         {
@@ -170,6 +183,8 @@ out = np.stack(out)` },
             title: "역전파",
             level: 2,
             mins: 14,
+            pre: ["deep-learning/perceptron"],
+            checked: "2026-11-16",
             key: [
                 "순전파(forward pass)로 값을 계산·**저장**, 역전파(backpropagation)로 기울기(gradient)를 뒤에서부터",
                 "연쇄 법칙(chain rule): 노드마다 **지역 기울기(local gradient)**를 곱해 나가면 끝",
@@ -302,16 +317,22 @@ def forward(self, x):
                 { term: "기울기 소실", en: "Vanishing gradient", def: "층을 거칠수록 1 보다 작은 값이 곱해져 앞쪽 기울기가 0 에 수렴" }
             ],
             quiz: [
-                { q: "`z = w·x` 에서 ∂z/∂w 는?", options: ["w", "1", "x", "w·x"], a: 2, why: "곱셈 노드의 지역 기울기 = 상대 입력" },
-                { q: "`u = z + b` 에 상류 기울기 g 가 들어오면 z 로 전달되는 값은?", options: ["g", "g·b", "0", "2g"], a: 0, why: "덧셈의 지역 기울기는 1 · 그대로 통과" },
-                { q: "큰 배치 학습에서 GPU 메모리를 가장 많이 차지하기 쉬운 것은?", options: ["손실 스칼라", "학습률", "가중치 기울기", "순전파에서 저장한 활성값"], a: 3, why: "활성값은 배치 × 시퀀스 × 층 수에 비례" },
-                { q: "`opt.zero_grad()` 를 빼먹으면?", options: ["에러 발생", "기울기가 스텝마다 누적되어 잘못된 갱신", "학습이 더 빨라짐", "가중치가 0 으로 초기화"], a: 1, why: "`.grad` 는 더해지는 방식 · 이전 스텝 값이 남음" },
-                { q: "sigmoid 를 깊게 쌓으면 기울기가 소실되기 쉬운 이유는?", options: ["sigmoid 미분의 최댓값이 0.25 라서", "출력이 음수라서", "sigmoid 가 비선형이라서", "학습률이 고정이라서"], a: 0, why: "층마다 ≤ 0.25 가 곱해져 지수적으로 작아짐" }
+                { q: "`z = w·x` 에서 ∂z/∂w 는?", options: ["w", "1", "x", "w·x"], a: 2, why: "곱셈 노드의 지역 기울기 = 상대 입력 · w 는 ∂z/∂x 쪽" },
+                { q: "`u = z + b` 에 상류 기울기 g 가 들어오면 z 로 전달되는 값은?", options: ["g", "g·b", "0", "2g"], a: 0, why: "덧셈의 지역 기울기는 1 · b 를 곱하는 건 곱셈 노드일 때" },
+                { q: "큰 배치 학습에서 GPU 메모리를 가장 많이 차지하기 쉬운 것은?", options: ["손실 스칼라 값", "학습률 스케줄", "가중치의 기울기", "저장된 활성값"], a: 3, why: "활성값은 배치 × 길이 × 층 수에 비례 · 기울기는 가중치와 같은 크기라 배치와 무관" },
+                { q: "`opt.zero_grad()` 를 빼먹으면?", options: ["매 스텝 RuntimeError 가 발생", "기울기가 누적돼 갱신이 틀어짐", "기울기가 0 이라 학습이 멈춤", "가중치가 0 으로 다시 초기화됨"], a: 1, why: "`.grad` 는 덮어쓰지 않고 더함 · 에러 없이 조용히 틀어지는 게 문제" },
+                { q: "sigmoid 를 깊게 쌓으면 기울기가 소실되기 쉬운 이유는?", options: ["미분 최댓값이 0.25 라서", "출력이 항상 음수라서", "sigmoid 가 비선형이라서", "학습률이 고정이라서"], a: 0, why: "층마다 ≤ 0.25 가 곱해져 10 층이면 ≤ 9.5e−7 배 · 비선형 자체는 ReLU 도 마찬가지" },
+                { type: "num", q: "데모 그래프(x = 2, w = 3, b = 1, y = 10, `L = (w·x + b − y)²`)에서 ∂L/∂w 는?", answer: -12, why: "∂L/∂u = 2(7 − 10) = −6 → 곱셈 노드에서 × x = −12" },
+                { type: "num", q: "같은 그래프에서 학습률 0.01 로 w 와 b 를 **둘 다** 한 번 갱신하면 새 손실 L 은?", answer: 7.29, tol: 0.01, why: "w = 3.12, b = 1.06 → u = 7.30 → (7.30 − 10)² = 7.29 · w 만 갱신하면 7.62" },
+                { type: "num", q: "배치 32, 길이 2048, 폭 4096 인 bf16 활성값 텐서 하나는 몇 MiB?", answer: 512, unit: "MiB", why: "32·2048·4096·2 byte = 2²⁹ byte · 층마다 이런 텐서를 여러 개 저장" },
+                { type: "text", q: "가중치 기울기 `dW` 의 shape 은?", code: { lang: "python", src: "import numpy as np\nX  = np.zeros((64, 3))     # 층 입력 (N, in)\ndY = np.zeros((64, 8))     # 상류 기울기 (N, out)\nprint((X.T @ dY).shape)" }, answer: ["(3, 8)", "3, 8"], why: "dW = Xᵀ @ dY 는 W 와 같은 (in, out) · 배치 축 N 은 합쳐져 사라짐" },
+                { type: "order", q: "학습 한 스텝의 순서 (`zero_grad` 제외)", items: ["순전파로 예측", "손실 계산", "`loss.backward()`", "`opt.step()`"], why: "backward 가 순전파 때 저장한 값을 써서 .grad 를 채우고, step 이 그 기울기로 갱신" }
             ],
             refs: [
                 { title: "Learning representations by back-propagating errors", by: "Rumelhart et al.", year: 1986, url: "https://doi.org/10.1038/323533a0", kind: "paper" },
                 { title: "Automatic differentiation in machine learning: a survey", by: "Baydin et al.", year: 2015, url: "https://arxiv.org/abs/1502.05767", kind: "paper" },
-                { title: "Training Deep Nets with Sublinear Memory Cost", by: "Chen et al.", year: 2016, url: "https://arxiv.org/abs/1604.06174", kind: "paper" }
+                { title: "Training Deep Nets with Sublinear Memory Cost", by: "Chen et al.", year: 2016, url: "https://arxiv.org/abs/1604.06174", kind: "paper" },
+                { title: "Scaling Laws for Neural Language Models", by: "Kaplan et al.", year: 2020, url: "https://arxiv.org/abs/2001.08361", kind: "paper" }
             ]
         },
         {
@@ -319,6 +340,8 @@ def forward(self, x):
             title: "경사하강과 옵티마이저",
             level: 2,
             mins: 14,
+            pre: ["deep-learning/backprop"],
+            checked: "2026-11-16",
             key: [
                 "경사하강(gradient descent): `θ ← θ − η·∇L` · 기울기(gradient) 반대로 한 걸음",
                 "학습률(learning rate) η: 크면 진동(oscillation)·발산(divergence), 작으면 너무 느림",
@@ -416,16 +439,21 @@ for i, (x, y) in enumerate(loader):
                 { term: "기울기 클리핑", en: "Gradient clipping", def: "기울기 노름이 임계값을 넘으면 비율대로 줄임 · 폭주 방지" }
             ],
             quiz: [
-                { q: "협곡 모양 손실에서 큰 학습률의 SGD 가 보이는 현상은?", options: ["바로 최솟값 도달", "가파른 방향으로 지그재그 진동·발산", "완만한 방향만 움직임", "멈춤"], a: 1, why: "곡률이 큰 축에서 보폭이 너무 커 반대편으로 튐" },
-                { q: "Adam 의 2차 모멘트 `v` 의 역할은?", options: ["이동 방향 결정", "학습률 스케줄", "파라미터별 기울기 크기로 보폭을 나눔", "가중치 감쇠"], a: 2, why: "`m̂/√v̂` · 기울기가 큰 축은 작게, 작은 축은 크게" },
-                { q: "Adam 에 편향 보정이 필요한 이유는?", options: ["m, v 가 0 으로 시작해 초반 값이 작게 치우쳐서", "학습률이 너무 커서", "기울기가 음수라서", "배치가 작아서"], a: 0, why: "t 가 작을 때 `1−βᵗ` 로 나눠 보정" },
-                { q: "Transformer 학습 초반 warmup 을 쓰는 주된 이유는?", options: ["메모리 절약", "과적합 방지", "데이터 증강", "초기 Adam 통계가 불안정해 큰 보폭이 위험해서"], a: 3, why: "작게 시작해 통계가 안정된 뒤 목표 lr 로" },
-                { q: "`clip_grad_norm_` 은 언제 호출해야 하나?", options: ["`backward()` 전", "`backward()` 후, `opt.step()` 전", "`opt.step()` 후", "`zero_grad()` 전"], a: 1, why: "계산된 기울기를 갱신 직전에 줄여야 의미가 있음" }
+                { q: "협곡 모양 손실에서 큰 학습률의 SGD 가 보이는 현상은?", options: ["한 스텝 만에 최솟값 도달", "가파른 축에서 지그재그·발산", "완만한 축 방향으로만 미끄러짐", "기울기가 0 이 되어 그대로 멈춤"], a: 1, why: "곡률이 큰 축에서 보폭이 커 반대편으로 튐 · 완만한 축은 오히려 느리게 기어감" },
+                { q: "Adam 의 2차 모멘트 `v` 의 역할은?", options: ["갱신의 이동 방향을 정함", "warmup 학습률 스케줄을 정함", "파라미터별 기울기 크기로 나눔", "매 스텝 가중치 감쇠를 적용"], a: 2, why: "`m̂/√v̂` · 기울기가 큰 축은 작게, 작은 축은 크게 · 방향은 1차 모멘트 m 이 정함" },
+                { q: "Adam 에 편향 보정이 필요한 이유는?", options: ["m, v 가 0 에서 출발해 작게 치우쳐서", "warmup 이 없으면 초반 학습률이 너무 커서", "기울기가 음수면 √v 가 정의되지 않아서", "미니배치가 작아 기울기 노이즈가 커서"], a: 0, why: "t 가 작을 때 `1 − βᵗ` 로 나눠 보정 · v 는 제곱 평균이라 항상 ≥ 0" },
+                { q: "Adam 계열 학습 초반에 warmup 을 쓰는 주된 이유로 꼽히는 것은?", options: ["GPU 메모리 사용량을 줄이려고", "과적합 시점을 뒤로 늦추려고", "초반 v 추정이 불안정해서", "배치 정규화 통계를 먼저 모으려고"], a: 2, why: "표본이 적은 초반엔 적응형 학습률의 분산이 큼 (Liu et al. 2019) · 메모리·과적합과는 무관" },
+                { q: "`clip_grad_norm_` 은 언제 호출해야 하나?", options: ["loss 계산 직후, backward() 전", "backward() 와 step() 사이", "opt.step() 후, 다음 배치 전", "zero_grad() 직후, 순전파 전"], a: 1, why: "backward 가 채운 .grad 를 갱신 직전에 줄여야 함 · backward 전엔 아직 기울기가 없음" },
+                { type: "num", q: "협곡 손실 `f = 0.1x² + 2y²` 에서 SGD 가 발산하지 않는 학습률 η 의 상한은?", answer: 0.5, tol: 0.001, why: "가장 가파른 y 축 곡률 a = 4 → |1 − ηa| < 1 → η < 2/4 · 데모에서 0.5 넘겨 보기" },
+                { type: "num", q: "Adam 첫 스텝(β1 = 0.9, β2 = 0.999)에서 편향 보정을 **빼면** `|m/√v|` 는? (소수 둘째 자리)", answer: 3.16, tol: 0.01, why: "m = 0.1g, v = 0.001g² → 0.1/√0.001 ≈ 3.16 · 보정하면 정확히 1" },
+                { type: "num", q: "Adam 혼합정밀 학습은 파라미터당 16 byte(가중치·기울기 2+2, FP32 사본·m·v 4+4+4)다. 7B 모델이면 몇 GB?", answer: 112, tol: 0.5, unit: "GB", why: "7e9 × 16 byte · 활성값은 별도 (ZeRO 논문의 16Ψ)" },
+                { type: "order", q: "PyTorch 학습 루프 한 스텝의 순서 (`zero_grad` 제외)", items: ["`loss = loss_fn(model(x), y)`", "`loss.backward()`", "`clip_grad_norm_(...)`", "`opt.step()`", "`sched.step()`"], why: "기울기 계산 → 줄이기 → 갱신 → 학습률 갱신 · 스케줄러를 먼저 부르면 첫 학습률 값을 건너뜀 (PyTorch 문서)" }
             ],
             refs: [
                 { title: "Adam: A Method for Stochastic Optimization", by: "Kingma et al.", year: 2014, url: "https://arxiv.org/abs/1412.6980", kind: "paper" },
                 { title: "Decoupled Weight Decay Regularization", by: "Loshchilov et al.", year: 2017, url: "https://arxiv.org/abs/1711.05101", kind: "paper" },
-                { title: "SGDR: Stochastic Gradient Descent with Warm Restarts", by: "Loshchilov et al.", year: 2016, url: "https://arxiv.org/abs/1608.03983", kind: "paper" }
+                { title: "On the Variance of the Adaptive Learning Rate and Beyond", by: "Liu et al.", year: 2019, url: "https://arxiv.org/abs/1908.03265", kind: "paper" },
+                { title: "ZeRO: Memory Optimizations Toward Training Trillion Parameter Models", by: "Rajbhandari et al.", year: 2019, url: "https://arxiv.org/abs/1910.02054", kind: "paper" }
             ]
         },
         {
@@ -433,6 +461,8 @@ for i, (x, y) in enumerate(loader):
             title: "CNN 합성곱",
             level: 2,
             mins: 14,
+            pre: ["deep-learning/backprop"],
+            checked: "2026-11-16",
             key: [
                 "합성곱(convolution) = 작은 커널(kernel)을 밀며 **같은 가중치**(shared weights)로 내적(dot product)",
                 "출력 크기 = `⌊(N + 2P − K) / S⌋ + 1`",
@@ -516,7 +546,7 @@ for x, y in loader:
     with torch.autocast("cuda", dtype=torch.bfloat16):   # 텐서코어 사용
         loss = F.cross_entropy(model(x), y)
     opt.zero_grad(); loss.backward(); opt.step()` },
-                    gain: "텐서코어 GPU 에서 대략 2× 안팎",
+                    gain: "텐서코어 사용 · 속도↑ 메모리↓ (모델·GPU 따라 다름, 실측 필수)",
                     note: "FP16 이면 `torch.amp.GradScaler` 필요 · bf16 은 보통 불필요"
                 },
                 {
@@ -539,11 +569,15 @@ for x, y in loader:
                 { term: "깊이별 분리 합성곱", en: "Depthwise separable convolution", def: "채널별 공간 합성곱 + 1×1 합성곱으로 분해해 연산 절감" }
             ],
             quiz: [
-                { q: "입력 32×32, K=5, P=0, S=1 의 출력 크기는?", options: ["32×32", "30×30", "28×28", "27×27"], a: 2, why: "(32 − 5)/1 + 1 = 28" },
-                { q: "`nn.Conv2d(3, 64, kernel_size=3)` 의 파라미터 수 (bias 포함)는?", options: ["1,792", "576", "1,728", "36,864"], a: 0, why: "3·3·3·64 = 1,728 + bias 64" },
-                { q: "입력 8, K=3, S=2, P=1 이면 출력은? (데모로 확인)", options: ["3", "5", "8", "4"], a: 3, why: "⌊(8 + 2 − 3)/2⌋ + 1 = ⌊3.5⌋ + 1 = 4" },
-                { q: "같은 입력에서 CNN 이 완전연결층보다 파라미터가 훨씬 적은 이유는?", options: ["활성함수가 없어서", "지역 연결 + 가중치 공유", "bias 가 없어서", "풀링 때문"], a: 1, why: "작은 커널 하나를 모든 위치에서 재사용" },
-                { q: "stride 1 에서 3×3 conv 가 입력 크기를 유지하려면 padding 은?", options: ["0", "2", "1", "3"], a: 2, why: "P = (K − 1)/2 = 1" }
+                { q: "입력 32×32, K=5, P=0, S=1 의 출력 크기는?", options: ["32×32", "30×30", "28×28", "27×27"], a: 2, why: "(32 − 5)/1 + 1 = 28 · 30 은 K=3 일 때" },
+                { q: "`nn.Conv2d(3, 64, kernel_size=3)` 의 파라미터 수 (bias 포함)는?", options: ["1,792", "576", "1,728", "36,864"], a: 0, why: "3·3·3·64 = 1,728 + bias 64 · 1,728 은 bias 를 빠뜨린 값" },
+                { q: "입력 8, K=3, S=2, P=1 이면 출력은? (데모로 확인)", options: ["3", "5", "8", "4"], a: 3, why: "⌊(8 + 2 − 3)/2⌋ + 1 = ⌊3.5⌋ + 1 = 4 · 바닥 함수를 빼면 4.5 로 헷갈림" },
+                { q: "같은 입력에서 CNN 이 완전연결층보다 파라미터가 훨씬 적은 이유는?", options: ["입력 채널을 하나로 합쳐서", "지역 연결 + 가중치 공유", "bias 항을 아예 쓰지 않아서", "풀링이 입력 크기를 줄여서"], a: 1, why: "작은 커널 하나를 모든 위치에서 재사용 · 풀링은 파라미터가 0 이라 개수와 무관" },
+                { q: "stride 1 에서 3×3 conv 가 입력 크기를 유지하려면 padding 은?", options: ["0", "2", "1", "3"], a: 2, why: "P = (K − 1)/2 = 1 · 양쪽에 붙으므로 2 가 아님" },
+                { type: "num", q: "입력 224×224, K=7, S=2, P=3 합성곱의 출력 한 변은?", answer: 112, why: "⌊(224 + 6 − 7)/2⌋ + 1 = 111 + 1 · ResNet 첫 층" },
+                { type: "num", q: "`nn.Conv2d(64, 128, 3, padding=1)` 의 파라미터 수 (bias 포함)는?", answer: 73856, why: "3·3·64·128 = 73,728 + bias 128 · padding 은 개수와 무관" },
+                { type: "num", q: "56×56 입력, 64 → 64 채널 3×3 합성곱(P=1, S=1)의 곱셈-누산은 약 몇 백만(M) 번?", answer: 115.6, tol: 0.5, unit: "M", why: "56·56·9·64·64 ≈ 1.16억 · 파라미터는 3.7만이지만 위치마다 재사용" },
+                { type: "text", q: "출력은? (`win` = 3×3 창을 모두 꺼내는 함수)", code: { lang: "python", src: "import numpy as np\nfrom numpy.lib.stride_tricks import sliding_window_view as win\nx = np.arange(25).reshape(5, 5)\nk = np.array([[-1, 0, 1]] * 3)\nout = (win(x, (3, 3)) * k).sum(axis=(-2, -1))\nprint(out.shape, out[0, 0])" }, answer: ["(3, 3) 6"], why: "5 − 3 + 1 = 3 · 첫 창의 행마다 오른쪽 − 왼쪽 = 2, 세 행 합 6" }
             ],
             refs: [
                 { title: "Gradient-based learning applied to document recognition", by: "LeCun et al.", year: 1998, url: "https://doi.org/10.1109/5.726791", kind: "paper" },
@@ -557,6 +591,8 @@ for x, y in loader:
             title: "RNN과 LSTM",
             level: 3,
             mins: 16,
+            pre: ["deep-learning/backprop"],
+            checked: "2026-11-16",
             key: [
                 "RNN: 은닉 상태(hidden state) `h` 가 지금까지의 요약 · 시점(time step)마다 **같은 가중치**",
                 "긴 시퀀스(sequence)에선 기울기 소실(vanishing gradient) → 먼 과거를 잊음",
@@ -655,7 +691,7 @@ h = c = np.zeros(H)
 for x in rng.normal(size=(5, D)):            # 5 시점 · 같은 W 재사용
     h, c = lstm_cell(x, h, c, W, b)
 print(h.round(3))`,
-                    note: "같은 W 를 `nn.LSTMCell` 에 넣으면 결과가 일치"
+                    note: "W 를 `[weight_ih | weight_hh]` 로 나눠 `nn.LSTMCell` 에 넣으면 결과가 일치 (bias 는 `b_ih + b_hh` 합)"
                 }
             ],
             optimize: [
@@ -687,14 +723,19 @@ out, (h, c) = lstm(x)       # cuDNN 이 시퀀스 전체를 융합 처리` },
                 { term: "Truncated BPTT", en: "Truncated BPTT", def: "긴 시퀀스를 구간으로 잘라 그 안에서만 역전파 · 메모리 절약" }
             ],
             quiz: [
-                { q: "LSTM 셀 상태의 갱신식은?", options: ["c = o⊙tanh(h)", "c = f⊙c + i⊙g", "c = σ(Wx)", "c = c + h"], a: 1, why: "forget 으로 지우고 input × 후보로 더함" },
-                { q: "forget 게이트 출력이 0 에 가까우면?", options: ["이전 셀 상태를 그대로 유지", "출력 h 가 0", "입력 x 를 무시", "이전 셀 상태를 거의 지움"], a: 3, why: "c(t−1) 에 0 을 곱함" },
-                { q: "`nn.LSTM(8, 16, batch_first=True)` 에 (4, 10, 8) 입력 시 `out` shape 은?", options: ["(4, 10, 16)", "(10, 4, 16)", "(4, 16)", "(4, 10, 8)"], a: 0, why: "(batch, time, hidden) · 모든 시점의 h" },
-                { q: "RNN 이 Transformer 보다 학습 병렬화가 어려운 이유는?", options: ["파라미터가 많아서", "배치를 못 써서", "h_t 가 h_(t−1) 에 의존해 순차 계산", "활성함수가 tanh 라서"], a: 2, why: "시간축으로는 한 스텝씩만 진행 가능" },
-                { q: "RNN 학습에서 기울기 폭주의 흔한 대책은?", options: ["기울기 클리핑", "학습률 증가", "은닉 크기 증가", "드롭아웃 제거"], a: 0, why: "노름이 임계값을 넘으면 비율대로 축소" }
+                { q: "LSTM 셀 상태의 갱신식은?", options: ["c = o⊙tanh(h)", "c = f⊙c + i⊙g", "c = σ(W·x)", "c = c + h"], a: 1, why: "forget 으로 지우고 input × 후보로 더함 · o⊙tanh(·) 는 h 를 만드는 식" },
+                { q: "forget 게이트 출력이 0 에 가까우면?", options: ["이전 셀 상태를 그대로 유지", "출력 h 가 0 이 됨", "입력 x 를 무시함", "이전 셀 상태를 거의 지움"], a: 3, why: "c(t−1) 에 0 을 곱함 · '유지'는 f ≈ 1 일 때" },
+                { q: "`nn.LSTM(8, 16, batch_first=True)` 에 (4, 10, 8) 입력 시 `out` shape 은?", options: ["(4, 10, 16)", "(10, 4, 16)", "(4, 16)", "(4, 10, 8)"], a: 0, why: "(batch, time, hidden) · 모든 시점의 h · (10, 4, 16) 은 batch_first=False 일 때" },
+                { q: "RNN 이 Transformer 보다 학습 병렬화가 어려운 이유는?", options: ["시점마다 가중치가 달라서", "배치를 나눠 계산할 수 없어서", "h_t 가 h_(t−1) 에 의존해서", "tanh 는 GPU 가 병렬화 못 해서"], a: 2, why: "시간축으로 한 스텝씩만 진행 · 가중치는 오히려 모든 시점이 공유" },
+                { q: "RNN 학습에서 기울기 폭주의 흔한 대책은?", options: ["기울기 클리핑", "학습률 증가", "은닉 크기 증가", "드롭아웃 제거"], a: 0, why: "노름이 임계값을 넘으면 비율대로 축소 · 소실은 클리핑으로 못 고침" },
+                { type: "num", q: "`nn.LSTM(input_size=8, hidden_size=16)` 한 층의 파라미터 수는?", answer: 1664, why: "4H(D + H) + 8H = 64·24 + 128 · 편향이 `b_ih`, `b_hh` 두 벌" },
+                { type: "num", q: "c(t−1) = 2.0, f = 0.9, i = 0.5, g = 0.8, o = 0.6 이면 h(t) 는? (소수 셋째 자리)", answer: 0.585, tol: 0.001, why: "c = 1.8 + 0.4 = 2.2 → h = 0.6 · tanh(2.2) ≈ 0.585" },
+                { type: "text", q: "입력 → 게이트 투영 결과의 shape 은?", code: { lang: "python", src: "import numpy as np\nB, T, D, H = 4, 10, 8, 16\nx = np.zeros((B, T, D))\nW_ih = np.zeros((4 * H, D))     # 게이트 i, f, g, o\nprint((x @ W_ih.T).shape)" }, answer: ["(4, 10, 64)", "4, 10, 64"], why: "모든 시점의 입력 투영은 한 번에 · 순차인 건 h 쪽 `U·h(t−1)` 뿐" },
+                { type: "order", q: "LSTM 한 시점의 계산 순서", items: ["h(t−1) 과 x(t) 이어 붙이기", "게이트 i, f, g, o 계산", "c(t) = f⊙c(t−1) + i⊙g", "h(t) = o⊙tanh(c(t))"], why: "게이트가 먼저, 셀 상태가 다음, h 는 새 셀 상태로 만듦" }
             ],
             refs: [
                 { title: "Long Short-Term Memory", by: "Hochreiter et al.", year: 1997, url: "https://doi.org/10.1162/neco.1997.9.8.1735", kind: "paper" },
+                { title: "Learning to Forget: Continual Prediction with LSTM", by: "Gers et al.", year: 2000, url: "https://doi.org/10.1162/089976600300015015", kind: "paper" },
                 { title: "Learning Phrase Representations using RNN Encoder-Decoder for Statistical Machine Translation", by: "Cho et al.", year: 2014, url: "https://arxiv.org/abs/1406.1078", kind: "paper" },
                 { title: "On the difficulty of training Recurrent Neural Networks", by: "Pascanu et al.", year: 2012, url: "https://arxiv.org/abs/1211.5063", kind: "paper" }
             ]
@@ -704,6 +745,8 @@ out, (h, c) = lstm(x)       # cuDNN 이 시퀀스 전체를 융합 처리` },
             title: "Transformer와 어텐션",
             level: 3,
             mins: 16,
+            pre: ["deep-learning/rnn"],
+            checked: "2026-11-16",
             key: [
                 "`Attention(Q,K,V) = softmax(QKᵀ / √d_k)·V`",
                 "모든 토큰(token)이 모든 토큰을 보고 가중 평균(weighted average) → 한 번에 병렬",
@@ -803,11 +846,15 @@ for _ in range(n_new - 1):
                 { term: "KV 캐시", en: "KV cache", def: "생성 중 이전 토큰의 Key·Value 를 저장해 재계산을 피함" }
             ],
             quiz: [
-                { q: "QKᵀ 를 √d_k 로 나누는 이유는?", options: ["메모리 절약", "음수 제거", "d_k 가 크면 내적이 커져 softmax 가 포화되므로", "위치 정보 추가"], a: 2, why: "포화되면 한 토큰에 몰리고 기울기가 거의 0" },
-                { q: "시퀀스 길이 T 일 때 헤드당 어텐션 점수 행렬 크기는?", options: ["T × T", "T × d", "d × d", "T"], a: 0, why: "모든 Query × 모든 Key 쌍" },
-                { q: "인과(causal) 마스크가 막는 것은?", options: ["패딩 토큰", "자기 자신", "과거 토큰", "미래 토큰 참조"], a: 3, why: "생성 시점엔 아직 없는 미래를 보면 안 됨" },
-                { q: "데모에서 softmax 온도 T 를 낮추면 어텐션 분포는?", options: ["더 평평해짐", "더 뾰족해짐 (소수 토큰에 집중)", "변화 없음", "합이 1 보다 커짐"], a: 1, why: "점수/T 의 차이가 커져 최댓값에 몰림" },
-                { q: "위치 정보가 따로 필요한 이유는?", options: ["softmax 안정화", "파라미터 감소", "어텐션 연산 자체는 토큰 순서를 구분하지 못해서", "KV 캐시용"], a: 2, why: "토큰을 섞어도 같은 결과 (순열 등변)" }
+                { q: "QKᵀ 를 √d_k 로 나누는 이유는?", options: ["점수 행렬 메모리를 줄이려고", "음수 점수를 0 으로 만들려고", "softmax 포화를 막으려고", "위치 정보를 점수에 더하려고"], a: 2, why: "내적의 분산이 d_k 에 비례 → 나누지 않으면 한 토큰에 몰려 기울기가 거의 0 · 음수는 softmax 가 알아서 처리" },
+                { q: "시퀀스 길이 T 일 때 헤드당 어텐션 점수 행렬 크기는?", options: ["T × T", "T × d", "d × d", "T"], a: 0, why: "모든 Query × 모든 Key 쌍 · T × d 는 Q, K, V 의 크기" },
+                { q: "인과(causal) 마스크가 막는 것은?", options: ["패딩 토큰 참조", "자기 자신 참조", "과거 토큰 참조", "미래 토큰 참조"], a: 3, why: "생성 시점엔 아직 없는 미래를 보면 안 됨 · 패딩은 별도의 패딩 마스크로 막음" },
+                { q: "데모에서 softmax 온도 T 를 낮추면 어텐션 분포는?", options: ["더 평평해짐", "더 뾰족해짐", "변화 없음", "합이 1 보다 커짐"], a: 1, why: "점수/T 의 차이가 커져 최댓값에 몰림 · 합은 항상 1" },
+                { q: "위치 정보가 따로 필요한 이유는?", options: ["softmax 출력을 안정시키려고", "파라미터 수를 줄이려고", "어텐션은 순서를 구분 못 해서", "KV 캐시를 쓰려고"], a: 2, why: "토큰을 섞으면 출력도 똑같이 섞일 뿐 (순열 등변) · RoPE 등으로 주입" },
+                { type: "num", q: "`d_k = 4`, 한 Query 와 세 Key 의 내적이 [4, 2, 0] 이면 첫 Key 의 어텐션 가중치는? (소수 셋째 자리)", answer: 0.665, tol: 0.001, why: "√4 로 나눠 [2, 1, 0] → e² / (e² + e + 1) ≈ 0.665 · 나누지 않으면 0.867" },
+                { type: "num", q: "d = 4096, 32 층, fp16 이면 KV 캐시는 토큰당 몇 KiB? (GQA 없음)", answer: 512, unit: "KiB", why: "2(K, V) × 32 × 4096 × 2 byte = 524,288 byte · 4096 토큰이면 2 GiB" },
+                { type: "text", q: "출력은?", code: { lang: "python", src: "import numpy as np\nT = 4\nfuture = np.triu(np.ones((T, T), bool), k=1)   # 막을 위치\nprint(future.sum())" }, answer: ["6"], why: "대각선 위 원소 T(T − 1)/2 = 6 개가 −∞ 로 가려짐" },
+                { type: "order", q: "Pre-LN Transformer 블록의 계산 순서", items: ["LN₁(x)", "셀프 어텐션", "x ← x + 어텐션 출력", "LN₂(x)", "FFN", "x ← x + FFN 출력"], why: "정규화 → 서브층 → 잔차 덧셈을 두 번 · 원 논문(Post-LN)은 덧셈 뒤에 LN" }
             ],
             refs: [
                 { title: "Attention Is All You Need", by: "Vaswani et al.", year: 2017, url: "https://arxiv.org/abs/1706.03762", kind: "paper" },
@@ -821,6 +868,8 @@ for _ in range(n_new - 1):
             title: "과적합과 정규화",
             level: 2,
             mins: 12,
+            pre: ["deep-learning/optimizer"],
+            checked: "2026-11-16",
             key: [
                 "과적합(overfitting) = train 은 좋은데 val 이 나빠짐 · **격차**(gap)를 본다",
                 "더 많은·다양한 데이터가 가장 강력한 정규화(regularization)",
@@ -949,16 +998,21 @@ opt = torch.optim.AdamW([
                 { term: "검증 세트", en: "Validation set", def: "하이퍼파라미터·체크포인트 선택용 데이터 · 학습에는 쓰지 않음" }
             ],
             quiz: [
-                { q: "train 손실 ↓, val 손실 ↑ 인 상황은?", options: ["과소적합", "정상 수렴", "학습률이 너무 작음", "과적합"], a: 3, why: "훈련 데이터에만 점점 더 맞추는 중" },
-                { q: "`Dropout(p=0.2)` 학습 중 남은 값에 곱해지는 배율은?", options: ["0.8", "1.25", "1 (그대로)", "0.2"], a: 1, why: "1 / (1 − 0.2) = 1.25 (inverted dropout)" },
-                { q: "평가 전에 `model.eval()` 을 빼먹으면?", options: ["Dropout·BatchNorm 이 학습 모드로 동작해 결과가 흔들림", "기울기가 계산되지 않음", "모델이 저장되지 않음", "아무 영향 없음"], a: 0, why: "eval() 은 기울기가 아니라 층의 동작 모드를 바꿈" },
-                { q: "하이퍼파라미터를 test 세트로 고르면 안 되는 이유는?", options: ["계산이 느려져서", "test 가 너무 작아서", "test 성능이 낙관적으로 부풀려져서", "규칙상 금지일 뿐 차이 없음"], a: 2, why: "test 에 맞춰 고른 순간 더 이상 '처음 보는' 데이터가 아님" },
-                { q: "AdamW 가 Adam + L2 와 다른 점은?", options: ["momentum 이 없다", "감쇠를 적응형 스텝과 분리해 직접 적용", "학습률 스케줄이 내장", "완전히 같다"], a: 1, why: "L2 기울기가 √v̂ 로 나뉘는 왜곡을 없앰" }
+                { q: "train 손실 ↓, val 손실 ↑ 인 상황은?", options: ["과소적합", "정상 수렴", "학습률이 너무 작음", "과적합"], a: 3, why: "훈련 데이터에만 점점 더 맞추는 중 · 과소적합이면 train 손실도 높음" },
+                { q: "`Dropout(p=0.2)` 학습 중 남은 값에 곱해지는 배율은?", options: ["0.8", "1.25", "1 (그대로)", "0.2"], a: 1, why: "1 / (1 − 0.2) = 1.25 (inverted dropout) · 0.8 은 원 논문식으로 테스트 때 곱하던 값" },
+                { q: "평가 전에 `model.eval()` 을 빼먹으면?", options: ["Dropout·BN 이 학습 모드로 동작", "모델 가중치가 저장되지 않음", "autograd 가 기울기 기록을 계속함", "아무 영향 없음"], a: 0, why: "eval() 은 층의 동작 모드만 바꿈 · 기울기 기록을 끄는 건 `torch.no_grad()`" },
+                { q: "하이퍼파라미터를 test 세트로 고르면 안 되는 이유는?", options: ["test 셋이 보통 너무 작아서", "test 점수가 낙관적으로 부풀어서", "학습이 test 분포에 과소적합해서", "규칙상 금지일 뿐 결과는 같아서"], a: 1, why: "test 에 맞춰 고른 순간 더 이상 '처음 보는' 데이터가 아님 · 크기와는 무관" },
+                { q: "AdamW 가 Adam + L2 와 다른 점은?", options: ["momentum 항을 쓰지 않음", "감쇠를 적응형 스텝 밖에서 적용", "warmup 스케줄이 내장되어 있음", "수식이 완전히 같고 이름만 다름"], a: 1, why: "L2 기울기가 √v̂ 로 나뉘는 왜곡을 없앰 · 모멘트 m, v 는 그대로" },
+                { type: "num", q: "η = 1e−3, λ = 0.1 의 weight decay 만 1만 스텝 걸면(기울기 0) 가중치는 처음의 몇 배? (소수 셋째 자리)", answer: 0.368, tol: 0.001, why: "(1 − ηλ)^10000 = 0.9999^10000 ≈ e^−1" },
+                { type: "num", q: "클래스 10 개, `CrossEntropyLoss(label_smoothing=0.1)` 이면 정답 클래스의 목표 확률은?", answer: 0.91, tol: 0.001, why: "원-핫과 균등분포를 섞음: 0.9 × 1 + 0.1/10 · 나머지 클래스는 각 0.01" },
+                { type: "text", q: "출력은? (p = 0.5 inverted dropout, 마스크 고정)", code: { lang: "python", src: "import numpy as np\nx = np.array([1., 2., 3., 4.])\nmask = np.array([1, 0, 1, 0])\nprint(x * mask / (1 - 0.5))" }, answer: ["[2. 0. 6. 0.]", "[2 0 6 0]"], why: "남은 값은 1/(1 − p) = 2 배 · 기댓값이 x 와 같아져 추론 땐 그대로 통과" },
+                { type: "order", q: "누수 없는 실험 순서", items: ["train / val / test 분할", "train 으로 학습", "val 로 하이퍼파라미터·체크포인트 선택", "test 로 한 번만 측정"], why: "분할이 먼저 · 전처리 통계도 train 으로만 · test 는 모든 결정이 끝난 뒤" }
             ],
             refs: [
                 { title: "Dropout: A Simple Way to Prevent Neural Networks from Overfitting", by: "Srivastava et al.", year: 2014, url: "https://jmlr.org/papers/v15/srivastava14a.html", kind: "paper" },
                 { title: "Decoupled Weight Decay Regularization", by: "Loshchilov et al.", year: 2017, url: "https://arxiv.org/abs/1711.05101", kind: "paper" },
-                { title: "Deep Learning", by: "Goodfellow et al.", year: 2016, url: "https://www.deeplearningbook.org/", kind: "book" }
+                { title: "Deep Learning", by: "Goodfellow et al.", year: 2016, url: "https://www.deeplearningbook.org/", kind: "book" },
+                { title: "CrossEntropyLoss (label_smoothing)", by: "PyTorch", url: "https://docs.pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html", kind: "doc" }
             ]
         },
         {
@@ -966,6 +1020,8 @@ opt = torch.optim.AdamW([
             title: "양자화와 경량화",
             level: 3,
             mins: 14,
+            pre: ["languages/float", "memory/mem-hierarchy"],
+            checked: "2026-11-16",
             key: [
                 "양자화(quantization): `x ≈ s·(q − z)` · FP32 → INT8 이면 크기 **1/4**",
                 "PTQ 는 빠르고 간단 · 정확도(accuracy) 하락이 크면 QAT",
@@ -1092,16 +1148,21 @@ quantize_(model, Int8WeightOnlyConfig())   # 채널별 INT8 가중치 · 제자�
                 { term: "지식 증류", en: "Knowledge distillation", def: "큰 교사 모델의 출력 분포를 작은 학생이 따라 하도록 학습" }
             ],
             quiz: [
-                { q: "FP32 가중치를 INT8 로 바꾸면 저장 크기는?", options: ["1/2", "그대로", "1/8", "1/4"], a: 3, why: "32 bit → 8 bit" },
-                { q: "max|x| = 2.54 인 텐서를 대칭 INT8 로 양자화할 때 x = 1.0 의 정수값은?", options: ["50", "25", "100", "127"], a: 0, why: "s = 2.54/127 = 0.02 → round(1.0/0.02) = 50" },
-                { q: "PTQ 후 정확도가 크게 떨어졌다. 다음 단계로 알맞은 것은?", options: ["학습률 증가", "FP64 로 변환", "QAT 로 미세조정", "배치 크기 증가"], a: 2, why: "반올림 오차를 학습 중에 보정" },
-                { q: "비구조적 가지치기 50% 가 일반 GPU 에서 속도 이득이 적은 이유는?", options: ["0 이 흩어져 있어 밀집 행렬 연산은 그대로라서", "가중치 수가 늘어나서", "정확도가 떨어져서", "INT8 이 아니라서"], a: 0, why: "전용 희소 커널·하드웨어 없으면 0 도 계산" },
-                { q: "지식 증류에서 온도 T 를 높이는 이유는?", options: ["학습 속도 증가", "교사 분포를 부드럽게 해 오답 간 유사도까지 전달", "정답 레이블 제거", "모델 크기 감소"], a: 1, why: "T↑ → 작은 확률들이 드러나 '어둠의 지식' 전달" }
+                { q: "FP32 가중치를 INT8 로 바꾸면 저장 크기는?", options: ["1/2", "그대로", "1/8", "1/4"], a: 3, why: "32 bit → 8 bit · 1/2 은 BF16, 1/8 은 INT4" },
+                { q: "max|x| = 2.54 인 텐서를 대칭 INT8 로 양자화할 때 x = 1.0 의 정수값은?", options: ["50", "25", "100", "127"], a: 0, why: "s = 2.54/127 = 0.02 → round(1.0/0.02) = 50 · 127 은 max|x| 쪽" },
+                { q: "PTQ 후 정확도가 크게 떨어졌다. 알맞은 다음 단계는?", options: ["캘리브레이션 없이 다시 변환", "QAT 로 미세조정", "텐서별 스케일 하나로 단순화", "INT4 로 비트를 더 줄임"], a: 1, why: "반올림 오차를 본 채 학습해 보정 · 그 전에 민감한 층만 고정밀로 두는 방법도 있음" },
+                { q: "비구조적 가지치기 50% 가 일반 GPU 에서 속도 이득이 적은 이유는?", options: ["0 이 흩어져 밀집 행렬곱은 그대로", "남은 가중치 수가 오히려 늘어서", "정확도 하락을 보정하느라 느려서", "INT8 이 아니면 희소 연산이 안 돼서"], a: 0, why: "전용 희소 커널·2:4 하드웨어 없으면 0 도 계산 · 비트 수와는 무관" },
+                { q: "지식 증류에서 온도 T 를 높이는 이유는?", options: ["교사 로짓의 노이즈를 지우려고", "오답 간 유사도까지 전하려고", "정답 레이블 손실을 대신하려고", "학생 모델의 크기를 줄이려고"], a: 1, why: "T↑ → 작은 확률들이 드러나 '어둠의 지식' 전달 · 정답 레이블 손실은 보통 함께 씀" },
+                { type: "num", q: "범위 [−1.0, 3.0] 을 uint8 비대칭 양자화할 때 제로포인트 z 는?", answer: 64, why: "s = 4/255 ≈ 0.0157 → z = round(1.0/s) = round(63.75)" },
+                { type: "num", q: "같은 s, z 로 x = 0.5 를 양자화했다 되돌린 값은? (소수 셋째 자리)", answer: 0.502, tol: 0.001, why: "q = round(31.875) + 64 = 96 → s·(96 − 64) ≈ 0.502 · 오차 ≤ s/2" },
+                { type: "num", q: "7B 모델을 INT4(그룹 128, FP16 스케일)로 저장하면 가중치는 약 몇 GB?", answer: 3.61, tol: 0.05, unit: "GB", why: "가중치당 4 + 16/128 = 4.125 bit → 7e9 × 4.125 / 8 · FP16 이면 14 GB" },
+                { type: "num", q: "FP8 E4M3 의 최대 유한값은?", answer: 448, why: "S.1111.110 = 1.75 × 2⁸ · 무한대를 두지 않아 범위를 넓힘 · E5M2 는 57,344" },
+                { type: "order", q: "INT8 PTQ 의 순서", items: ["대표 입력 수백 개 준비", "층별 활성값 범위 관측", "스케일·제로포인트 계산", "round·clip 으로 INT8 변환", "검증 세트로 정확도 비교"], why: "캘리브레이션 데이터가 실제 입력 분포를 닮아야 범위가 맞음" }
             ],
             refs: [
                 { title: "Quantization and Training of Neural Networks for Efficient Integer-Arithmetic-Only Inference", by: "Jacob et al.", year: 2017, url: "https://arxiv.org/abs/1712.05877", kind: "paper" },
                 { title: "GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers", by: "Frantar et al.", year: 2022, url: "https://arxiv.org/abs/2210.17323", kind: "paper" },
-                { title: "Deep Compression: Compressing Deep Neural Networks with Pruning, Trained Quantization and Huffman Coding", by: "Han et al.", year: 2015, url: "https://arxiv.org/abs/1510.00149", kind: "paper" },
+                { title: "FP8 Formats for Deep Learning", by: "Micikevicius et al.", year: 2022, url: "https://arxiv.org/abs/2209.05433", kind: "paper" },
                 { title: "Distilling the Knowledge in a Neural Network", by: "Hinton et al.", year: 2015, url: "https://arxiv.org/abs/1503.02531", kind: "paper" }
             ]
         }

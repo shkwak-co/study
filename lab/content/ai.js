@@ -6,50 +6,54 @@ LAB.track({
     tagline: "LLM을 이해하고 제품에 붙이기 — 토큰, 검색, 에이전트, 평가",
     trends: [
         {
-            title: "에이전트 코딩(agentic coding)과 MCP",
+            title: "MCP 2026-07-28: 상태 없는(stateless) 프로토콜로",
             when: "2025–2026",
             points: [
-                "Claude Code · Codex CLI · Gemini CLI 등 터미널 코딩 에이전트 확산",
-                "MCP: 툴 연결 오픈 프로토콜 · 2025-12 Linux Foundation(AAIF) 으로 이관",
-                "평가는 저장소(repository) 단위 과제(SWE-bench 류) + 자체 eval 병행"
+                "2025-12 MCP 가 Linux Foundation 산하 AAIF(Agentic AI Foundation)로 · goose, AGENTS.md 와 함께",
+                "2026-07-28 사양: `initialize` 핸드셰이크와 세션 제거 · 요청마다 버전·기능을 `_meta` 에 실음",
+                "`server/discover` 로 서버 버전·기능 조회 · 표준 전송은 stdio 와 Streamable HTTP",
+                "Roots·Sampling·Logging 은 지원 중단(deprecated) · Tasks 는 확장(extension)으로 분리"
             ],
             refs: [
                 { title: "Linux Foundation Announces the Formation of the Agentic AI Foundation (AAIF)", by: "Linux Foundation", year: 2025, url: "https://www.linuxfoundation.org/press/linux-foundation-announces-the-formation-of-the-agentic-ai-foundation", kind: "doc" },
-                { title: "Model Context Protocol Specification (2026-07-28)", by: "Model Context Protocol", year: 2026, url: "https://modelcontextprotocol.io/specification/2026-07-28", kind: "spec" }
+                { title: "Model Context Protocol Specification 2026-07-28: Key Changes", by: "Model Context Protocol", year: 2026, url: "https://modelcontextprotocol.io/specification/2026-07-28/changelog", kind: "spec" }
             ]
         },
         {
-            title: "추론 모델(reasoning model) · test-time compute",
+            title: "추론 모델(reasoning model)과 과잉 사고(overthinking)",
             when: "2025–2026",
             points: [
-                "답 전에 생각 토큰(thinking tokens)을 쓰는 추론 모델이 주류 (o-시리즈, R1, Claude thinking)",
-                "DeepSeek-R1 (2025-01): 공개 가중치(open weights) 추론 모델",
-                "effort·생각 예산(thinking budget) = 품질 ↔ 비용·지연(latency) 손잡이 · 쉬운 질문엔 과잉 사고(overthinking) 주의"
+                "답 전에 긴 생각 사슬(chain-of-thought)을 만드는 추론 모델이 주류",
+                "DeepSeek-R1 (2025-01): 사람이 쓴 추론 예시 없이 강화학습(reinforcement learning)으로 추론 능력 향상",
+                "생각이 길수록 비용·지연(latency)↑ → 생각을 줄이는 효율적 추론(efficient reasoning) 연구가 활발",
+                "운영: 쉬운 요청은 짧게, 어려운 요청만 길게 생각하도록 평가로 조절"
             ],
             refs: [
-                { title: "Learning to reason with LLMs", by: "OpenAI", year: 2024, url: "https://openai.com/index/learning-to-reason-with-llms/", kind: "doc" },
-                { title: "DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning", by: "DeepSeek-AI", year: 2025, url: "https://arxiv.org/abs/2501.12948", kind: "paper" }
+                { title: "DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning", by: "DeepSeek-AI", year: 2025, url: "https://arxiv.org/abs/2501.12948", kind: "paper" },
+                { title: "Stop Overthinking: A Survey on Efficient Reasoning for Large Language Models", by: "Sui et al.", year: 2025, url: "https://arxiv.org/abs/2503.16419", kind: "paper" }
             ]
         },
         {
             title: "온디바이스 AI 런타임",
             when: "2025–2026",
             points: [
-                "ExecuTorch 1.0 GA (2025-10): PyTorch 모델을 모바일·엣지에 배포(deployment)",
-                "LiteRT (구 TFLite) + LiteRT-LM: Google 의 온디바이스 LLM 스택",
-                "소형 모델 + 저비트 양자화(low-bit quantization)로 폰·PC 로컬 추론(inference) · 프라이버시·오프라인"
+                "ExecuTorch 1.0 (2025-10): PyTorch 모델을 변환·재작성 없이 폰·PC·MCU 에 배포(deployment) · 2026-11 v1.6",
+                "1.0 에서 XNNPACK(CPU) · Core ML · Qualcomm NPU · Arm Ethos-U 백엔드가 production 단계로",
+                "LiteRT: 변환 중 학습 후 양자화(post-training quantization)는 deprecated → FP32 변환 후 LiteRT Quantizer"
             ],
             refs: [
                 { title: "Introducing ExecuTorch 1.0: Powering the next generation of edge AI", by: "PyTorch", year: 2025, url: "https://pytorch.org/blog/introducing-executorch-1-0/", kind: "doc" },
-                { title: "LiteRT: High-Performance On-Device Machine Learning Framework", by: "Google", url: "https://developers.google.com/edge/litert", kind: "doc" }
+                { title: "ExecuTorch releases", by: "PyTorch", url: "https://github.com/pytorch/executorch/releases", kind: "doc" },
+                { title: "Post-training quantization", by: "Google", url: "https://developers.google.com/edge/litert/models/post_training_quantization", kind: "doc" }
             ]
         },
         {
-            title: "EU AI Act 단계 적용(phased application)",
+            title: "EU AI Act: Digital Omnibus 로 바뀐 일정",
             when: "2025–2028",
             points: [
-                "2025-02 금지 관행(prohibited practices) · 2025-08 범용 AI(general-purpose AI · GPAI) 모델 의무 적용",
-                "고위험(high-risk) 의무는 Digital Omnibus 로 연기 합의 (독립형 2027-12, 제품 내장 2028-08)",
+                "2025-02 금지 관행(prohibited practices) · 2025-08 범용 AI(general-purpose AI · GPAI) 모델 의무",
+                "2026-08 대부분 규정과 투명성 의무(transparency, 제50조) · 2026-12 새 금지 항목",
+                "고위험(high-risk) 연기: 독립형(Annex III) 2027-12 · 제품 내장(Annex I) 2028-08",
                 "평가 기록·문서화·로그가 규제 대응(compliance)의 기본 자료"
             ],
             refs: [
@@ -64,6 +68,8 @@ LAB.track({
             title: "LLM 동작: 토큰과 디코딩",
             level: 1,
             mins: 12,
+            pre: ["deep-learning/transformer"],
+            checked: "2026-11-16",
             key: [
                 "LLM = 다음 **토큰(token)**의 확률 분포(probability distribution)를 내는 함수 · 생성은 반복",
                 "토큰 ≠ 글자 ≠ 단어 · 요금과 한도는 모두 토큰 단위",
@@ -118,7 +124,7 @@ client = anthropic.Anthropic()        # 키는 환경변수 ANTHROPIC_API_KEY �
 msgs = [{"role": "user", "content": "LLM 디코딩 과정을 세 줄로 설명해줘"}]
 
 n = client.messages.count_tokens(model="claude-opus-5-5", messages=msgs)
-print("입력 토큰:", n.input_tokens)     # 토크나이저는 모델마다 다름
+print("입력 토큰:", n.input_tokens)     # 추정치 · 토크나이저는 모델마다 다름
 
 resp = client.messages.create(
     model="claude-opus-5-5",
@@ -129,7 +135,7 @@ for block in resp.content:
     if block.type == "text":
         print(block.text)
 print(resp.stop_reason, resp.usage.input_tokens, resp.usage.output_tokens)`,
-                    note: "최신 Claude 모델은 기본값 외 `temperature`/`top_p` 지정 시 400 · 디코딩 원리는 위 sim 으로"
+                    note: "일부 API·모델은 `temperature`·`top_p` 를 받지 않음(400) · 디코딩 원리는 위 sim 으로"
                 }
             ],
             optimize: [
@@ -152,7 +158,7 @@ show(resp)        # 마지막 토큰이 나올 때까지 화면은 빈 상태` }
           "positive, negative, neutral 중 한 단어로만 답하세요.")
 # → 한 단어 · 파싱도 쉬움` },
                     gain: "출력 토큰↓ → 지연·비용↓",
-                    note: "출력 토큰은 입력보다 단가가 높고 순차 생성이라 지연에 직결"
+                    note: "출력 토큰은 보통 입력보다 단가가 높고, 순차 생성이라 지연에 직결"
                 }
             ],
             glossary: [
@@ -164,16 +170,156 @@ show(resp)        # 마지막 토큰이 나올 때까지 화면은 빈 상태` }
                 { term: "TTFT", en: "Time To First Token", def: "요청부터 첫 출력 토큰까지 시간 · 체감 속도" }
             ],
             quiz: [
-                { q: "온도 T 를 0 에 가깝게 낮추면?", options: ["가장 확률 높은 토큰이 거의 항상 선택", "모든 토큰 확률이 같아짐", "어휘가 늘어남", "출력이 길어짐"], a: 0, why: "z/T 의 차이가 커져 분포가 최댓값으로 쏠림 (≈ 그리디)" },
-                { q: "top-p = 0.9 의 의미는?", options: ["상위 90개 토큰만 사용", "누적 확률 90% 를 채우는 최소 후보에서 샘플", "확률 0.9 이상 토큰만", "10% 확률로 무작위 토큰"], a: 1, why: "확률 큰 순으로 더해 0.9 에 도달할 때까지가 후보" },
-                { q: "API 요금과 컨텍스트 한도를 세는 단위는?", options: ["글자 수", "단어 수", "토큰 수", "요청 바이트"], a: 2, why: "입력·출력 모두 토큰 단위로 계산" },
-                { q: "같은 요청에서 출력 길이가 2배가 되면 생성 시간은 대략?", options: ["변화 없음", "거의 2배", "절반", "입력 길이에만 의존"], a: 1, why: "디코드는 토큰마다 한 스텝씩 순차 실행" },
-                { q: "프리필(prefill) 단계의 특징은?", options: ["출력 토큰을 하나씩 생성", "샘플링 수행", "모델 가중치 갱신", "프롬프트 토큰을 한 번에 병렬 처리"], a: 3, why: "입력은 이미 다 알고 있으므로 한꺼번에 계산" }
+                { q: "온도 T 를 0 에 가깝게 낮추면?", options: ["1등 토큰이 거의 늘 뽑힘", "모든 후보의 확률이 같아짐", "후보의 순위가 뒤바뀜", "꼬리 후보 확률이 커짐"], a: 0, why: "z/T 격차가 커져 분포가 1등으로 쏠림 (≈ 그리디) · 확률이 고르게 되는 건 T 를 키울 때" },
+                { q: "top-p = 0.9 의 의미는?", options: ["확률 상위 90 개 토큰만 골라 사용", "누적 0.9 를 채우는 최소 후보", "확률이 0.9 이상인 토큰만 남김", "10% 확률로 아무 토큰이나 뽑음"], a: 1, why: "확률 큰 순으로 더해 0.9 에 닿는 최소 집합 · 개수(k)로 자르는 건 top-k" },
+                { q: "API 요금과 컨텍스트 한도를 세는 단위는?", options: ["글자 수", "단어 수", "토큰 수", "요청 바이트"], a: 2, why: "입력·출력 모두 토큰 단위 · 같은 글도 토크나이저마다 토큰 수가 다름" },
+                { q: "같은 요청에서 출력 길이가 2배가 되면 생성 시간은 대략?", options: ["변화 없음", "거의 2배", "절반", "입력 길이에만 의존"], a: 1, why: "디코드는 토큰마다 한 스텝씩 순차 실행 · 입력 길이는 주로 TTFT 에 영향" },
+                { q: "프리필(prefill) 단계의 특징은?", options: ["출력 토큰을 하나씩 순차 생성", "프롬프트를 한 번에 병렬 처리", "다음 토큰을 확률로 샘플링", "가중치를 조금씩 갱신"], a: 1, why: "입력은 이미 다 알고 있어 한꺼번에 계산 · 하나씩 만드는 건 디코드" },
+                { type: "num", q: "로짓 [2, 1, 0], T = 1 일 때 1등 토큰의 확률은? (소수)", answer: 0.665, tol: 0.005, why: "e² / (e² + e¹ + e⁰) = 7.39 / 11.11 · T = 0.5 면 0.867 로 더 쏠림" },
+                { type: "num", q: "데모 로짓(메모리 2.9 … 운세 −2.2), T = 1, top-p = 0.9 면 남는 후보는 몇 개?", answer: 4, why: "36.7 + 24.6 + 18.2 = 79.5% < 90% → 캐시 12.2% 를 더해 91.6% · T = 0.5 면 3 개, T = 2 면 5 개" },
+                { type: "num", q: "층 32, KV 헤드 8, 헤드 차원 128, bf16(2 B)인 모델의 토큰당 KV 캐시는 몇 KiB?", answer: 128, unit: "KiB", why: "2(K·V) × 32 × 8 × 128 × 2 B = 131,072 B · 8k 토큰이면 요청 하나에 1 GiB" },
+                { type: "order", q: "다음 토큰 하나가 정해지는 순서", items: ["로짓 계산", "온도로 나누기 (z/T)", "softmax 로 확률화", "top-k · top-p 로 꼬리 자르기", "남은 후보 재정규화 후 추출"], why: "온도는 softmax 전에 · 필터 뒤 남은 후보의 합이 1 이 되게 다시 나눔" }
             ],
             refs: [
                 { title: "The Curious Case of Neural Text Degeneration", by: "Holtzman et al.", year: 2019, url: "https://arxiv.org/abs/1904.09751", kind: "paper" },
-                { title: "Neural Machine Translation of Rare Words with Subword Units", by: "Sennrich et al.", year: 2015, url: "https://arxiv.org/abs/1508.07909", kind: "paper" },
+                { title: "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints", by: "Ainslie et al.", year: 2023, url: "https://arxiv.org/abs/2305.13245", kind: "paper" },
+                { title: "Lost in the Middle: How Language Models Use Long Contexts", by: "Liu et al.", year: 2023, url: "https://arxiv.org/abs/2307.03172", kind: "paper" },
                 { title: "Token counting", by: "Anthropic", url: "https://platform.claude.com/docs/en/build-with-claude/token-counting", kind: "doc" }
+            ]
+        },
+        {
+            id: "tokenizer",
+            title: "토큰화와 BPE",
+            level: 2,
+            mins: 14,
+            pre: ["ai/llm", "data-structures/ds-hash"],
+            checked: "2026-11-16",
+            key: [
+                "**BPE(byte pair encoding)**: 가장 자주 이웃한 쌍을 하나로 **병합(merge)** · 반복",
+                "결과는 **서브워드(subword)** 어휘: 흔한 단어는 통째로, 드문 단어는 조각으로",
+                "학습 결과 = **병합 규칙(merge rules)** 목록 · 새 단어도 같은 순서로 병합",
+                "**어휘 크기(vocabulary size)** = 기본 기호 수 + 병합 횟수",
+                "**바이트 수준 BPE(byte-level BPE)**: 256 바이트에서 출발 → `<unk>` 없음"
+            ],
+            concepts: [
+                { term: "서브워드", en: "Subword unit", def: "글자와 단어 사이 단위 · 모르는 단어도 아는 조각으로 표현" },
+                { term: "단어 끝 기호", en: "End-of-word symbol", def: "`</w>` · 단어 경계를 남겨 원래 띄어쓰기를 복원 · 데모에선 `_`" },
+                { term: "쌍 빈도", en: "Pair frequency", def: "단어 빈도로 가중한 인접 기호 쌍의 수 · 단어 경계를 넘는 쌍은 세지 않음" },
+                { term: "병합 규칙", en: "Merge rules", def: "(a, b) → ab 의 순서 있는 목록 · 적용도 배운 순서대로" },
+                { term: "WordPiece · Unigram", def: "다른 서브워드 방식 · WordPiece 는 우도 기준 병합, Unigram 은 큰 어휘에서 가지치기" }
+            ],
+            demo: { type: "sim", name: "bpe", merges: 0, word: "lowest" },
+            code: [
+                {
+                    lang: "python",
+                    title: "BPE 학습 + 적용 (Sennrich et al. 2016 방식)",
+                    src: `from collections import Counter
+
+def merge(sym, pair):
+    out, i = [], 0
+    while i < len(sym):
+        if i + 1 < len(sym) and (sym[i], sym[i + 1]) == pair:
+            out.append(sym[i] + sym[i + 1]); i += 2
+        else:
+            out.append(sym[i]); i += 1
+    return tuple(out)
+
+def learn_bpe(corpus, n_merges):
+    vocab = Counter(tuple(w) + ("</w>",) for w in corpus.split())  # 글자 + 끝 기호
+    merges = []
+    for _ in range(n_merges):
+        pairs = Counter()
+        for sym, freq in vocab.items():
+            for a, b in zip(sym, sym[1:]):
+                pairs[a, b] += freq            # 단어 빈도로 가중
+        if not pairs:
+            break
+        best = max(pairs, key=pairs.get)       # 동률이면 먼저 센 쌍
+        merges.append(best)
+        vocab = Counter({merge(s, best): f for s, f in vocab.items()})
+    return merges
+
+def apply_bpe(word, merges):
+    sym = tuple(word) + ("</w>",)
+    for pair in merges:                        # 배운 순서 그대로
+        sym = merge(sym, pair)
+    return sym
+
+corpus = "low " * 5 + "lower " * 2 + "newest " * 6 + "widest " * 3
+merges = learn_bpe(corpus, 10)
+print(merges[:5])  # [('e','s'), ('es','t'), ('est','</w>'), ('l','o'), ('lo','w')]
+print(apply_bpe("lowest", merges))   # ('low', 'est</w>') · 말뭉치에 없던 단어
+print(apply_bpe("newer", merges))    # ('new', 'e', 'r', '</w>')`,
+                    note: "단어 끝 기호(end-of-word symbol) `</w>` 로 경계 보존 · 쌍 빈도(pair frequency)는 단어 빈도로 가중 · 데모와 같은 결과"
+                },
+                {
+                    lang: "python",
+                    title: "바이트 수준 BPE 의 출발점: UTF-8 바이트",
+                    src: `text = "토큰 token"
+b = text.encode("utf-8")
+print(len(text), len(b))          # 8 12  · 글자 8 개, 바이트 12 개
+print(list("토".encode("utf-8")))  # [237, 134, 160] · 한글 한 글자 = 3 바이트
+
+# 기본 어휘 = 바이트 256 개 → 어떤 문자열도 표현 가능
+# 자주 나온 바이트 쌍이 병합되면 한 글자·한 단어가 토큰 하나로 줄어듦`,
+                    note: "학습 데이터에 드문 문자는 병합이 덜 돼 바이트 단위로 남음 → 같은 뜻에 토큰이 더 듦"
+                }
+            ],
+            optimize: [
+                {
+                    title: "학습: 매번 전체 재계산 → 바뀐 단어만 갱신",
+                    before: { lang: "python", src: `for _ in range(n_merges):
+    pairs = count_pairs(vocab)          # 매 병합마다 말뭉치 전체를 다시 셈
+    best = max(pairs, key=pairs.get)
+    vocab = {merge(s, best): f for s, f in vocab.items()}` },
+                    after: { lang: "python", src: `pairs = count_pairs(vocab)              # 처음 한 번만 전체 계산
+where = index_pairs(vocab)              # 쌍 → 그 쌍이 든 단어들 (해시 맵)
+for _ in range(n_merges):
+    best = max(pairs, key=pairs.get)
+    for w in where.pop(best):           # 바뀌는 단어만
+        update_counts(pairs, where, w, best)   # 옛 쌍 빼고 새 쌍 더함` },
+                    gain: "병합당 비용: 말뭉치 전체 → 해당 쌍이 든 단어만",
+                    note: "Sennrich et al. 도 쌍 색인과 증분 갱신(incremental update)으로 속도를 냄"
+                },
+                {
+                    title: "적용: 같은 단어 반복 분할 → 단어별 캐시",
+                    before: { lang: "python", src: `tokens = [t for w in text.split() for t in apply_bpe(w, merges)]
+# 'the' 가 만 번 나오면 병합 목록 전체를 만 번 순회` },
+                    after: { lang: "python", src: `from functools import lru_cache
+
+@lru_cache(maxsize=100_000)
+def bpe_word(w):
+    return apply_bpe(w, merges)         # 단어마다 한 번만 계산
+
+tokens = [t for w in text.split() for t in bpe_word(w)]` },
+                    gain: "반복 단어 재계산 0",
+                    note: "결과가 단어에만 의존하므로 캐시해도 안전 · 병합 규칙을 바꾸면 캐시도 비움"
+                }
+            ],
+            glossary: [
+                { term: "BPE", en: "Byte Pair Encoding", def: "가장 잦은 인접 쌍을 반복 병합해 서브워드 어휘를 만드는 방법 · 원래는 압축 알고리즘 (Gage 1994)" },
+                { term: "서브워드", en: "Subword unit", def: "단어보다 작고 글자보다 큰 토큰 단위 · 개방 어휘(open vocabulary)를 가능하게 함" },
+                { term: "병합 규칙", en: "Merge rules", def: "BPE 학습 결과 · (a, b) → ab 의 순서 있는 목록" },
+                { term: "어휘 크기", en: "Vocabulary size", def: "기본 기호 수 + 병합 횟수 · 임베딩 행렬의 행 수를 정함" },
+                { term: "바이트 수준 BPE", en: "Byte-level BPE", def: "256 바이트를 기본 어휘로 · GPT-2 어휘 50,257 = 256 + 병합 50,000 + 끝 토큰 1" },
+                { term: "SentencePiece", en: "SentencePiece", def: "공백을 `▁` 기호로 포함해 원문에서 바로 BPE·Unigram 학습 · 띄어쓰기 없는 언어에 유리" }
+            ],
+            quiz: [
+                { q: "BPE 학습에서 매 단계 합치는 쌍은?", options: ["가장 자주 이웃한 기호 쌍", "사전 순으로 가장 앞선 쌍", "합치면 가장 길어지는 쌍", "가장 드물게 나온 기호 쌍"], a: 0, why: "단어 빈도로 가중한 쌍 빈도 1위 · 길이나 사전 순은 기준이 아님" },
+                { q: "BPE 의 어휘 크기를 정하는 값은?", options: ["병합 횟수", "말뭉치 크기", "임베딩 차원", "학습률"], a: 0, why: "어휘 = 기본 기호 + 병합 횟수 · 말뭉치가 커져도 병합 수가 같으면 어휘 크기도 같음" },
+                { q: "바이트 수준 BPE 의 장점은?", options: ["모든 문자열을 `<unk>` 없이 표현", "어느 언어든 토큰 수가 항상 최소가 됨", "병합 규칙 없이 바로 쓸 수 있게 됨", "한글 한 글자가 늘 토큰 하나가 됨"], a: 0, why: "256 바이트로 무엇이든 쓸 수 있음 · 드문 글자는 오히려 여러 바이트 토큰이 됨" },
+                { q: "모델을 바꾸니 같은 문장의 토큰 수가 달라졌다. 이유는?", options: ["어휘·병합 규칙이 달라서", "샘플링 온도가 달라서", "출력 상한이 달라서", "프롬프트 캐시 상태가 달라서"], a: 0, why: "토큰 수는 토크나이저가 정함 · 온도·캐시는 입력 분할과 무관" },
+                { q: "학습한 병합을 새 단어에 적용하는 방법은?", options: ["배운 순서대로 병합 적용", "새 단어로 쌍 빈도를 다시 셈", "가장 긴 어휘부터 찾아 자름", "글자 단위로만 나눔"], a: 0, why: "병합 순서가 곧 규칙 · 새로 세면 학습 때와 분할이 달라져 모델이 모르는 토큰이 생김" },
+                { type: "text", q: "레슨 말뭉치로 배운 병합 10 개다. `lowest` 의 토큰은? (`|` 로 구분, 단어 끝은 `_`)", code: { lang: "txt", src: "1 e+s  2 es+t  3 est+_  4 l+o  5 lo+w\n6 n+e  7 ne+w  8 new+est_  9 low+_  10 w+i" }, answer: ["low|est_", "low|est</w>"], why: "e+s → es+t → est+_ 로 `est_`, l+o → lo+w 로 `low` · 말뭉치에 없던 단어도 아는 조각 2 개" },
+                { type: "num", q: "같은 말뭉치의 병합 15 개를 모두 적용하면 `newer` 는 몇 토큰?", answer: 4, why: "`new e r _` · `e+r` 은 lower 에서 2 번뿐이고 같은 빈도의 low+e 가 먼저 병합돼 er 이 생기지 않음" },
+                { type: "num", q: "말뭉치 low×5, lower×2, newest×6, widest×3 에서 첫 병합 `e+s` 의 빈도는?", answer: 9, why: "newest 6 + widest 3 · s+t, t+_ 도 9 로 동률 → 먼저 센 쌍이 이김" },
+                { type: "num", q: "기본 바이트 256 개 + 병합 50,000 번 + 특수 토큰 1 개면 어휘 크기는?", answer: 50257, why: "GPT-2 의 바이트 수준 BPE 어휘 · 어휘 = 기본 기호 + 병합 수 (+ 특수 토큰)" },
+                { type: "order", q: "BPE 학습 순서", items: ["단어를 글자 + 끝 기호로 쪼갬", "단어 빈도로 인접 쌍을 셈", "최다 쌍을 새 기호로 병합", "병합 규칙 목록에 추가", "목표 병합 수까지 반복"], why: "끝 기호로 경계를 남기고, 세고 → 합치고 → 기록 · 병합 수가 유일한 하이퍼파라미터" }
+            ],
+            refs: [
+                { title: "Neural Machine Translation of Rare Words with Subword Units", by: "Sennrich et al.", year: 2016, url: "https://arxiv.org/abs/1508.07909", kind: "paper" },
+                { title: "SentencePiece: A simple and language independent subword tokenizer and detokenizer for Neural Text Processing", by: "Kudo et al.", year: 2018, url: "https://arxiv.org/abs/1808.06226", kind: "paper" },
+                { title: "Tokenization algorithms", by: "Hugging Face", url: "https://huggingface.co/docs/transformers/tokenizer_summary", kind: "doc" }
             ]
         },
         {
@@ -181,6 +327,8 @@ show(resp)        # 마지막 토큰이 나올 때까지 화면은 빈 상태` }
             title: "프롬프트 설계",
             level: 1,
             mins: 12,
+            pre: ["ai/llm"],
+            checked: "2026-11-16",
             key: [
                 "좋은 프롬프트(prompt) = 새로 온 동료에게 주는 **업무 지시서**",
                 "역할·맥락 → 지시 → 예시 → 출력 형식 순으로 구조화",
@@ -189,7 +337,7 @@ show(resp)        # 마지막 토큰이 나올 때까지 화면은 빈 상태` }
             ],
             concepts: [
                 { term: "시스템 프롬프트", en: "System prompt", def: "역할·규칙·고정 맥락 · 대화 내내 유지" },
-                { term: "Few-shot 예시", en: "Few-shot examples", def: "원하는 입출력 2–5개로 형식·톤을 보여줌 · 다양하게" },
+                { term: "Few-shot 예시", en: "Few-shot examples", def: "원하는 입출력 3–5개로 형식·톤을 보여줌 · 다양하게" },
                 { term: "XML 태그 구분", en: "XML tag delimiters", def: "`<doc>`, `<rules>` 로 자료와 지시를 나눠 혼동 방지" },
                 { term: "구조화 출력", en: "Structured output", def: "JSON 스키마로 응답 형식을 강제 · 파싱 실패 감소" },
                 { term: "프롬프트 인젝션", en: "Prompt injection", def: "자료 속 지시문이 원래 지시를 덮으려는 공격 · 외부 입력은 데이터로 취급" }
@@ -199,7 +347,7 @@ show(resp)        # 마지막 토큰이 나올 때까지 화면은 빈 상태` }
                 nodes: [
                     { id: "role", label: "역할·맥락", sub: "system 프롬프트", x: 0, y: 0 },
                     { id: "inst", label: "지시", sub: "할 일·제약·순서", x: 1, y: 0 },
-                    { id: "ex", label: "예시", sub: "few-shot 2–5개", x: 2, y: 0 },
+                    { id: "ex", label: "예시", sub: "few-shot 3–5개", x: 2, y: 0 },
                     { id: "fmt", label: "출력 형식", sub: "JSON 스키마", x: 3, y: 0 },
                     { id: "llm", label: "LLM 호출", sub: "자료는 태그로", x: 3, y: 1 },
                     { id: "chk", label: "검증", sub: "파싱·규칙 체크", x: 2, y: 1 },
@@ -217,7 +365,7 @@ show(resp)        # 마지막 토큰이 나올 때까지 화면은 빈 상태` }
                 steps: [
                     { on: ["role"], text: "역할과 배경: 누구를 위해, 왜 하는 일인지 · system 에 고정" },
                     { on: ["role>inst", "inst"], text: "지시: 할 일을 **번호 목록**으로 · 금지보다 해야 할 것 위주" },
-                    { on: ["inst>ex", "ex"], text: "예시: 원하는 입출력 2–5개 · 한 패턴만 복제하지 않게 다양하게" },
+                    { on: ["inst>ex", "ex"], text: "예시: 원하는 입출력 3–5개 · 한 패턴만 복제하지 않게 다양하게" },
                     { on: ["ex>fmt", "fmt"], text: "출력 형식: 스키마·태그로 명시 → 코드가 파싱 가능" },
                     { on: ["fmt>llm", "llm"], text: "호출 · 외부 자료는 `<document>` 태그로 지시와 분리" },
                     { on: ["llm>chk", "chk"], text: "코드로 검증(validation): JSON 파싱, 필수 필드, 허용 값" },
@@ -285,7 +433,7 @@ resp = client.messages.create(model="claude-opus-5-5", max_tokens=16000,
 msg = f"현재 시각: {now}\\n{q}"                          # 변하는 값은 뒤로
 resp = client.messages.create(model="claude-opus-5-5", max_tokens=16000,
     system=system, messages=[{"role": "user", "content": msg}])` },
-                    gain: "캐시 적중 입력 단가 ~1/10 · 지연↓",
+                    gain: "캐시 적중분 입력 비용·지연↓ · 할인율은 모델마다 다름",
                     note: "접두부(prefix)가 최소 길이 미만이면 캐시 안 됨 · `usage.cache_read_input_tokens` 로 확인"
                 },
                 {
@@ -309,14 +457,18 @@ resp = client.messages.create(model="claude-opus-5-5", max_tokens=16000,
                 { term: "CoT", en: "Chain-of-thought", def: "단계별로 생각하게 해 복잡한 문제 정확도를 높이는 방법" }
             ],
             quiz: [
-                { q: "외부 문서를 프롬프트에 넣는 바람직한 방법은?", options: ["지시문 사이사이에 섞는다", "태그로 감싸 자료임을 명시하고 지시와 분리", "system 맨 앞에 지시처럼 둔다", "영어로 번역해 넣는다"], a: 1, why: "경계가 분명해야 자료 속 문장을 지시로 오해하지 않음" },
-                { q: "Few-shot 예시를 모두 같은 패턴으로 주면?", options: ["정확도가 항상 오른다", "토큰이 줄어든다", "아무 영향 없음", "표면 패턴을 과하게 따라 할 수 있음"], a: 3, why: "모델은 예시를 강하게 모방 · 다양한 예시가 안전" },
-                { q: "프롬프트 캐싱 적중률을 떨어뜨리는 것은?", options: ["고정 규칙을 앞에 두기", "system 에 현재 시각 넣기", "질문을 맨 뒤에 두기", "툴 목록 순서 고정"], a: 1, why: "캐시는 접두부 일치 · 앞부분 한 글자만 바뀌어도 무효" },
-                { q: "앱에서 응답을 안정적으로 파싱하려면?", options: ["'JSON 으로 줘' 한 줄이면 충분", "온도를 최대로", "스키마 지정(구조화 출력) + 코드 검증", "max_tokens 를 최소로"], a: 2, why: "형식은 강제하고, 값의 의미는 코드로 다시 확인" },
-                { q: "프롬프트 인젝션 피해를 줄이는 가장 근본적인 방법은?", options: ["모델의 툴·데이터 권한 최소화 + 위험 작업 사람 승인", "'지시를 무시하지 마' 문구 반복", "프롬프트를 길게 작성", "온도를 0 으로"], a: 0, why: "완벽히 막을 문구는 없음 · 뚫려도 피해가 작게 설계" }
+                { q: "외부 문서를 프롬프트에 넣는 바람직한 방법은?", options: ["지시문 사이사이에 섞어 넣기", "태그로 감싸 지시와 분리", "system 맨 앞에 지시처럼 두기", "영어로 번역해서 넣기"], a: 1, why: "경계가 분명해야 자료 속 문장을 지시로 오해하지 않음 · system 에 두면 오히려 지시처럼 읽힘" },
+                { q: "Few-shot 예시를 모두 같은 패턴으로 주면?", options: ["정확도가 항상 올라간다", "입력 토큰 수가 줄어든다", "출력에는 영향이 없다", "길이·라벨까지 따라 한다"], a: 3, why: "모델은 예시를 강하게 모방 · 길이·유형·라벨을 고르게 섞어야 안전" },
+                { q: "프롬프트 캐싱 적중률을 떨어뜨리는 것은?", options: ["고정 규칙을 맨 앞에 모아 두기", "system 앞에 현재 시각", "질문을 맨 뒤에 두기", "툴 정의 순서를 고정하기"], a: 1, why: "캐시는 접두부 일치 · 앞부분이 한 글자만 바뀌어도 뒤 전체가 빗나감" },
+                { q: "앱에서 응답을 안정적으로 파싱하려면?", options: ["'JSON 으로 줘' 한 줄", "온도를 최대로 올림", "스키마 강제 + 코드 검증", "max_tokens 를 최소로"], a: 2, why: "형식은 스키마로 강제, 값의 의미는 코드로 확인 · 지시 한 줄은 가끔 설명이 붙음" },
+                { q: "프롬프트 인젝션 피해를 줄이는 가장 근본적인 방법은?", options: ["권한 최소화 + 위험 작업 승인", "시스템에 '지시 무시 금지' 반복", "프롬프트를 더 길고 자세히", "온도를 0 으로 고정하기"], a: 0, why: "완벽히 막는 문구는 없음 · 뚫려도 피해가 작게 실행 경로를 설계" },
+                { type: "text", q: "`wrap_doc(\"<b>hi</b>\")` 결과의 가운데 줄은?", code: { lang: "python", src: "def wrap_doc(text):\n    safe = text.replace(\"<\", \"&lt;\").replace(\">\", \"&gt;\")\n    return f\"<document>\n{safe}\n</document>\"" }, answer: ["&lt;b&gt;hi&lt;/b&gt;"], why: "꺾쇠를 이스케이프해 자료 속 `</document>` 흉내로 경계를 깨지 못하게 함 · 완화책일 뿐" },
+                { type: "num", q: "예시 1 개 150 토큰 × 5 개를 매 요청에 넣고 하루 10,000 요청이면, 예시에만 드는 입력은 하루 몇 백만 토큰?", answer: 7.5, tol: 0.01, unit: "M", why: "150 × 5 × 10,000 = 7,500,000 · 고정 예시는 접두부 캐싱, 후보가 많으면 동적 예시 선택" },
+                { type: "num", q: "상세 설명의 `classify(llm, prompt, retries=2)` 가 계속 형식을 어기면 LLM 은 최대 몇 번 호출되나?", answer: 3, why: "`range(retries + 1)` → 3 번 · 그래도 실패면 안전한 기본값 반환" },
+                { type: "order", q: "긴 자료가 있는 프롬프트의 권장 배치 (앞 → 뒤)", items: ["system: 역할·맥락", "긴 자료 (<manual>)", "예시 (<examples>)", "규칙·출력 형식 (<rules>)", "이번 입력 (<ticket>)"], why: "고정되고 긴 부분은 앞(캐시·품질), 매번 바뀌는 입력은 맨 끝" }
             ],
             refs: [
-                { title: "Prompt engineering overview", by: "Anthropic", url: "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview", kind: "doc" },
+                { title: "Prompting best practices", by: "Anthropic", url: "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices", kind: "doc" },
                 { title: "Prompt engineering", by: "OpenAI", url: "https://developers.openai.com/api/docs/guides/prompt-engineering", kind: "doc" },
                 { title: "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models", by: "Wei et al.", year: 2022, url: "https://arxiv.org/abs/2201.11903", kind: "paper" }
             ]
@@ -326,10 +478,13 @@ resp = client.messages.create(model="claude-opus-5-5", max_tokens=16000,
             title: "RAG 검색 증강 생성",
             level: 2,
             mins: 15,
+            pre: ["ai/prompting", "data-structures/ds-heap"],
+            checked: "2026-11-16",
             key: [
                 "RAG = 관련 문서를 **검색(retrieval)**해 프롬프트에 붙여 답하게 함",
                 "재학습(retraining) 없이 최신·사내 지식 반영 + 출처 제시",
                 "품질은 대부분 검색에서 결정: 청킹(chunking)·임베딩(embedding)·top-k",
+                "**코사인 유사도(cosine similarity)**는 길이 무시 · 내적은 긴 벡터 편애 · 정규화하면 같음",
                 "근거가 없으면 '모른다'고 답하게 지시"
             ],
             concepts: [
@@ -340,37 +495,19 @@ resp = client.messages.create(model="claude-opus-5-5", max_tokens=16000,
                 { term: "하이브리드 검색", en: "Hybrid search", def: "BM25 키워드 + 벡터 검색 결합 · 고유명사·코드명에 강함" }
             ],
             demo: {
-                type: "steps",
-                nodes: [
-                    { id: "doc", label: "문서", sub: "위키·PDF·티켓", x: 0, y: 0 },
-                    { id: "chunk", label: "청킹", sub: "수백 토큰 + 겹침", x: 1, y: 0 },
-                    { id: "emb", label: "임베딩", sub: "청크 → 벡터", x: 2, y: 0 },
-                    { id: "idx", label: "벡터 인덱스", sub: "벡터+원문+출처", x: 3, y: 0 },
-                    { id: "q", label: "질문", sub: "사용자 입력", x: 0, y: 1 },
-                    { id: "qe", label: "질문 임베딩", sub: "같은 모델 사용", x: 1, y: 1 },
-                    { id: "topk", label: "top-k 검색", sub: "코사인 유사도", x: 2, y: 1 },
-                    { id: "llm", label: "LLM 생성", sub: "청크 + 질문", x: 3, y: 1 },
-                    { id: "ans", label: "답 + 출처", sub: "[1] [3] 인용", x: 3, y: 2 }
+                type: "sim",
+                name: "vector",
+                docs: [
+                    { t: "UART 보레이트 설정", v: [0.9, 0.15] },
+                    { t: "SPI 클럭 모드", v: [0.75, 0.45] },
+                    { t: "I2C 풀업 저항", v: [0.55, 0.25] },
+                    { t: "PID 튜닝 가이드", v: [-0.6, 0.7] },
+                    { t: "칼만 필터 노트", v: [-0.8, 0.35] },
+                    { t: "통신 매뉴얼 통째 (긴 청크)", v: [1.8, 1.1] },
+                    { t: "어텐션 정리", v: [-0.2, -0.9] }
                 ],
-                edges: [
-                    { from: "doc", to: "chunk" },
-                    { from: "chunk", to: "emb" },
-                    { from: "emb", to: "idx" },
-                    { from: "q", to: "qe" },
-                    { from: "qe", to: "topk" },
-                    { from: "idx", to: "topk", label: "검색" },
-                    { from: "topk", to: "llm" },
-                    { from: "llm", to: "ans" }
-                ],
-                steps: [
-                    { on: ["doc", "doc>chunk", "chunk"], text: "오프라인: 문서를 청크(chunk)로 분할 · 너무 크면 잡음, 너무 작으면 문맥 손실" },
-                    { on: ["chunk>emb", "emb"], text: "각 청크를 임베딩 모델로 벡터화" },
-                    { on: ["emb>idx", "idx"], text: "벡터 + 원문 + 메타데이터(출처, 날짜)를 인덱스에 저장" },
-                    { on: ["q", "q>qe", "qe"], text: "온라인: 질문을 **같은** 임베딩 모델로 벡터화" },
-                    { on: ["qe>topk", "idx>topk", "topk"], text: "질문 벡터와 가장 가까운 청크 k 개 검색" },
-                    { on: ["topk>llm", "llm"], text: "청크에 번호를 붙여 프롬프트에 넣고 생성 · 근거 없으면 모른다고" },
-                    { on: ["llm>ans", "ans"], text: "답에 [번호] 출처 표시 → 사용자가 원문으로 검증 가능" }
-                ]
+                query: [0.8, 0.3],
+                k: 2
             },
             code: [
                 {
@@ -455,15 +592,21 @@ hits = rrf(bm25_search(q, 20), vector_search(q, 20))[:10]` },
                 { term: "환각", en: "Hallucination", def: "근거 없는 내용을 그럴듯하게 생성 · RAG + 인용으로 완화" }
             ],
             quiz: [
-                { q: "RAG 가 파인튜닝보다 적합한 경우는?", options: ["말투·형식을 바꾸고 싶을 때", "자주 바뀌는 사내 문서를 근거로 답할 때", "추론 속도를 높이고 싶을 때", "모델 크기를 줄이고 싶을 때"], a: 1, why: "문서만 다시 인덱싱하면 최신 지식 반영 · 출처도 제시" },
-                { q: "질문에 문서와 다른 임베딩 모델을 쓰면?", options: ["더 정확해짐", "속도만 느려짐", "벡터 공간이 달라 유사도 비교가 무의미", "영향 없음"], a: 2, why: "모델마다 벡터 공간이 다름 · 같은 모델로 맞춰야 함" },
-                { q: "벡터를 L2 정규화해 두면 코사인 유사도는?", options: ["내적과 같아짐", "항상 1", "계산 불가", "유클리드 거리와 무관해짐"], a: 0, why: "cos = a·b / (|a||b|) 에서 |a|=|b|=1" },
-                { q: "청크가 너무 크면?", options: ["검색이 더 정확해짐", "출처 표시가 쉬워짐", "인덱스가 작아져 항상 이득", "한 벡터에 여러 주제가 섞여 정밀도↓ · 토큰↑"], a: 3, why: "벡터가 평균적 의미가 되고 프롬프트에 잡음도 늘어남" },
-                { q: "제품 코드명 검색이 자주 실패할 때 먼저 시도할 것은?", options: ["온도 낮추기", "BM25 키워드 검색과 하이브리드", "청크 크기 2배", "더 큰 LLM"], a: 1, why: "정확한 문자열 일치는 키워드 검색이 강함" }
+                { q: "RAG 가 파인튜닝보다 적합한 경우는?", options: ["말투·형식을 바꾸고 싶을 때", "사내 문서가 자주 바뀔 때", "추론 속도를 높이고 싶을 때", "모델 크기를 줄이고 싶을 때"], a: 1, why: "문서만 다시 색인하면 최신 지식 반영 + 출처 제시 · 말투·형식은 파인튜닝이 강함" },
+                { q: "질문에 문서와 다른 임베딩 모델을 쓰면?", options: ["벡터 공간이 달라 비교 무의미", "차원만 같으면 그대로 비교 가능", "정규화하면 문제없이 비교 가능", "질문 쪽 정확도가 오히려 오름"], a: 0, why: "모델마다 학습된 공간이 다름 · 차원이 같아도 축의 의미가 다르고 정규화로 해결되지 않음" },
+                { q: "벡터를 L2 정규화해 두면 코사인 유사도는?", options: ["내적과 같아짐", "항상 1 이 됨", "계산할 수 없음", "L2 거리와 무관해짐"], a: 0, why: "cos = a·b / (|a||b|) 에서 |a| = |b| = 1 · 이때 L2 거리 순위도 같아짐" },
+                { q: "청크가 너무 크면?", options: ["검색이 더 정확해짐", "주제가 섞여 정밀도↓", "출처 표시가 쉬워짐", "인덱스가 작아져 늘 이득"], a: 1, why: "한 벡터에 여러 주제가 평균돼 흐려지고, 무관한 문장까지 프롬프트에 들어가 토큰도 늘어남" },
+                { q: "제품 코드명 검색이 자주 실패할 때 먼저 시도할 것은?", options: ["온도를 낮추기", "BM25 하이브리드", "청크 크기 2배", "더 큰 LLM 으로 교체"], a: 1, why: "정확한 문자열 일치는 키워드 검색이 강함 · 생성 모델을 바꿔도 검색 누락은 그대로" },
+                { type: "num", q: "a = (3, 4), b = (4, 3) 의 코사인 유사도는?", answer: 0.96, tol: 0.005, why: "a·b = 24, |a||b| = 5 × 5 = 25 → 0.96" },
+                { type: "text", q: "정규화 없이 **내적** 1위와 **코사인** 1위 문서를 `내적,코사인` 형식으로 쓰면?", code: { lang: "txt", src: "q = (0.8, 0.3)\nA = (0.9, 0.15)   B = (1.8, 1.1)   C = (0.55, 0.25)" }, answer: ["B,C", "BC", "B/C"], why: "내적: B 1.77 (길이 덕) · 코사인: C 0.998, B 0.982, A 0.981 · 데모에서 정규화를 켜면 순위가 같아짐" },
+                { type: "num", q: "질문 4 개의 첫 정답 순위가 1, 3, 없음, 2 다. MRR 은?", answer: 0.458, tol: 0.005, why: "(1 + 1/3 + 0 + 1/2) / 4 · 같은 결과의 recall@2 (정답 1 개씩) = 0.5" },
+                { type: "order", q: "RAG 한 번의 흐름", items: ["문서를 청크로 분할", "청크 임베딩 → 인덱스 저장", "질문을 같은 모델로 임베딩", "top-k 검색 (+ 재정렬)", "청크 + 질문으로 생성·인용"], why: "앞 둘은 오프라인 색인, 뒤 셋은 질문마다 · 검색과 생성 실패는 따로 잰다" }
             ],
             refs: [
                 { title: "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks", by: "Lewis et al.", year: 2020, url: "https://arxiv.org/abs/2005.11401", kind: "paper" },
-                { title: "Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs", by: "Malkov et al.", year: 2016, url: "https://arxiv.org/abs/1603.09320", kind: "paper" }
+                { title: "Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs", by: "Malkov et al.", year: 2016, url: "https://arxiv.org/abs/1603.09320", kind: "paper" },
+                { title: "Reciprocal Rank Fusion outperforms Condorcet and individual Rank Learning Methods", by: "Cormack et al.", year: 2009, url: "https://doi.org/10.1145/1571941.1572114", kind: "paper" },
+                { title: "Pairwise metrics, Affinities and Kernels: Cosine similarity", by: "scikit-learn", url: "https://scikit-learn.org/stable/modules/metrics.html#cosine-similarity", kind: "doc" }
             ]
         },
         {
@@ -471,6 +614,8 @@ hits = rrf(bm25_search(q, 20), vector_search(q, 20))[:10]` },
             title: "에이전트와 툴 사용",
             level: 2,
             mins: 15,
+            pre: ["ai/prompting"],
+            checked: "2026-11-16",
             key: [
                 "에이전트(agent) = LLM 이 **툴 호출(tool call)을 스스로 결정**하며 도는 루프",
                 "모델은 `tool_use` 를 제안할 뿐 · 실행은 **앱**이 한다",
@@ -481,7 +626,7 @@ hits = rrf(bm25_search(q, 20), vector_search(q, 20))[:10]` },
                 { term: "툴 정의", en: "Tool definition", def: "이름 + 설명 + JSON Schema 입력 · 설명이 곧 사용 설명서" },
                 { term: "에이전트 루프", en: "Agent loop", def: "호출 → tool_use → 실행 → tool_result → 재호출 · end_turn 까지" },
                 { term: "병렬 툴 호출", en: "Parallel tool use", def: "한 응답에 tool_use 여러 개 가능 · 결과는 한 user 메시지에 모아서" },
-                { term: "MCP", en: "Model Context Protocol", def: "툴·데이터를 표준 프로토콜로 노출 · 한 번 만들어 여러 앱에서 재사용" },
+                { term: "MCP", en: "Model Context Protocol", def: "툴·리소스·프롬프트를 JSON-RPC 표준으로 노출 · 한 번 만들어 여러 앱에서 재사용" },
                 { term: "워크플로 vs 에이전트", en: "Workflow vs agent", def: "순서를 코드가 정하면 워크플로, 모델이 정하면 에이전트 · 단순한 쪽부터" }
             ],
             demo: {
@@ -600,11 +745,15 @@ with ThreadPoolExecutor() as pool:      # I/O 대기 툴은 동시에
                 { term: "사람 승인", en: "Human-in-the-loop", def: "삭제·결제 등 위험 행동 전에 사람이 확인하는 단계" }
             ],
             quiz: [
-                { q: "`stop_reason` 이 `tool_use` 일 때 앱이 할 일은?", options: ["응답을 사용자에게 바로 표시", "요청된 툴을 실행하고 tool_result 로 다시 호출", "모델이 이미 실행했으니 결과만 읽기", "온도를 올려 재시도"], a: 1, why: "모델은 호출을 제안만 함 · 실행과 결과 전달은 앱 몫" },
-                { q: "한 응답에 tool_use 블록이 3개면?", options: ["첫 번째만 실행", "각각 별도 user 메시지로 3번 반환", "모두 실행해 결과 3개를 한 user 메시지로 반환", "오류로 처리"], a: 2, why: "결과를 나눠 보내면 이후 병렬 호출이 줄어드는 경향" },
-                { q: "툴 실행이 실패하면?", options: ["`is_error: true` 와 오류 내용을 tool_result 로 전달", "결과를 버리고 다음 단계", "루프 즉시 종료", "같은 호출을 무한 재시도"], a: 0, why: "모델이 오류를 보고 입력을 고치거나 다른 방법을 택함" },
-                { q: "에이전트보다 고정 워크플로가 나은 경우는?", options: ["탐색 경로를 미리 알 수 없을 때", "툴이 많을 때", "사용자가 많을 때", "단계가 명확하고 매번 같을 때"], a: 3, why: "정해진 순서면 코드가 더 싸고 예측 가능" },
-                { q: "MCP 의 역할은?", options: ["모델 가중치 압축 포맷", "툴·데이터를 LLM 앱에 연결하는 표준 프로토콜", "임베딩 알고리즘", "GPU 스케줄러"], a: 1, why: "툴을 MCP 서버로 만들면 여러 클라이언트가 재사용" }
+                { q: "`stop_reason` 이 `tool_use` 일 때 앱이 할 일은?", options: ["응답을 사용자에게 바로 표시", "툴 실행 후 결과를 돌려줌", "모델이 실행한 결과만 읽기", "온도를 올려 다시 요청"], a: 1, why: "모델은 호출을 제안만 함 · 실행과 결과 전달은 앱 몫" },
+                { q: "한 응답에 tool_use 블록이 3 개면?", options: ["첫 번째 블록만 실행하고 끝냄", "3 개를 각각 다른 메시지로 반환", "3 개 결과를 한 메시지로", "오류로 보고 루프를 종료함"], a: 2, why: "결과 블록을 한 user 메시지에 모아서 · 나눠 보내면 이후 병렬 호출이 줄어드는 경향" },
+                { q: "툴 실행이 실패하면?", options: ["오류를 결과로 알려 줌", "빈 결과를 성공처럼 돌려줌", "루프를 즉시 끝내고 사과 문구", "같은 호출을 성공할 때까지 반복"], a: 0, why: "`is_error: true` 인 tool_result 로 전달 → 모델이 인자를 고치거나 다른 길을 택함 · 빈 결과는 틀린 결론을 부름" },
+                { q: "에이전트보다 고정 워크플로가 나은 경우는?", options: ["다음 단계를 미리 알 수 없을 때", "툴 종류가 아주 많을 때", "동시 사용자가 많을 때", "단계가 정해져 매번 같을 때"], a: 3, why: "순서가 정해진 일은 코드가 더 싸고 예측 가능 · 앞이 안 보이는 탐색이 에이전트 영역" },
+                { q: "MCP 의 역할은?", options: ["모델 가중치 압축 파일 포맷", "툴 연결용 표준 프로토콜", "임베딩 학습 알고리즘", "GPU 작업 스케줄러"], a: 1, why: "툴을 MCP 서버로 만들면 여러 호스트 앱이 재사용 · 메시지는 JSON-RPC 2.0" },
+                { type: "num", q: "시스템+툴 정의 2,000 토큰, 단계마다 출력 300 + 툴 결과 1,500 이 쌓인다. 8 번째 호출의 입력은 몇 토큰?", answer: 14600, why: "2,000 + 1,800 × 7 · 8 번 호출 입력 합은 66,400 토큰" },
+                { type: "num", q: "단계마다 95% 로 성공하고 실패가 독립이면 10 단계 작업의 성공 확률은?", answer: 0.599, tol: 0.005, why: "0.95¹⁰ ≈ 0.60 · 단계가 길수록 실패가 쌓임" },
+                { type: "num", q: "`for step in range(8)` 루프에서 모델이 매번 tool_use 만 낸다면 모델 호출은 몇 번?", answer: 8, why: "단계 상한에서 멈춤 · 상한이 없으면 무한 루프·비용 폭주" },
+                { type: "order", q: "툴 사용 루프 한 바퀴", items: ["messages + tools 로 모델 호출", "stop_reason 이 tool_use 인지 확인", "입력 검증 후 툴 실행", "같은 id 의 tool_result 를 추가", "end_turn 이면 종료, 아니면 반복"], why: "실행은 앱이 · 결과는 `tool_use_id` 로 짝지어 user 메시지로 돌려줌" }
             ],
             refs: [
                 { title: "ReAct: Synergizing Reasoning and Acting in Language Models", by: "Yao et al.", year: 2022, url: "https://arxiv.org/abs/2210.03629", kind: "paper" },
@@ -618,10 +767,12 @@ with ThreadPoolExecutor() as pool:      # I/O 대기 툴은 동시에
             title: "파인튜닝과 LoRA",
             level: 3,
             mins: 15,
+            pre: ["deep-learning/transformer", "deep-learning/quantization"],
+            checked: "2026-11-16",
             key: [
                 "파인튜닝(fine-tuning) = 내 데이터로 **가중치(weights)**를 추가 학습",
                 "지식 주입(knowledge injection)은 보통 RAG 먼저 · 파인튜닝은 형식·말투·작업 특화",
-                "LoRA: W 는 고정(frozen), 작은 행렬 `B·A` 만 학습 → `W + BA`",
+                "LoRA: W 는 고정(frozen), 작은 행렬 `B·A` 만 학습 → `W + (α/r)·BA`",
                 "평가셋(eval set) 먼저 · 데이터는 양보다 품질"
             ],
             concepts: [
@@ -640,7 +791,7 @@ with ThreadPoolExecutor() as pool:      # I/O 대기 툴은 동시에
                     { id: "eval", label: "평가", sub: "홀드아웃·회귀", x: 3, y: 0 },
                     { id: "data", label: "학습 데이터", sub: "지시·응답 쌍", x: 1, y: 1 },
                     { id: "serve", label: "서빙", sub: "추가 지연 없음", x: 2, y: 1 },
-                    { id: "merge", label: "병합", sub: "W' = W + BA", x: 3, y: 1 }
+                    { id: "merge", label: "병합", sub: "W' = W + (α/r)BA", x: 3, y: 1 }
                 ],
                 edges: [
                     { from: "base", to: "lora" },
@@ -652,7 +803,7 @@ with ThreadPoolExecutor() as pool:      # I/O 대기 툴은 동시에
                 ],
                 steps: [
                     { on: ["base"], text: "기본 모델(base model) 가중치 W 는 **고정** · 원본은 그대로 보존" },
-                    { on: ["base>lora", "lora"], text: "선형층(linear layer) 옆에 저랭크(low-rank) A(r×k)·B(d×r) 추가 · B=0 시작 → 처음엔 원본과 동일" },
+                    { on: ["base>lora", "lora"], text: "선형층(linear layer) 옆에 저랭크(low-rank) A(r×k)·B(d×r) 추가 · A 는 난수, B=0 시작 → 처음엔 원본과 동일" },
                     { on: ["data"], text: "데이터: 원하는 지시·응답 쌍(instruction-response pairs) · 평가용은 따로 떼어 둠" },
                     { on: ["lora>train", "data>train", "train"], text: "A·B 만 학습 → 학습 파라미터와 메모리 대폭 감소" },
                     { on: ["train>eval", "eval"], text: "홀드아웃 + 기존 능력 회귀(regression) 확인 · 과적합(overfitting)·망각(forgetting)" },
@@ -693,7 +844,7 @@ cfg = LoraConfig(
     r=16,                                    # 랭크: 표현력 ↔ 파라미터 수
     lora_alpha=32,                           # 스케일 α (ΔW × α/r)
     lora_dropout=0.05,
-    target_modules=["q_proj", "v_proj"],     # 모델 구조마다 이름 다름
+    target_modules=["q_proj", "v_proj"],     # LoRA 논문 설정 · QLoRA 는 "all-linear" 권장
     task_type="CAUSAL_LM",
 )
 model = get_peft_model(model, cfg)           # 원본 가중치는 자동으로 고정
@@ -704,7 +855,7 @@ model.save_pretrained("adapter/")            # 어댑터만 저장 (작음)
 # 배포용 병합
 merged = PeftModel.from_pretrained(
     AutoModelForCausalLM.from_pretrained(base_id), "adapter/").merge_and_unload()`,
-                    note: "`target_modules` 는 `model` 을 print 해서 선형층 이름을 확인"
+                    note: "모듈 이름은 구조마다 다름 → `model` 을 print 해 확인 · PEFT 기본값은 r = 8, lora_alpha = 8"
                 }
             ],
             optimize: [
@@ -719,7 +870,7 @@ model.set_adapter("support")     # 기본 모델은 공유, 어댑터만 바꿔 
                 },
                 {
                     title: "GPU 메모리 부족: 4bit 기본 모델 + LoRA (QLoRA)",
-                    before: { lang: "python", src: `model = AutoModelForCausalLM.from_pretrained(base_id, torch_dtype=torch.bfloat16)
+                    before: { lang: "python", src: `model = AutoModelForCausalLM.from_pretrained(base_id, dtype=torch.bfloat16)
 # 7B × 2 byte ≈ 14 GB · 가중치만으로 소비자 GPU 초과` },
                     after: { lang: "python", src: `bnb = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type="nf4",
                          bnb_4bit_compute_dtype=torch.bfloat16)
@@ -738,16 +889,20 @@ model = get_peft_model(prepare_model_for_kbit_training(model), cfg)` },
                 { term: "QLoRA", en: "Quantized LoRA", def: "4bit 로 고정한 기본 모델 위에서 LoRA 를 학습" }
             ],
             quiz: [
-                { q: "LoRA 에서 학습되는 것은?", options: ["기본 모델 전체 가중치", "저랭크 행렬 A, B", "토크나이저", "임베딩 인덱스"], a: 1, why: "W 는 고정 · ΔW = BA 만 갱신" },
-                { q: "B 를 0 으로 초기화하는 이유는?", options: ["학습 속도 2배", "학습 시작 시 출력이 원본과 같도록", "메모리 절약", "랭크를 줄이려고"], a: 1, why: "BA = 0 → 처음엔 W 만 작동, 점진적으로 변화" },
-                { q: "d = k = 4096, r = 8 인 층의 LoRA 파라미터 수는?", options: ["4096 × 4096", "8 × 8", "8 × (4096 + 4096) = 65,536", "4096 × 8 = 32,768"], a: 2, why: "A(r×k) + B(d×r) = r(d + k)" },
-                { q: "매달 바뀌는 사내 규정에 답하는 봇, 우선 선택은?", options: ["RAG 로 문서 검색 후 답변", "매달 파인튜닝", "온도 조절", "모델 크기 증가"], a: 0, why: "자주 바뀌는 지식은 검색이 싸고 출처도 제시" },
-                { q: "어댑터를 병합(merge)하면 좋은 점은?", options: ["어댑터 교체가 쉬워짐", "학습이 빨라짐", "데이터가 덜 필요", "추론 시 추가 연산·지연이 없음"], a: 3, why: "W' 하나로 합쳐져 구조가 원본과 같음 · 대신 교체 유연성은 잃음" }
+                { q: "LoRA 에서 학습되는 것은?", options: ["기본 모델 전체 가중치", "저랭크 행렬 A 와 B", "토크나이저 병합 규칙", "임베딩 검색 인덱스"], a: 1, why: "W 는 고정 · ΔW = BA 만 갱신 → 기울기·옵티마이저 상태도 A, B 몫만" },
+                { q: "B 를 0 으로 초기화하는 이유는?", options: ["학습 속도를 2 배로 올리려고", "시작 출력이 원본과 같게", "메모리를 아끼려고", "랭크를 줄이려고"], a: 1, why: "BA = 0 → 처음엔 W 만 작동하고 보정이 0 에서부터 자람 · A 는 난수로 시작" },
+                { q: "매달 바뀌는 사내 규정에 답하는 봇, 우선 선택은?", options: ["RAG 로 검색해 근거 제시", "바뀔 때마다 전체 재학습", "LoRA 랭크를 키워 다시 학습", "온도를 낮춰 답을 고정"], a: 0, why: "자주 바뀌는 사실은 검색이 싸고 출처도 제시 · 가중치에 넣으면 바뀔 때마다 재학습" },
+                { q: "어댑터를 병합(merge)하면 좋은 점은?", options: ["추론 때 추가 연산이 없음", "어댑터를 더 쉽게 바꿔 낌", "학습 속도가 빨라짐", "필요한 데이터가 줄어듦"], a: 0, why: "W' 하나로 합쳐 구조가 원본과 같음 · 대신 어댑터 교체 유연성은 잃음" },
+                { q: "QLoRA 논문이 16비트 전체 파인튜닝 성능에 맞추려면 필요하다고 본 것은?", options: ["모든 선형층에 LoRA 적용", "q·v 투영에만 LoRA 적용", "랭크 r 을 256 이상으로", "학습률을 10 배로 올림"], a: 0, why: "q·v 만으론 큰 모델에서 재현 실패 · r 같은 다른 설정은 성능에 큰 영향이 없었다고 보고" },
+                { type: "num", q: "d = k = 4096, r = 8 인 층의 LoRA 학습 파라미터 수는?", answer: 65536, why: "A(r×k) + B(d×r) = r(d + k) = 8 × 8192 · 원래 행렬 16,777,216 의 0.39%" },
+                { type: "num", q: "PEFT 에서 r = 16, lora_alpha = 32 면 ΔW 에 곱해지는 스케일은?", answer: 2, why: "α / r = 32 / 16 · α 를 두고 r 만 바꾸면 보정 세기도 같이 바뀜" },
+                { type: "num", q: "7B 모델을 혼합 정밀도 + Adam 으로 전체 파인튜닝할 때 모델 상태 메모리는 몇 GB? (활성값 제외, 1 GB = 10⁹ B)", answer: 112, unit: "GB", why: "파라미터당 16 B: 가중치 2 + 기울기 2 + fp32 사본·m·v 12 (ZeRO 논문)" },
+                { type: "order", q: "LoRA 파인튜닝 작업 순서", items: ["평가셋부터 떼어 둠", "SFT 데이터 정제", "LoRA 설정 후 학습", "홀드아웃·회귀 평가", "병합 또는 어댑터로 배포"], why: "기준이 먼저 있어야 좋아졌는지 판단 · 배포 결정은 학습 손실이 아니라 평가 점수로" }
             ],
             refs: [
                 { title: "LoRA: Low-Rank Adaptation of Large Language Models", by: "Hu et al.", year: 2021, url: "https://arxiv.org/abs/2106.09685", kind: "paper" },
                 { title: "QLoRA: Efficient Finetuning of Quantized LLMs", by: "Dettmers et al.", year: 2023, url: "https://arxiv.org/abs/2305.14314", kind: "paper" },
-                { title: "Training language models to follow instructions with human feedback", by: "Ouyang et al.", year: 2022, url: "https://arxiv.org/abs/2203.02155", kind: "paper" },
+                { title: "ZeRO: Memory Optimizations Toward Training Trillion Parameter Models", by: "Rajbhandari et al.", year: 2019, url: "https://arxiv.org/abs/1910.02054", kind: "paper" },
                 { title: "Direct Preference Optimization: Your Language Model is Secretly a Reward Model", by: "Rafailov et al.", year: 2023, url: "https://arxiv.org/abs/2305.18290", kind: "paper" }
             ]
         },
@@ -756,6 +911,8 @@ model = get_peft_model(prepare_model_for_kbit_training(model), cfg)` },
             title: "엣지 AI와 TinyML",
             level: 2,
             mins: 14,
+            pre: ["deep-learning/quantization", "embedded/mcu"],
+            checked: "2026-11-16",
             key: [
                 "엣지 AI(edge AI) = 데이터가 생기는 기기에서 바로 추론(inference)",
                 "학습(서버) → INT8 양자화(quantization) → 변환 → 기기 런타임(runtime)",
@@ -815,21 +972,21 @@ import tensorflow as tf
 model = tf.keras.models.load_model("kws.keras")      # 학습 끝난 모델
 
 def representative_data():
-    for x in calib_samples[:200]:                      # 실제 입력 분포 샘플
+    for x in calib_samples[:200]:                      # 실제 입력 분포 샘플 (보통 수백 개)
         yield [x[np.newaxis].astype(np.float32)]
 
 conv = tf.lite.TFLiteConverter.from_keras_model(model)
 conv.optimizations = [tf.lite.Optimize.DEFAULT]
 conv.representative_dataset = representative_data
 conv.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]  # 정수 전용
-conv.inference_input_type = tf.int8
+conv.inference_input_type = tf.int8                    # int8 또는 uint8
 conv.inference_output_type = tf.int8
 tflite = conv.convert()
 
 open("kws_int8.tflite", "wb").write(tflite)
 print(f"{len(tflite) / 1024:.1f} KB")
-# MCU 용 C 배열: xxd -i kws_int8.tflite > model_data.cc`,
-                    note: "TFLite 는 LiteRT 로 이름이 바뀜 · 변환 후 INT8 모델로 정확도 다시 측정"
+# MCU 용 C 배열: xxd -i kws_int8.tflite > model_data.cc  (배열은 const 로)`,
+                    note: "TFLite 는 LiteRT 로 이름이 바뀜 · 최신 문서는 변환 중 양자화를 deprecated 로 두고 LiteRT Quantizer 권장 · 변환 후 정확도 재측정"
                 },
                 {
                     lang: "cpp",
@@ -861,7 +1018,7 @@ int ml_classify(const int8_t* feat, size_t n) {
         if (out->data.int8[i] > out->data.int8[best]) best = i;
     return best;                                // 점수 최대 클래스
 }`,
-                    note: "`interp->arena_used_bytes()` 로 실제 사용량 확인 · 입력은 scale/zero_point 로 변환해 넣기"
+                    note: "`AllocateTensors()` 뒤 `interp->arena_used_bytes()` 로 실사용량 확인 · 입력은 scale/zero_point 로 변환해 넣기"
                 }
             ],
             optimize: [
@@ -903,11 +1060,15 @@ tflite = conv.convert()            # INT8 · CMSIS-NN / NPU 커널 사용` },
                 { term: "Tensor arena", en: "Tensor arena", def: "TFLite Micro 가 쓰는 고정 크기 작업 메모리 · 정적 할당" }
             ],
             quiz: [
-                { q: "MCU 에 모델을 올릴 때 가장 먼저 부딪히는 제약은?", options: ["GPU 드라이버", "Flash·SRAM 용량 (모델 크기·arena)", "인터넷 속도", "Python 버전"], a: 1, why: "수백 KB Flash, 수십~수백 KB SRAM 안에 들어가야 함" },
-                { q: "FP32 → INT8 양자화 시 가중치 크기는 대략?", options: ["그대로", "1/2", "1/4", "1/32"], a: 2, why: "32bit → 8bit" },
-                { q: "NPU 가 지원하지 않는 op 가 모델에 있으면 보통?", options: ["변환이 항상 실패", "그 op 는 자동 삭제", "정확도 향상", "그 op 만 CPU 로 실행 → 전체가 느려질 수 있음"], a: 3, why: "CPU↔NPU 전환 비용까지 더해짐 · 지원 op 로 모델 설계" },
-                { q: "엣지 추론의 장점이 아닌 것은?", options: ["모델 크기 제약이 사라짐", "지연 감소", "원본 데이터가 기기 밖으로 덜 나감", "통신량·전력 감소"], a: 0, why: "오히려 메모리·연산 제약이 가장 큼" },
-                { q: "변환 후 꼭 해야 할 것은?", options: ["FP32 로 되돌리기", "학습률 조정", "기기 위에서 정확도·지연 재측정", "토크나이저 교체"], a: 2, why: "양자화 오차·전처리 차이·op 폴백은 실제 기기에서만 드러남" }
+                { q: "MCU 에 모델을 올릴 때 가장 먼저 부딪히는 제약은?", options: ["Flash·SRAM 용량", "GPU 드라이버 버전 호환", "네트워크 대역폭 부족", "Python 런타임 버전"], a: 0, why: "수백 KB Flash, 수십~수백 KB SRAM 안에 모델·arena·버퍼가 들어가야 함 · GPU·Python 은 보통 없음" },
+                { q: "FP32 → INT8 양자화 시 가중치 크기는 대략?", options: ["그대로", "1/2", "1/4", "1/32"], a: 2, why: "32bit → 8bit · 1/2 은 FP16, 1/32 은 비트 수를 바이트로 착각한 값" },
+                { q: "NPU 가 지원하지 않는 op 가 모델에 있으면 보통?", options: ["그 op 만 CPU 로 폴백", "변환이 항상 실패함", "그 op 를 자동으로 삭제함", "NPU 가 흉내 내 더 빨라짐"], a: 0, why: "CPU↔NPU 데이터 이동까지 더해져 오히려 느려질 수 있음 · 지원 op 로 모델 설계" },
+                { q: "엣지 추론의 장점이 아닌 것은?", options: ["모델 크기 제약이 사라짐", "지연 감소", "데이터가 기기 밖으로 덜 나감", "통신량·전력 감소"], a: 0, why: "오히려 메모리·연산 제약이 가장 큼 · 나머지는 클라우드 왕복이 없어서 얻는 이득" },
+                { q: "변환 후 꼭 해야 할 것은?", options: ["기기에서 정확도·지연 재측정", "FP32 모델로 되돌려 배포", "학습률을 낮춰 다시 학습", "PC 에서 FP32 정확도만 확인"], a: 0, why: "양자화 오차·전처리 차이·op 폴백은 실제 기기에서만 드러남" },
+                { type: "num", q: "파라미터 25 만 개 모델의 INT8 가중치는 약 몇 KB? (1 KB = 1000 B)", answer: 250, unit: "KB", why: "파라미터당 1 B · FP32 면 1,000 KB 라 Flash 1 MB 기기에 못 들어감" },
+                { type: "num", q: "활성값 범위 [−1, 3] 을 INT8 [−128, 127] 로 아핀 양자화할 때 zero_point 는?", answer: -64, why: "scale = 4 / 255 ≈ 0.0157 · zp = −128 − round(−1 / 0.0157) = −64 · 실수 0 ↔ −64" },
+                { type: "num", q: "32×32 출력, 입력 8 → 출력 16 채널, 3×3 표준 합성곱의 MAC 수는?", answer: 1179648, why: "32·32·16·3·3·8 · 깊이별 분리면 204,800 으로 약 5.8 배↓" },
+                { type: "order", q: "MCU 배포 순서", items: ["FP32 로 학습", "대표 데이터로 INT8 보정", "런타임 포맷으로 변환", "Flash·RAM 예산 확인", "기기에서 정확도·지연 측정"], why: "보정 → 변환 → 예산 → 실측 · 마지막 측정이 배포 기준" }
             ],
             refs: [
                 { title: "MLPerf Tiny Benchmark", by: "Banbury et al.", year: 2021, url: "https://arxiv.org/abs/2106.07597", kind: "paper" },
@@ -921,6 +1082,8 @@ tflite = conv.convert()            # INT8 · CMSIS-NN / NPU 커널 사용` },
             title: "평가와 안전",
             level: 2,
             mins: 14,
+            pre: ["ai/prompting"],
+            checked: "2026-11-16",
             key: [
                 "감이 아니라 **평가셋(eval set)**: 실제 입력 + 기대 결과 + 채점 기준(grading criteria)",
                 "채점은 코드 우선 · 주관 품질만 LLM-as-judge",
@@ -994,7 +1157,7 @@ def evaluate(app) -> float:                       # app: 입력 → 출력 문�
 base, cand = evaluate(app_v1), evaluate(app_v2)
 print(f"v1={base:.2f}  v2={cand:.2f}")
 assert cand >= base, "회귀 발생: 배포 차단"         # CI 에서 실패 처리`,
-                    note: "케이스가 적으면 점수 흔들림(variance)이 큼 · 여러 번 돌려 평균, 실패 사례는 계속 추가"
+                    note: "케이스가 적으면 점수 흔들림(variance)이 큼 · 표준오차 √(p(1−p)/n) 로 잡음 크기부터 보고 실패 사례는 계속 추가"
                 },
                 {
                     lang: "python",
@@ -1037,8 +1200,8 @@ def judge(source: str, summary: str) -> Verdict:
         messages=[{"role": "user", "content": c["input"]}]))
     for i, c in enumerate(CASES)])
 # 끝나면 results(batch.id) 를 custom_id 로 매칭 (순서 보장 안 됨)` },
-                    gain: "토큰 비용 50% · 실시간 아님",
-                    note: "대부분 1시간 내 완료, 최대 24시간 · 실시간 응답에는 부적합"
+                    gain: "할인 단가 · 실시간 아님",
+                    note: "비동기 처리 · 결과까지 최대 24시간 걸릴 수 있어 실시간 응답엔 부적합 · 할인율은 제공자 문서 확인"
                 },
                 {
                     title: "모든 요청에 큰 모델 → 평가로 검증한 라우팅",
@@ -1062,16 +1225,20 @@ assert evaluate(classify) >= evaluate(classify_opus)` },
                 { term: "EU AI Act", en: "EU Artificial Intelligence Act", def: "EU 의 위험 기반 AI 규제 · 의무가 단계적으로 적용" }
             ],
             quiz: [
-                { q: "JSON 분류 결과가 맞는지 채점할 때 가장 적합한 것은?", options: ["LLM-as-judge", "코드로 파싱 후 필드 비교", "사람이 매번 확인", "출력 길이 비교"], a: 1, why: "정답이 명확하면 코드가 빠르고 재현 가능" },
-                { q: "LLM-as-judge 를 신뢰하기 전에 할 일은?", options: ["온도를 최대로", "판정 모델을 매번 바꾸기", "루브릭 없이 자유 채점", "일부 샘플로 사람 판정과의 일치율 확인"], a: 3, why: "판정기도 측정 도구 · 먼저 보정이 필요" },
-                { q: "회귀 게이트의 역할은?", options: ["새 버전이 기존보다 나빠지면 배포를 막음", "모델 학습 속도 향상", "토큰 비용 계산", "로그 삭제"], a: 0, why: "프롬프트 한 줄 수정도 다른 케이스를 깨뜨릴 수 있음" },
-                { q: "평가셋 구성으로 가장 부적절한 것은?", options: ["실제 사용자 입력 샘플", "거절해야 하는 요청", "평가 대상 모델이 만든 쉬운 예시만", "과거 실패 사례"], a: 2, why: "편향되고 쉬운 셋은 실제 품질을 과대평가" },
-                { q: "EU AI Act 의 범용 AI(GPAI) 모델 의무가 적용되기 시작한 시점은?", options: ["2024-08", "2025-08", "2027-12", "2030-01"], a: 1, why: "2024-08 발효 · 2025-02 금지 관행 · 2025-08 GPAI 의무" }
+                { q: "JSON 분류 결과가 맞는지 채점할 때 가장 적합한 것은?", options: ["LLM-as-judge 로 채점", "코드로 파싱 후 필드 비교", "사람이 매번 직접 확인", "출력 길이로 비교"], a: 1, why: "정답이 명확하면 코드가 빠르고 재현 가능 · 판정기는 주관 항목용" },
+                { q: "LLM-as-judge 를 믿기 전에 할 일은?", options: ["온도를 최대로 올림", "판정 모델을 매번 바꿔 평균", "루브릭 없이 자유 채점", "사람 판정과 일치율 확인"], a: 3, why: "판정기도 측정 도구 · 위치·길이·자기 선호 편향이 있어 먼저 보정" },
+                { q: "회귀 게이트의 역할은?", options: ["나빠진 버전의 배포를 차단", "평가셋을 자동으로 늘려 줌", "모델 학습 속도를 높여 줌", "토큰 비용을 미리 계산해 줌"], a: 0, why: "프롬프트 한 줄 수정도 다른 케이스를 깨뜨릴 수 있음 · 실패 사례 추가는 사람·운영 루프의 몫" },
+                { q: "평가셋 구성으로 가장 부적절한 것은?", options: ["대상 모델이 만든 쉬운 예시만", "실제 사용자 입력에서 뽑은 샘플", "반드시 거절해야 하는 요청들", "운영에서 실패했던 과거 사례"], a: 0, why: "그 모델에게 쉬운 셋이 되어 품질을 과대평가 · 나머지는 오히려 꼭 넣을 항목" },
+                { q: "EU AI Act 의 범용 AI(GPAI) 모델 의무가 적용되기 시작한 시점은?", options: ["2024-08", "2025-08", "2027-12", "2028-08"], a: 1, why: "2024-08 발효 · 2025-02 금지 관행 · 2025-08 GPAI · 2027-12 / 2028-08 은 연기된 고위험 일정" },
+                { type: "num", q: "통과율 0.85, 케이스 100 개일 때 표준오차는?", answer: 0.0357, tol: 0.001, why: "√(0.85 × 0.15 / 100) · 95% 구간 ≈ ±7%p · 400 개면 반으로" },
+                { type: "num", q: "v2 가 고친 것 12, 깨뜨린 것 4. 정확 McNemar 검정의 양측 p값은?", answer: 0.077, tol: 0.002, why: "불일치 16 개 중 4 개 이하일 이항(0.5) 확률 × 2 · 5% 수준에선 우연과 구분 안 됨" },
+                { type: "text", q: "같은 케이스 순서의 통과(1)/실패(0)다. v2 가 고친 수와 깨뜨린 수를 `고친,깨뜨린` 으로 쓰면?", code: { lang: "python", src: "v1 = [1, 1, 0, 1, 0, 1]\nv2 = [1, 0, 1, 1, 1, 1]" }, answer: ["2,1"], why: "인덱스 2·4 가 0→1(고침), 인덱스 1 이 1→0(깨짐) · 평균만 보면 깨진 케이스를 놓침" },
+                { type: "order", q: "변경 하나를 평가해 배포하는 순서", items: ["실제 로그로 평가셋 구성", "후보 버전으로 전체 실행", "코드 채점 후 주관 항목만 판정기", "회귀 게이트로 v1 과 비교", "일부 트래픽부터 배포·모니터링"], why: "기준 → 실행 → 채점 → 비교 → 점진 배포 · 운영 실패 사례는 다시 평가셋으로" }
             ],
             refs: [
                 { title: "Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena", by: "Zheng et al.", year: 2023, url: "https://arxiv.org/abs/2306.05685", kind: "paper" },
                 { title: "Red Teaming Language Models with Language Models", by: "Perez et al.", year: 2022, url: "https://arxiv.org/abs/2202.03286", kind: "paper" },
-                { title: "Define success criteria and build evaluations", by: "Anthropic", url: "https://platform.claude.com/docs/en/test-and-evaluate/develop-tests", kind: "doc" },
+                { title: "Adding Error Bars to Evals: A Statistical Approach to Language Model Evaluations", by: "E. Miller", year: 2024, url: "https://arxiv.org/abs/2411.00640", kind: "paper" },
                 { title: "Regulation (EU) 2024/1689 laying down harmonised rules on artificial intelligence (Artificial Intelligence Act)", by: "European Parliament and Council", year: 2024, url: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj", kind: "spec" }
             ]
         }

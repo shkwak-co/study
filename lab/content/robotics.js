@@ -7,11 +7,12 @@ LAB.track({
     trends: [
         {
             title: "휴머노이드(humanoid), 공장 투입 준비",
-            when: "2025–2026",
+            when: "2026",
             points: [
-                "Figure, Tesla Optimus, Boston Dynamics Atlas 등 양산(mass production)·파일럿 경쟁",
-                "현대차그룹: 2028년부터 미국 공장에 Atlas 단계 투입 계획 발표",
-                "남은 과제: 손 조작(manipulation) 신뢰성 · 배터리 시간 · 안전 인증(safety certification)"
+                "Boston Dynamics 양산형(production) Atlas 공개 (2026-01 CES) · 56 자유도 · 50 kg · 배터리 자가 교체",
+                "2026 물량은 현대차 RMAC·Google DeepMind 로 전량 배정 · 다른 고객은 2027 초부터",
+                "현대차그룹: 2028 HMGMA 부품 시퀀싱(parts sequencing) → 2030 부품 조립 · 로봇 연 3만 대 생산 능력 목표",
+                "남은 과제: 다섯 손가락 손 조작(dexterous manipulation) 신뢰성 · 안전 인증(safety certification)"
             ],
             refs: [
                 { title: "Hyundai Motor Group Announces AI Robotics Strategy to Lead Human-Centered Robotics Era at CES 2026", by: "Hyundai Motor Group", year: 2026, url: "https://www.hyundaimotorgroup.com/en/news/hyundai-motor-group-announces-ai-robotics-strategy--to-lead-human-centered-robotics-era-at-ces-2026", kind: "doc" },
@@ -23,11 +24,15 @@ LAB.track({
             when: "2025–2026",
             points: [
                 "카메라 + 언어 지시 → 동작을 직접 출력하는 VLA (Vision-Language-Action)",
-                "NVIDIA `GR00T N1.x`, Physical Intelligence `π0` 계열, DeepMind `Gemini Robotics`",
-                "고수준 판단은 모델, 고속 저수준 루프는 기존 제어기(controller)가 담당하는 계층 구조(hierarchical architecture)"
+                "Google DeepMind `Gemini Robotics 2` (2026-07): 휴머노이드 전신 제어 · 추론용 ER 2 + 로컬 실행용 On-Device 2",
+                "`Gemini Robotics 2.5` (2026-11): 200개 이상 작업으로 평가 · 파트너에게만 배포",
+                "NVIDIA `GR00T N1.6` (2025-12): 공개 모델 · VLM 백본 + 확산 트랜스포머(DiT) 동작 헤드",
+                "계층 구조(hierarchical architecture): 계획은 추론 모델, 동작은 VLA, 고속 저수준 루프는 기존 제어기(controller)"
             ],
             refs: [
-                { title: "GR00T N1: An Open Foundation Model for Generalist Humanoid Robots", by: "NVIDIA", year: 2025, url: "https://arxiv.org/abs/2503.14734", kind: "paper" },
+                { title: "Gemini Robotics 2 brings whole body intelligence to robots", by: "Google DeepMind", year: 2026, url: "https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/", kind: "doc" },
+                { title: "Gemini Robotics 2.5 accelerates real-world physical intelligence", by: "Google DeepMind", year: 2026, url: "https://deepmind.google/blog/gemini-robotics-2-5-accelerates-real-world-physical-intelligence/", kind: "doc" },
+                { title: "GR00T N1.6: An Improved Open Foundation Model for Generalist Humanoid Robots", by: "NVIDIA", year: 2025, url: "https://research.nvidia.com/labs/gear/gr00t-n1_6/", kind: "doc" },
                 { title: "π0: A Vision-Language-Action Flow Model for General Robot Control", by: "Black et al.", year: 2024, url: "https://arxiv.org/abs/2410.24164", kind: "paper" }
             ]
         },
@@ -35,9 +40,10 @@ LAB.track({
             title: "ROS 2 Lyrical Luth (LTS)",
             when: "2026",
             points: [
-                "2026-05 출시 · 12번째 배포판(distribution) · 5년 지원 (2031-05까지)",
+                "2026-05-22 출시 · 12번째 배포판(distribution) · LTS 로 2031-05 까지 · Tier 1 은 Ubuntu 26.04 · Windows 11",
+                "새 기능: rclcpp `EventsCBGExecutor` (CPU 10~15%↓) · rclpy `AsyncNode`(asyncio) · `rosidl::Buffer` 무복사 전송",
                 "기본 RMW 는 Fast DDS · Zenoh 는 Kilted(2025)부터 Tier 1",
-                "Humble(2022 LTS) 지원 종료(end of life) 2027-05 → 이전(migration) 계획 필요"
+                "지원 종료(end of life): Kilted 2026-12 · Humble 2027-05 → 이전(migration) 계획 필요"
             ],
             refs: [
                 { title: "Lyrical Luth (codename ‘lyrical’; May, 2026)", by: "Open Robotics", year: 2026, url: "https://docs.ros.org/en/lyrical/Releases/Release-Lyrical-Luth.html", kind: "doc" },
@@ -48,12 +54,15 @@ LAB.track({
             title: "GPU 시뮬레이션과 sim-to-real",
             when: "2025–2026",
             points: [
-                "GPU 에서 수천 개 환경을 병렬로 돌려 강화학습(reinforcement learning) (Isaac Lab 등)",
-                "Newton 물리엔진(physics engine): Disney·DeepMind·NVIDIA 시작, 2025-09 Linux Foundation 이관",
+                "GPU 에서 수천 개 환경을 병렬로 돌려 강화학습(reinforcement learning)",
+                "Newton 물리엔진(physics engine): Disney·DeepMind·NVIDIA 시작, Linux Foundation 프로젝트 · v1.0 2026-04",
+                "Isaac Lab 3.0 정식 (2026-10): 한 작업 API 로 PhysX·Newton 백엔드 선택 · Isaac Sim 없이도(kit-less) 실행",
                 "마찰·질량·지연을 무작위화(domain randomization)해 현실 격차(reality gap)를 줄임"
             ],
             refs: [
                 { title: "Isaac Lab: A GPU-Accelerated Simulation Framework for Multi-Modal Robot Learning", by: "NVIDIA", year: 2025, url: "https://arxiv.org/abs/2511.04831", kind: "paper" },
+                { title: "Isaac Lab v3.0.0 release notes", by: "NVIDIA", year: 2026, url: "https://github.com/isaac-sim/IsaacLab/releases/tag/v3.0.0", kind: "doc" },
+                { title: "Newton v1.0.0 release", by: "Newton contributors", year: 2026, url: "https://github.com/newton-physics/newton/releases/tag/v1.0.0", kind: "doc" },
                 { title: "Linux Foundation Announces Contribution of Newton by Disney Research, Google DeepMind and NVIDIA to Accelerate Open Robot Learning", by: "Linux Foundation", year: 2025, url: "https://www.linuxfoundation.org/press/linux-foundation-announces-contribution-of-newton-by-disney-research-google-deepmind-and-nvidia-to-accelerate-open-robot-learning", kind: "doc" }
             ]
         }
@@ -64,6 +73,7 @@ LAB.track({
             title: "좌표계와 변환행렬",
             level: 1,
             mins: 12,
+            checked: "2026-11-16",
             key: [
                 "자세(pose) = 위치(position) + 방향(orientation) · 3D 강체(rigid body)는 **6 자유도**(degrees of freedom)",
                 "동차 변환(homogeneous transform) `T = [R p; 0 1]` (4×4) 하나로 회전 + 이동(translation)",
@@ -196,11 +206,15 @@ pts_w = pts @ R.T + t          # (N,3) 한 번에` },
                 { term: "tf2", en: "ROS 2 transform library", def: "프레임 트리를 시간별로 관리하고 임의 두 프레임 변환을 계산" }
             ],
             quiz: [
-                { q: "회전행렬 R 의 역행렬은?", options: ["Rᵀ", "−R", "R 자신", "det(R) · R"], a: 0, why: "직교행렬: RᵀR = I 이므로 R⁻¹ = Rᵀ" },
-                { q: "동차 좌표에서 방향 벡터(속도 등)의 4번째 성분은?", options: ["1", "0", "−1", "벡터 크기"], a: 1, why: "0 이면 이동 p 가 곱해지지 않고 회전만 적용" },
-                { q: "`T_w_t` 를 구하는 올바른 곱은?", options: ["T_l_t · T_b_l · T_w_b", "T_t_l · T_l_b · T_b_w", "T_w_b · T_b_l · T_l_t", "T_w_b + T_b_l + T_l_t"], a: 2, why: "인접 첨자가 맞물리게: w_b · b_l · l_t → w_t" },
-                { q: "오일러각 대신 쿼터니언을 쓰는 주된 이유는?", options: ["사람이 읽기 쉬움", "숫자 개수가 더 적음", "이동까지 함께 표현", "짐벌락 없음 · 보간이 매끄러움"], a: 3, why: "특이 자세가 없고 slerp 로 부드럽게 보간 가능" },
-                { q: "3D 강체 자세의 자유도는?", options: ["3", "4", "6", "12"], a: 2, why: "위치 3 + 방향 3 · 행렬 원소 12개는 제약으로 묶여 있음" }
+                { q: "회전행렬 R 의 역행렬은?", options: ["Rᵀ", "−R", "R 자신", "det(R) · R"], a: 0, why: "직교행렬: RᵀR = I 이므로 R⁻¹ = Rᵀ · −R 은 3×3 에서 det = −1 인 반사라 회전이 아님" },
+                { q: "동차 좌표에서 방향 벡터(속도 등)의 4번째 성분은?", options: ["1", "0", "−1", "벡터 크기"], a: 1, why: "0 이면 이동 p 가 곱해지지 않고 회전만 적용 · 1 로 두면 속도에 위치 오프셋이 더해지는 오류" },
+                { q: "`T_w_t` 를 구하는 올바른 곱은?", options: ["T_l_t · T_b_l · T_w_b", "T_t_l · T_l_b · T_b_w", "T_w_b · T_b_l · T_l_t", "T_w_b + T_b_l + T_l_t"], a: 2, why: "인접 첨자가 맞물리게: w_b · b_l · l_t → w_t · 역순 곱은 첨자가 맞물리지 않아 의미 없는 행렬" },
+                { q: "오일러각 대신 쿼터니언을 쓰는 주된 이유는?", options: ["값 3개라 메모리가 적음", "회전과 이동을 함께 표현", "사람이 읽고 입력하기 쉬움", "특이점(짐벌락)이 없음"], a: 3, why: "특이 자세가 없고 slerp 보간 가능 · 숫자는 4개라 오히려 많고, 이동은 따로 표현" },
+                { q: "3D 강체 자세의 자유도는?", options: ["3", "4", "6", "12"], a: 2, why: "위치 3 + 방향 3 · 행렬 원소 12개는 직교·단위 제약으로 묶여 있음" },
+                { type: "num", q: "base 가 world 에서 z축 90° 회전 + 이동 (3, 0, 0) 이다. base 기준 점 (1, 2, 0) 의 world **x** 좌표는?", answer: 1, tol: 0.001, unit: "m", why: "R·(1, 2, 0) = (−2, 1, 0) → + (3, 0, 0) = (1, 1, 0) · 이동만 더하면 4 로 틀림" },
+                { type: "num", q: "z축 120° 회전을 나타내는 단위 쿼터니언의 w 는?", answer: 0.5, tol: 0.001, why: "w = cos(θ/2) = cos 60° · (x, y, z) = sin 60°·(0, 0, 1)" },
+                { type: "text", q: "출력은?", code: { lang: "python", src: "import numpy as np\nth = np.pi / 2\nR = np.array([[np.cos(th), -np.sin(th)],\n              [np.sin(th),  np.cos(th)]])\nprint(np.round(R @ [1, 0]).astype(int))" }, answer: ["[0 1]", "[0, 1]"], why: "+90° 회전은 x축 단위벡터를 +y 로 · R 의 첫 열이 곧 결과" },
+                { type: "order", q: "REP 103 RPY (고정 축 X → Y → Z) 를 회전행렬로 쓸 때, 곱의 **왼쪽부터**", items: ["Rz(yaw)", "Ry(pitch)", "Rx(roll)"], why: "고정 축 회전은 나중 회전이 왼쪽에 곱해짐 → R = Rz·Ry·Rx · 움직이는 축 ZYX 오일러와 같은 행렬" }
             ],
             refs: [
                 { title: "Modern Robotics: Mechanics, Planning, and Control", by: "Lynch et al.", year: 2017, url: "https://hades.mech.northwestern.edu/index.php/Modern_Robotics", kind: "book" },
@@ -214,6 +228,8 @@ pts_w = pts @ R.T + t          # (N,3) 한 번에` },
             title: "FK / IK 기구학",
             level: 2,
             mins: 14,
+            pre: ["robotics/frames"],
+            checked: "2026-11-16",
             key: [
                 "FK: 관절각(joint angle) θ → 끝점(end-effector) 자세 · 해가 항상 **하나**",
                 "IK: 끝점 자세 → θ · 해가 없거나 **여러 개** (팔꿈치 위/아래)",
@@ -304,13 +320,18 @@ q = ik_dls(np.array([1.2, 0.6]), np.array([0.3, 0.3]))`,
                 { term: "자유도", en: "Degrees of freedom (DOF)", def: "독립적으로 바꿀 수 있는 변수 수 · 일반 산업용 팔은 6" }
             ],
             quiz: [
-                { q: "링크 1.0, 0.75 인 2링크 팔이 닿는 거리 r 의 범위는? (관절 제한 없음)", options: ["0 ≤ r ≤ 1.75", "0.25 ≤ r ≤ 1.75", "0.75 ≤ r ≤ 1.0", "1.0 ≤ r ≤ 1.75"], a: 1, why: "|l1−l2| ≤ r ≤ l1+l2" },
-                { q: "작업공간 내부(경계 아님)의 점에 대한 평면 2링크 IK 해의 수는?", options: ["0", "1", "2", "무한"], a: 2, why: "팔꿈치 위/아래 두 해 · 경계에서는 1개로 합쳐짐" },
-                { q: "자코비안 J 가 연결하는 것은?", options: ["관절 속도 → 끝점 속도", "관절 토크 → 관절 가속도", "끝점 위치 → 관절각", "링크 질량 → 관성"], a: 0, why: "ẋ = J(θ) θ̇ · 정역학에선 τ = Jᵀ F 로도 쓰임" },
-                { q: "특이점 근처에서 의사역행렬 IK 의 문제는?", options: ["해가 항상 0", "작업공간이 넓어짐", "FK 가 틀려짐", "작은 끝점 이동에도 관절 속도가 폭주"], a: 3, why: "작은 특이값의 역수가 매우 커짐 → DLS 로 완화" },
-                { q: "7축 팔(작업 6자유도)의 남는 자유도로 할 수 있는 것은?", options: ["IK 를 항상 닫힌 식으로", "끝점을 고정한 채 팔꿈치를 움직여 장애물 회피", "FK 계산 생략", "모든 특이점 제거"], a: 1, why: "영공간 동작: 끝점은 그대로, 관절 구성만 변경" }
+                { q: "링크 1.0, 0.75 인 2링크 팔이 닿는 거리 r 의 범위는? (관절 제한 없음)", options: ["0 ≤ r ≤ 1.75", "0.25 ≤ r ≤ 1.75", "0.75 ≤ r ≤ 1.75", "0.25 ≤ r ≤ 1.00"], a: 1, why: "|l1−l2| ≤ r ≤ l1+l2 · 완전히 접어도 0.25 가 남아 원점엔 못 닿음" },
+                { q: "작업공간 내부(경계 아님)의 점에 대한 평면 2링크 IK 해의 수는?", options: ["0", "1", "2", "무한"], a: 2, why: "팔꿈치 위/아래 두 해 · 경계에서는 1개로 합쳐짐 · 무한은 3링크 평면 팔(여유자유도)" },
+                { q: "자코비안 J 가 연결하는 것은?", options: ["관절 속도 → 끝점 속도", "관절 토크 → 관절 가속도", "끝점 위치 → 관절각", "링크 질량 → 관성"], a: 0, why: "ẋ = J(θ) θ̇ · 정역학에선 τ = Jᵀ F · 토크 → 가속도는 동역학(질량행렬)의 일" },
+                { q: "특이점 근처에서 의사역행렬 IK 의 문제는?", options: ["해가 항상 0 으로 나옴", "작업공간이 오히려 넓어짐", "FK 결과가 틀리게 나옴", "관절 속도가 폭주함"], a: 3, why: "작은 특이값 σ 의 역수 1/σ 가 매우 커짐 → DLS 로 완화 · FK 자체는 여전히 정확" },
+                { q: "7축 팔(작업 6자유도)의 남는 자유도로 할 수 있는 것은?", options: ["IK 를 항상 닫힌 식으로 풂", "끝점 고정, 팔꿈치만 이동", "FK 계산을 생략할 수 있음", "모든 특이점이 사라짐"], a: 1, why: "영공간 동작: 끝점은 그대로, 관절 구성만 변경 · 특이점은 줄일 수 있어도 없어지지 않음" },
+                { type: "num", q: "L1 = 1.0, L2 = 0.75, θ1 = 30°, θ2 = 45° 일 때 끝점 **x** 는?", answer: 1.06, tol: 0.005, unit: "m", why: "x = cos 30° + 0.75·cos(30° + 45°) = 0.866 + 0.194 · 둘째 링크는 θ1 + θ2 방향" },
+                { type: "num", q: "같은 팔로 목표 (1.2, 0.6) 에 갈 때 팔꿈치 각 |θ2| 는 몇 °?", answer: 80.89, tol: 0.2, unit: "°", why: "cos θ2 = (1.8 − 1 − 0.5625) / 1.5 = 0.158 → ±80.9° (두 해)" },
+                { type: "text", q: "출력은? (L1 = 1.0, L2 = 0.75)", code: { lang: "python", src: "import numpy as np\nfor x, y in [(1.75, 0), (1.2, 0.6), (2.0, 0)]:\n    c2 = (x*x + y*y - 1.0 - 0.5625) / 1.5\n    print(0 if abs(c2) > 1 else 1 if np.isclose(abs(c2), 1) else 2, end=\" \")" }, answer: ["1 2 0"], why: "경계(쭉 폄)는 해 1개, 내부는 2개, 1.75 밖은 0개 · |cos θ2| 로 판정" },
+                { type: "order", q: "수치 IK(DLS) 반복 한 번의 순서", items: ["FK 로 현재 끝점 계산", "오차 e 계산 · 충분히 작으면 종료", "J(q) 로 dq = Jᵀ(JJᵀ + λ²I)⁻¹e", "q ← q + dq"], why: "레슨 `ik_dls` 와 같은 순서 · 오차부터 재야 종료 판정을 먼저 할 수 있음" }
             ],
             refs: [
+                { title: "Modern Robotics: Mechanics, Planning, and Control (ch. 6 Inverse Kinematics)", by: "Lynch et al.", year: 2017, url: "https://hades.mech.northwestern.edu/index.php/Modern_Robotics", kind: "book" },
                 { title: "A Kinematic Notation for Lower-Pair Mechanisms Based on Matrices", by: "Denavit et al.", year: 1955, url: "https://doi.org/10.1115/1.4011045", kind: "paper" },
                 { title: "Manipulator Inverse Kinematic Solutions Based on Vector Formulations and Damped Least-Squares Methods", by: "Wampler", year: 1986, url: "https://doi.org/10.1109/TSMC.1986.289285", kind: "paper" },
                 { title: "Inverse Kinematic Solutions With Singularity Robustness for Robot Manipulator Control", by: "Nakamura et al.", year: 1986, url: "https://doi.org/10.1115/1.3143764", kind: "paper" }
@@ -321,6 +342,7 @@ q = ik_dls(np.array([1.2, 0.6]), np.array([0.3, 0.3]))`,
             title: "PID 제어",
             level: 2,
             mins: 14,
+            checked: "2026-11-16",
             key: [
                 "`u = Kp·e + Ki·∫e dt + Kd·de/dt` · e = 목표(setpoint) − 측정(measurement)",
                 "P: 빠르게 · I: 정상상태 오차(steady-state error) 제거 · D: 진동 감쇠(damping)",
@@ -419,11 +441,15 @@ if (u == u_raw || (u_raw > 1.0) != (e > 0))
                 { term: "지글러–니콜스", en: "Ziegler–Nichols", def: "한계 이득과 진동 주기로 초기 게인을 정하는 경험식" }
             ],
             quiz: [
-                { q: "스프링처럼 복원력이 있는 플랜트를 P 제어만 하면?", options: ["오차 없이 정확히 수렴", "정상상태 오차가 남음", "항상 발산", "오버슈트가 항상 0"], a: 1, why: "평형에서 u = Kp·e 가 복원력과 맞서야 하므로 e ≠ 0" },
-                { q: "Ki 를 과도하게 키우면?", options: ["오버슈트와 진동 증가", "응답이 느려지고 진동 없음", "정상상태 오차 증가", "노이즈에 둔감해짐"], a: 0, why: "누적 오차가 위상 지연을 만들어 진동 경향" },
-                { q: "D 항이 센서 노이즈에 민감한 이유는?", options: ["적분 연산이라서", "Kd 는 항상 커야 해서", "미분이 고주파 성분을 증폭", "샘플링이 느려서"], a: 2, why: "미분 이득은 주파수에 비례 · 저역통과 필터와 함께 사용" },
-                { q: "anti-windup 이 필요한 상황은?", options: ["센서 노이즈가 클 때", "액추에이터 출력이 포화될 때", "dt 가 아주 작을 때", "Kd = 0 일 때"], a: 1, why: "포화 중엔 적분이 효과 없이 쌓이기만 함" },
-                { q: "모터 캐스케이드 제어에서 가장 빠른 루프는?", options: ["위치", "속도", "모두 같은 주기", "전류(토크)"], a: 3, why: "안쪽 루프일수록 빠르게 · 바깥 루프는 안쪽이 이미 추종한다고 가정" }
+                { q: "스프링처럼 복원력이 있는 플랜트를 P 제어만 하면?", options: ["오차 없이 정확히 수렴", "정상상태 오차가 남음", "항상 발산", "오버슈트가 항상 0"], a: 1, why: "평형에서 u = Kp·e 가 복원력과 맞서야 하므로 e ≠ 0 · Kp 를 키워도 줄 뿐 0 은 안 됨" },
+                { q: "Ki 를 과도하게 키우면?", options: ["오버슈트와 진동 증가", "응답이 느려지고 진동 없음", "정상상태 오차 증가", "노이즈에 둔감해짐"], a: 0, why: "누적 오차가 위상 지연을 만들어 진동 경향 · 정상상태 오차는 I 가 오히려 없앰" },
+                { q: "D 항이 센서 노이즈에 민감한 이유는?", options: ["적분이 오차를 쌓아서", "Kd 가 항상 커야 해서", "고주파 성분을 증폭해서", "샘플링이 너무 느려서"], a: 2, why: "미분 이득은 주파수에 비례 · 저역통과 필터와 함께 사용 · 누적은 I 항의 성질" },
+                { q: "anti-windup 이 필요한 상황은?", options: ["센서 노이즈가 매우 클 때", "구동기 출력이 포화될 때", "제어 주기 dt 가 짧을 때", "Kd 를 0 으로 둘 때"], a: 1, why: "포화 중엔 적분이 효과 없이 쌓이기만 함 · 노이즈는 D 항 필터의 문제" },
+                { q: "모터 캐스케이드 제어에서 가장 빠른 루프는?", options: ["위치", "속도", "모두 같은 주기", "전류(토크)"], a: 3, why: "안쪽 루프일수록 빠르게 · 바깥 루프는 안쪽이 이미 추종한다고 가정" },
+                { type: "text", q: "시뮬과 같은 플랜트에 P 제어(Kp = 3)만 40 s 돌린 결과는?", code: { lang: "python", src: "y = v = 0.0\nfor _ in range(40000):          # dt = 0.001 s\n    u = 3 * (1 - y)\n    v += (u - 0.6*v - y) * 0.001\n    y += v * 0.001\nprint(round(y, 2))" }, answer: ["0.75"], why: "평형 y = Kp/(1 + Kp) = 3/4 · 1.0 이 아님: 정상상태 오차 0.25" },
+                { type: "num", q: "Kp = 2, Ki = 0.5, Kd = 0.1, dt = 0.01 s. e = 0.4, 갱신 전 적분 integ = 1.0, 측정이 0.60 → 0.62. 측정 미분 D 를 쓴 출력 u 는? (필터 없음)", answer: 1.1, tol: 0.005, why: "0.8 + 0.5·1.0 − 0.1·(0.02/0.01) = 1.1 · D 는 −Kd·Δy/dt 라 측정이 오르면 출력을 줄임" },
+                { type: "num", q: "한계 이득 Ku = 10, 진동 주기 Tu = 0.5 s. 고전 지글러–니콜스 PID 의 Kd (= Kp·Td) 는?", answer: 0.375, tol: 0.001, why: "Kp = 0.6·Ku = 6, Td = Tu/8 = 0.0625 s → 6 × 0.0625" },
+                { type: "order", q: "실무 PID 튜닝 순서", items: ["I·D 를 0 으로, 작은 Kp 로 부호 확인", "Kp 를 올려 응답 속도 확보", "Kd 로 진동 감쇠", "작은 Ki 로 정상상태 오차 제거"], why: "P → D → I · Ki 를 먼저 크게 넣으면 와인드업·진동부터 생김" }
             ],
             refs: [
                 { title: "Optimum Settings for Automatic Controllers", by: "Ziegler et al.", year: 1942, url: "https://doi.org/10.1115/1.4019264", kind: "paper" },
@@ -435,6 +461,8 @@ if (u == u_raw || (u_raw > 1.0) != (e > 0))
             title: "센서와 칼만 필터",
             level: 3,
             mins: 16,
+            pre: ["robotics/kinematics"],
+            checked: "2026-11-16",
             key: [
                 "예측(prediction, 모델) → 갱신(update, 측정) 반복 · 둘을 **불확실성 비율**로 섞음",
                 "1D 칼만 이득(Kalman gain) `K = P/(P+R)` · 측정을 얼마나 믿을지",
@@ -516,11 +544,15 @@ P = IKH @ P @ IKH.T + K @ R @ K.T   # 대칭·양정치 유지` },
                 { term: "자이로 드리프트", en: "Gyro bias drift", def: "각속도 바이어스가 적분되어 각도 오차가 시간에 따라 커짐" }
             ],
             quiz: [
-                { q: "R(측정 노이즈)을 크게 설정하면 추정값은?", options: ["측정을 더 따라가 노이지해짐", "더 부드럽지만 변화에 늦게 반응", "변화 없음", "즉시 발산"], a: 1, why: "측정을 덜 믿어 K 가 작아짐" },
-                { q: "칼만 이득 K 가 1 에 가까우면?", options: ["예측을 그대로 사용", "필터가 정지", "P 가 무한대로 발산", "측정을 거의 그대로 사용"], a: 3, why: "x += K(z − x) · K=1 이면 x = z" },
-                { q: "예측 단계에서 P 는 보통?", options: ["커진다 (Q 가 더해짐)", "작아진다", "0 이 된다", "항상 R 과 같다"], a: 0, why: "P = FPFᵀ + Q · 측정 없이 시간이 가면 불확실성 증가" },
-                { q: "방향 θ 가 들어간 로봇 운동 모델(cos θ, sin θ)에 흔히 쓰는 것은?", options: ["선형 KF 그대로", "EKF (자코비안으로 선형화)", "단순 이동평균", "FFT"], a: 1, why: "비선형 f(x, u) 를 현재 추정점에서 선형화" },
-                { q: "자이로와 GPS/카메라를 융합하는 이유는?", options: ["둘 다 드리프트가 없어서", "카메라가 더 빨라서", "자이로는 빠르지만 드리프트, 다른 쪽은 느리지만 절대 기준", "전력을 줄이려고"], a: 2, why: "고주파는 IMU, 저주파(절대값)는 외부 센서가 담당" }
+                { q: "R(측정 노이즈)을 크게 설정하면 추정값은?", options: ["측정을 더 따라가 노이지함", "매끈하지만 변화에 늦음", "아무 변화 없음", "곧바로 발산함"], a: 1, why: "측정을 덜 믿어 K 가 작아짐 · 노이지해지는 쪽은 Q 를 키웠을 때" },
+                { q: "칼만 이득 K 가 1 에 가까우면?", options: ["예측을 그대로 사용함", "필터가 멈춤", "P 가 무한대로 발산", "측정을 그대로 믿음"], a: 3, why: "x += K(z − x) · K = 1 이면 x = z · 예측만 쓰는 쪽은 K = 0" },
+                { q: "예측 단계에서 P 는 보통?", options: ["커진다 (+Q)", "작아진다 (−Q)", "0 이 된다", "항상 R 과 같아진다"], a: 0, why: "P = FPFᵀ + Q · 측정 없이 시간이 가면 불확실성 증가 · 줄어드는 건 갱신 단계" },
+                { q: "방향 θ 가 들어간 로봇 운동 모델(cos θ, sin θ)에 흔히 쓰는 것은?", options: ["선형 KF 를 그대로", "EKF (선형화)", "단순 이동평균 필터", "FFT 로 주파수 분석"], a: 1, why: "비선형 f(x, u) 를 현재 추정점의 자코비안으로 선형화 · 선형 KF 는 cos θ 를 표현 못 함" },
+                { q: "자이로와 GPS/카메라를 융합하는 이유는?", options: ["둘 다 드리프트가 없어서", "카메라 쪽이 더 빨라서", "자이로는 빠르나 드리프트", "전력 소모를 줄이려고"], a: 2, why: "고주파는 IMU, 저주파(절대값)는 느리지만 드리프트 없는 외부 센서가 담당" },
+                { type: "num", q: "예측 10.0 m (분산 4), 측정 12.0 m (분산 1). 갱신된 추정값은?", answer: 11.6, tol: 0.01, unit: "m", why: "K = 4/(4 + 1) = 0.8 → 10 + 0.8 × 2 · 갱신 분산은 0.8 로 둘보다 작음" },
+                { type: "num", q: "정지 모델 1D 필터, q = 0.002, r = 0.12 의 정상상태 칼만 이득 K 는?", answer: 0.121, tol: 0.002, why: "P⁻ = (q + √(q² + 4qr))/2 ≈ 0.0165 → K = P⁻/(P⁻ + r) · q, r 을 함께 10배 해도 같음" },
+                { type: "text", q: "출력은? (q/r = 0.01)", code: { lang: "python", src: "P, q, r = 1.0, 0.01, 1.0\nfor _ in range(100):\n    P += q\n    K = P / (P + r)\n    P *= 1 - K\nprint(round(K, 3))" }, answer: ["0.095"], why: "몇십 스텝이면 정상상태로 수렴 · 약 1/K ≈ 10 샘플 평균과 비슷한 매끈함" },
+                { type: "order", q: "선형 칼만 필터 한 주기 (Welch & Bishop 식 순서)", items: ["x̂⁻ = F·x̂ (상태 예측)", "P⁻ = F·P·Fᵀ + Q", "K = P⁻Hᵀ(HP⁻Hᵀ + R)⁻¹", "x̂ = x̂⁻ + K(z − Hx̂⁻)", "P = (I − KH)·P⁻"], why: "시간 갱신(예측) 2식 → 측정 갱신 3식 · 이득을 먼저 구해야 상태와 P 를 고칠 수 있음" }
             ],
             refs: [
                 { title: "A New Approach to Linear Filtering and Prediction Problems", by: "Kalman", year: 1960, url: "https://doi.org/10.1115/1.3662552", kind: "paper" },
@@ -533,11 +565,13 @@ P = IKH @ P @ IKH.T + K @ R @ K.T   # 대칭·양정치 유지` },
             title: "SLAM과 위치 추정",
             level: 3,
             mins: 16,
+            pre: ["robotics/frames", "robotics/kalman"],
+            checked: "2026-11-16",
             key: [
                 "SLAM = 지도를 만들면서 그 지도 위 내 위치를 **동시에** 추정",
                 "오도메트리(odometry)만 쓰면 오차가 **누적** → 스캔 매칭(scan matching)으로 보정",
                 "루프 클로저(loop closure): 와 본 곳 인식 → 쌓인 드리프트(drift)를 궤적(trajectory) 전체에 분산",
-                "현대 SLAM 백엔드(back-end)는 대부분 **포즈 그래프(pose graph) 최적화** · 최소제곱(least squares)"
+                "백엔드(back-end)의 사실상 표준: **포즈 그래프(pose graph)**·팩터 그래프 최적화 · 최소제곱(least squares)"
             ],
             concepts: [
                 { term: "드리프트", en: "Drift", def: "작은 상대 이동 오차가 적분되어 위치 오차가 계속 커짐" },
@@ -646,11 +680,15 @@ if d > 0.5 or abs(th) > np.radians(30):  # 충분히 움직였을 때만
                 { term: "VIO", en: "Visual-Inertial Odometry", def: "카메라와 IMU 를 결합한 오도메트리 · 드론·AR 에 흔함" }
             ],
             quiz: [
-                { q: "오도메트리만으로 위치를 추정하면?", options: ["오차가 시간에 따라 누적", "오차가 0 으로 수렴", "지도가 자동 생성", "절대 위치를 알 수 있음"], a: 0, why: "상대 이동의 적분 · 작은 오차도 계속 쌓임" },
-                { q: "루프 클로저의 역할은?", options: ["새 센서 추가", "재방문 인식 → 누적 드리프트 보정", "스캔 노이즈 필터링", "모터 속도 제어"], a: 1, why: "닫힌 루프 제약으로 궤적 전체를 다시 맞춤" },
-                { q: "포즈 그래프에서 엣지가 나타내는 것은?", options: ["로봇 속도", "지도 셀 점유 확률", "두 자세 사이 상대 변환 측정", "센서 종류"], a: 2, why: "오도메트리·스캔 매칭·루프 클로저 모두 상대 자세 제약" },
-                { q: "ICP 가 잘못된 정렬로 수렴하기 쉬운 경우는?", options: ["점이 많을 때", "로봇이 정지했을 때", "라이다 정확도가 높을 때", "초기값이 정답에서 멀 때"], a: 3, why: "최근접 대응이 틀려 지역 최소에 빠짐" },
-                { q: "지도가 이미 있을 때 Nav2 가 기본으로 쓰는 위치 추정은?", options: ["EKF SLAM", "AMCL (파티클 필터)", "ICP 매핑", "A* 탐색"], a: 1, why: "지도는 고정하고 라이다 스캔으로 파티클 가중치 갱신" }
+                { q: "오도메트리만으로 위치를 추정하면?", options: ["오차가 계속 누적됨", "오차가 0 으로 수렴함", "지도가 자동 생성됨", "절대 위치를 알게 됨"], a: 0, why: "상대 이동의 적분 · 작은 오차도 계속 쌓임 · 절대 기준이 없으니 저절로 줄지 않음" },
+                { q: "루프 클로저의 역할은?", options: ["새 센서를 보정함", "쌓인 드리프트 보정", "스캔 노이즈 필터링", "모터 속도를 제어함"], a: 1, why: "재방문 인식 → 닫힌 루프 제약으로 궤적 전체를 다시 맞춤 · 노이즈 제거는 프런트엔드 일" },
+                { q: "포즈 그래프에서 엣지가 나타내는 것은?", options: ["로봇의 속도 명령값", "격자 셀의 점유 확률", "두 자세 간 상대 변환", "센서 종류와 측정 주기"], a: 2, why: "오도메트리·스캔 매칭·루프 클로저 모두 상대 자세 제약 + 정보행렬 · 점유 확률은 격자 지도의 값" },
+                { q: "ICP 가 잘못된 정렬로 수렴하기 쉬운 경우는?", options: ["점이 많을 때", "로봇이 정지했을 때", "라이다 정확도가 높을 때", "초기값이 정답에서 멀 때"], a: 3, why: "최근접 대응이 틀려 지역 최소에 빠짐 · 그래서 오도메트리 예측을 초기값으로" },
+                { q: "지도가 이미 있을 때 Nav2 가 기본으로 쓰는 위치 추정은?", options: ["EKF SLAM 재실행", "AMCL", "ICP 로 지도 재작성", "Cartographer 매핑"], a: 1, why: "AMCL = 파티클 필터 · 지도는 고정하고 라이다 스캔으로 파티클 가중치 갱신 · SLAM 을 다시 돌릴 필요 없음" },
+                { type: "num", q: "방향이 2° 틀어진 채 30 m 직진하면 옆으로 몇 m 벗어나나?", answer: 1.047, tol: 0.01, unit: "m", why: "30 × sin 2° · 방향 오차가 거리에 곱해져 커짐" },
+                { type: "num", q: "레슨 1D 포즈 그래프에서 뒤쪽 4개 엣지의 정보 ω 를 0.25 로 낮추면 x4 는?", answer: 4.12, tol: 0.005, unit: "m", why: "보정이 분산 비율로 나뉨: 앞 엣지 −0.02, 뒤 엣지 −0.08 씩 → x4 = 4 × 1.03" },
+                { type: "text", q: "점유 격자 셀이 3번 맞고 2번 통과된 뒤의 점유 확률은?", code: { lang: "python", src: "import numpy as np\nl = 3 * np.log(0.7 / 0.3) + 2 * np.log(0.4 / 0.6)   # log-odds 덧셈\nprint(round(1 - 1 / (1 + np.exp(l)), 2))" }, answer: ["0.85"], why: "l = 2.54 − 0.81 = 1.73 → p = 0.85 · 확률을 곱하지 않고 log-odds 를 더함" },
+                { type: "order", q: "그래프 SLAM 한 바퀴의 순서", items: ["오도메트리로 자세 예측", "스캔 매칭으로 자세 보정", "재방문(루프) 검출", "포즈 그래프 최적화", "일관된 지도 생성"], why: "프런트엔드(예측·매칭·루프 검출) → 백엔드(최적화) → 지도 · 레슨 단계도와 같음" }
             ],
             refs: [
                 { title: "Past, Present, and Future of Simultaneous Localization And Mapping: Towards the Robust-Perception Age", by: "Cadena et al.", year: 2016, url: "https://arxiv.org/abs/1606.05830", kind: "paper" },
@@ -664,6 +702,8 @@ if d > 0.5 or abs(th) > np.radians(30):  # 충분히 움직였을 때만
             title: "ROS 2 노드와 통신",
             level: 2,
             mins: 14,
+            pre: ["protocols/tcpip", "languages/concurrency"],
+            checked: "2026-11-16",
             key: [
                 "노드(node) = 기능 하나 · 토픽(topic) / 서비스(service) / 액션(action)으로 통신",
                 "기본 미들웨어(middleware)는 DDS · 마스터(master) 없이 **자동 발견**(discovery)",
@@ -687,7 +727,7 @@ if d > 0.5 or abs(th) > np.radians(30):  # 충분히 움직였을 때만
                     { from: 0, to: 1, label: "publish LaserScan #1", text: "발행: 직렬화(serialization) 후 전송 · 발행자(publisher)는 구독자 수를 몰라도 됨" },
                     { from: 1, to: 2, label: "LaserScan #1", text: "매칭된 모든 구독자에 전달 · executor 가 콜백 실행" },
                     { from: 1, to: 2, label: "LaserScan #2 ✗ 유실", text: "BEST_EFFORT: 재전송 없음 · 센서처럼 최신값이 중요할 때" },
-                    { from: 2, to: 3, label: "req SetBool(data=true)", text: "서비스 요청 · 내부적으로 요청/응답 토픽 한 쌍 (역시 DDS)" },
+                    { from: 2, to: 3, label: "req SetBool(data=true)", text: "서비스 요청 · DDS rmw 에선 요청(`rq/`)·응답(`rr/`) 토픽 한 쌍으로 전달" },
                     { from: 3, to: 3, label: "콜백 처리", text: "서버 콜백은 짧게 · 오래 걸리면 액션으로" },
                     { from: 3, to: 2, label: "res success=true", text: "응답 도착 → future 완료 · 콜백 안에서 동기(synchronous) 대기 금지" }
                 ]
@@ -792,11 +832,15 @@ int main(int argc, char ** argv) {
                 { term: "launch 파일", en: "Launch file", def: "여러 노드·파라미터·리매핑을 한 번에 실행하는 스크립트" }
             ],
             quiz: [
-                { q: "목표 지점까지 이동시키며 진행률을 받고 취소도 하려면?", options: ["토픽", "서비스", "액션", "파라미터"], a: 2, why: "액션 = 목표 + 주기적 피드백 + 결과 + 취소" },
-                { q: "발행자 BEST_EFFORT, 구독자 RELIABLE 이면?", options: ["정상 수신", "QoS 비호환 · 연결 안 됨", "RELIABLE 로 자동 승격", "메시지 절반만 수신"], a: 1, why: "구독자가 발행자보다 강한 보장을 요구하면 매칭 실패" },
-                { q: "ROS 2 가 ROS 1 의 roscore(마스터) 없이 동작하는 이유는?", options: ["DDS 의 분산 자동 발견", "노드가 하나뿐이라서", "launch 파일이 마스터 역할", "모든 노드가 같은 프로세스"], a: 0, why: "참가자들이 서로를 직접 찾아 연결" },
-                { q: "단일 스레드 executor 콜백 안에서 서비스를 동기 호출하면?", options: ["더 빠름", "자동으로 비동기로 바뀜", "QoS 가 변경됨", "응답 처리가 막혀 데드락 위험"], a: 3, why: "응답을 처리할 executor 가 바로 그 콜백에 묶여 있음" },
-                { q: "늦게 시작한 구독자도 마지막 `/map` 을 받으려면 필요한 QoS 는?", options: ["BEST_EFFORT", "VOLATILE", "TRANSIENT_LOCAL", "depth 0"], a: 2, why: "Durability TRANSIENT_LOCAL: 발행자가 최근 샘플을 보관해 늦은 구독자에게 전달" }
+                { q: "목표 지점까지 이동시키며 진행률을 받고 취소도 하려면?", options: ["토픽", "서비스", "액션", "파라미터"], a: 2, why: "액션 = 목표 + 주기적 피드백 + 결과 + 취소 · 서비스는 취소·진행률이 없음" },
+                { q: "발행자 BEST_EFFORT, 구독자 RELIABLE 이면?", options: ["정상적으로 수신됨", "연결되지 않음", "RELIABLE 로 자동 승격", "메시지 절반만 수신"], a: 1, why: "구독자가 발행자보다 강한 보장을 요구하면 매칭 실패 · 경고만 남고 수신 0 (DDS rmw)" },
+                { q: "ROS 2 가 ROS 1 의 roscore(마스터) 없이 동작하는 이유는?", options: ["DDS 의 분산 자동 발견", "노드가 하나뿐이라서", "launch 파일이 마스터 역할", "모든 노드가 한 프로세스"], a: 0, why: "참가자들이 서로를 직접 찾아 연결 · launch 는 실행만 묶을 뿐" },
+                { q: "단일 스레드 executor 콜백 안에서 서비스를 동기 호출하면?", options: ["오히려 더 빨라짐", "자동으로 비동기로 바뀜", "QoS 가 RELIABLE 로 바뀜", "데드락 위험"], a: 3, why: "응답을 처리할 executor 가 바로 그 콜백에 묶여 있음 · `call_async` 를 써야 함" },
+                { q: "발행자가 TRANSIENT_LOCAL 인 `/map` 을 늦게 시작한 구독자도 받으려면 구독 QoS 는?", options: ["BEST_EFFORT + depth 1", "VOLATILE + KEEP_ALL", "TRANSIENT_LOCAL", "RELIABLE + depth 100"], a: 2, why: "양쪽 다 TRANSIENT_LOCAL 이어야 보관된 샘플을 받음 · VOLATILE 구독은 연결돼도 새 메시지만" },
+                { type: "num", q: "640×480 RGB8 영상을 30 Hz 로 압축 없이 보내면 몇 Mbit/s?", answer: 221.2, tol: 0.5, unit: "Mbit/s", why: "921,600 B × 30 × 8 · Wi-Fi 로는 버거워 압축 토픽·BEST_EFFORT 를 씀" },
+                { type: "num", q: "단일 스레드 executor 에서 한 콜백이 200 ms 걸리면, 그동안 100 Hz 타이머 주기는 몇 번 지나가나?", answer: 20, why: "200 ms / 10 ms · 무거운 처리는 다른 콜백 그룹·멀티스레드 executor 로" },
+                { type: "text", q: "출력은? (QoS: 구독 요구 ≤ 발행 제공)", code: { lang: "python", src: "RANK = {\"BEST_EFFORT\": 0, \"RELIABLE\": 1, \"VOLATILE\": 0, \"TRANSIENT_LOCAL\": 1}\ndef ok(pub, sub):\n    return all(RANK[s] <= RANK[p] for p, s in zip(pub, sub))\npub = (\"RELIABLE\", \"VOLATILE\")\nfor sub in [(\"BEST_EFFORT\", \"VOLATILE\"), (\"RELIABLE\", \"TRANSIENT_LOCAL\"), (\"RELIABLE\", \"VOLATILE\")]:\n    print(int(ok(pub, sub)), end=\" \")" }, answer: ["1 0 1"], why: "두 번째는 VOLATILE 발행자에 TRANSIENT_LOCAL 을 요구해 비호환 · 약한 보장을 요구하는 건 항상 OK" },
+                { type: "order", q: "생명주기 노드(lifecycle node)가 시작해 활성화되기까지의 상태 순서", items: ["Unconfigured", "Configuring", "Inactive", "Activating", "Active"], why: "configure → Inactive, activate → Active · -ing 는 전이 상태 · Nav2 가 이 순서로 노드를 한꺼번에 띄움" }
             ],
             refs: [
                 { title: "Robot Operating System 2: Design, Architecture, and Uses In The Wild", by: "Macenski et al.", year: 2022, url: "https://arxiv.org/abs/2211.07752", kind: "paper" },
@@ -810,6 +854,8 @@ int main(int argc, char ** argv) {
             title: "경로 계획 A*·RRT",
             level: 2,
             mins: 14,
+            pre: ["data-structures/ds-heap", "data-structures/ds-graph"],
+            checked: "2026-11-16",
             key: [
                 "A*: `f = g + h` 가 가장 작은 노드부터 확장(expansion)",
                 "h 가 실제 비용을 넘지 않으면(admissible) **최단 경로(shortest path) 보장**",
@@ -909,11 +955,15 @@ open_list.remove(cur)                      # 또 O(n)` },
                 { term: "지역 계획기", en: "Local planner / controller", def: "전역 경로를 따라가며 실시간 장애물·속도 제한 반영 (DWB, MPPI)" }
             ],
             quiz: [
-                { q: "A* 에서 h = 0 으로 두면?", options: ["Greedy 탐색", "Dijkstra 와 같음", "경로를 못 찾음", "깊이 우선 탐색"], a: 1, why: "f = g · 거리 순으로 고르게 퍼짐 (위 시뮬에서 확장 노드 비교)" },
-                { q: "4방향 이동 격자에서 허용 가능하면서 가장 정보가 많은 휴리스틱은?", options: ["h = 0", "유클리드 거리", "맨해튼 거리", "맨해튼 × 2"], a: 2, why: "벽 없을 때 실제 최소 이동 수와 같음 · ×2 는 과대평가" },
-                { q: "Greedy best-first (f = h) 의 특징은?", options: ["빠르지만 최단 보장 없음", "항상 최단 경로", "모든 노드를 확장", "g 만 사용"], a: 0, why: "지나온 비용을 무시해 벽 뒤로 돌아가는 경로를 놓칠 수 있음" },
-                { q: "7축 팔의 경로 계획에 격자 A* 대신 RRT 류를 쓰는 이유는?", options: ["격자가 더 정확해서", "RRT 는 항상 최단이라서", "충돌 검사가 필요 없어서", "고차원 격자는 셀 수가 지수적으로 폭증"], a: 3, why: "축당 100칸이면 100⁷ 셀 · 샘플링은 차원에 덜 민감" },
-                { q: "가중 A* (f = g + 2h) 의 결과 경로는?", options: ["항상 최적", "최적 비용의 2배 이내", "경로를 찾지 못함", "Dijkstra 와 동일"], a: 1, why: "허용 h 에 ε 를 곱하면 비용 ≤ ε × 최적" }
+                { q: "A* 에서 h = 0 으로 두면?", options: ["Greedy 탐색이 됨", "Dijkstra 가 됨", "경로를 못 찾음", "깊이 우선 탐색이 됨"], a: 1, why: "f = g · 거리 순으로 고르게 퍼짐 · Greedy 는 반대로 g 를 버린 f = h" },
+                { q: "4방향 이동 격자에서 허용 가능하면서 가장 정보가 많은 휴리스틱은?", options: ["h = 0", "유클리드 거리", "맨해튼 거리", "맨해튼 × 2"], a: 2, why: "벽 없을 때 실제 최소 이동 수와 같음 · 유클리드는 허용되지만 덜 정확, ×2 는 과대평가" },
+                { q: "Greedy best-first (f = h) 의 특징은?", options: ["빠르나 최단 보장 없음", "항상 최단 경로를 찾음", "모든 노드를 확장함", "g 만 보고 고름"], a: 0, why: "지나온 비용을 무시해 벽 뒤로 돌아가는 경로를 놓칠 수 있음" },
+                { q: "7축 팔의 경로 계획에 격자 A* 대신 RRT 류를 쓰는 이유는?", options: ["격자가 더 정확해서", "RRT 는 항상 최단이라서", "충돌 검사가 필요 없어서", "격자 셀 수가 폭증해서"], a: 3, why: "축당 100칸이면 100⁷ 셀 · 샘플링은 차원에 덜 민감 · RRT 는 최단을 보장하지 않음" },
+                { q: "가중 A* (f = g + 2h) 의 결과 경로는?", options: ["항상 최적", "최적 비용의 2배 이내", "경로를 찾지 못함", "Dijkstra 와 동일"], a: 1, why: "허용 h 에 ε 를 곱하면 비용 ≤ ε × 최적 · 확장 노드는 줄어듦" },
+                { type: "num", q: "4방향 격자, 목표 (5, 3), 맨해튼 h. 노드 (2, 1) 까지 g = 3 이면 f 는?", answer: 8, why: "h = |5 − 2| + |3 − 1| = 5 → f = 3 + 5" },
+                { type: "num", q: "8방향 격자(대각 비용 √2)에서 (dx, dy) = (6, 2) 의 옥타일 h 는?", answer: 6.83, tol: 0.01, why: "max + (√2 − 1)·min = 6 + 0.414 × 2 · 맨해튼 8 은 과대평가" },
+                { type: "text", q: "레슨의 `astar` 로 실행하면 출력은? (`grid[y][x]`, 1 = 벽)", code: { lang: "python", src: "grid = [[0, 0, 0, 0],\n        [1, 1, 1, 0],\n        [0, 0, 0, 0]]\npath = astar(grid, (0, 0), (0, 2))   # (x, y)\nprint(len(path) - 1)" }, answer: ["8"], why: "벽 끝 (3, 1) 로 돌아감: 오른쪽 3 + 아래 2 + 왼쪽 3 · 노드 수 9 에서 1 을 뺀 이동 수" },
+                { type: "order", q: "레슨 `astar` 루프 한 번의 순서", items: ["힙에서 f 최소 항목 pop", "목표면 부모를 따라 역추적", "낡은 항목이면 건너뜀", "이웃 g 갱신 · 힙에 push"], why: "목표 확인을 먼저 해야 꺼낸 순간 최적 비용으로 끝남 · 낡은 항목은 힙에서 못 지워 꺼낼 때 버림" }
             ],
             refs: [
                 { title: "A Formal Basis for the Heuristic Determination of Minimum Cost Paths", by: "Hart et al.", year: 1968, url: "https://doi.org/10.1109/TSSC.1968.300136", kind: "paper" },

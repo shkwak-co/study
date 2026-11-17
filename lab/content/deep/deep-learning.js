@@ -808,7 +808,42 @@ y.backward()
 print(w.grad)                                       # 전부 1 · round 를 그대로 통과`,
                     note: "범위 밖으로 잘린 값은 기울기를 0 으로 막는 변형도 흔하다"
                 },
-                demo: "lesson"
+                demo: {
+                    type: "steps",
+                    nodes: [
+                        { id: "fp32", label: "FP32 모델", sub: "가중치당 4 byte", x: 0, y: 0 },
+                        { id: "calib", label: "캘리브레이션", sub: "대표 입력 수백 개", x: 1, y: 0 },
+                        { id: "scale", label: "스케일 계산", sub: "s = max|x| / 127", x: 2, y: 0 },
+                        { id: "int8", label: "INT8 모델", sub: "크기 1/4", x: 3, y: 0 },
+                        { id: "prune", label: "가지치기", sub: "작은 가중치 제거", x: 0, y: 1 },
+                        { id: "distill", label: "지식 증류", sub: "교사 → 학생", x: 1, y: 1 },
+                        { id: "qat", label: "QAT", sub: "fake quant 로 학습", x: 2, y: 1 },
+                        { id: "eval", label: "정확도 검증", sub: "FP32 대비 하락", x: 3, y: 1 },
+                        { id: "deploy", label: "배포", sub: "GPU · NPU · CPU", x: 3, y: 2 }
+                    ],
+                    edges: [
+                        { from: "fp32", to: "calib" },
+                        { from: "calib", to: "scale", label: "범위 관측" },
+                        { from: "scale", to: "int8", label: "round·clip" },
+                        { from: "int8", to: "eval" },
+                        { from: "eval", to: "qat", label: "하락 큼" },
+                        { from: "qat", to: "int8", label: "재변환" },
+                        { from: "fp32", to: "prune" },
+                        { from: "prune", to: "distill", label: "회복" },
+                        { from: "eval", to: "deploy", label: "OK" }
+                    ],
+                    steps: [
+                        { on: ["fp32"], text: "학습이 끝난 FP32 모델 · 가중치 하나에 4 byte, 추론(inference)엔 과한 정밀도(precision)" },
+                        { on: ["fp32>calib", "calib"], text: "캘리브레이션(calibration): 대표 입력을 흘려 층별 **활성값 범위**(activation range)를 관측" },
+                        { on: ["calib>scale", "scale"], text: "대칭(symmetric) INT8: `s = max|x|/127`, `q = round(x/s)` · 가중치는 채널별(per-channel) s" },
+                        { on: ["scale>int8", "int8"], text: "INT8 모델(PTQ): 크기 1/4 · 정수 연산으로 메모리 대역폭(memory bandwidth)·전력↓" },
+                        { on: ["int8>eval", "eval"], text: "검증 세트(validation set)로 FP32 대비 정확도 하락을 측정" },
+                        { on: ["eval>qat", "qat", "qat>int8"], text: "하락이 크면 QAT: 순전파(forward pass)에 반올림(rounding)을 흉내 내며 미세조정(fine-tuning) 후 재변환" },
+                        { on: ["fp32>prune", "prune"], text: "가지치기: 작은 가중치·채널 제거 · 채널 단위여야 일반 하드웨어에서 빨라짐" },
+                        { on: ["prune>distill", "distill"], text: "지식 증류(knowledge distillation): 큰 교사(teacher)의 부드러운 확률로 작은 학생(student)을 학습해 정확도 회복" },
+                        { on: ["eval>deploy", "deploy"], text: "통과 → 대상 런타임(runtime) 형식으로 변환해 배포(deployment)" }
+                    ]
+                }
             },
             {
                 h: "가지치기와 지식 증류",

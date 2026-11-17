@@ -301,7 +301,34 @@ bool debounce_update(debounce_t *d, bool raw) {
                     "**Tail-chaining**: ISR이 끝날 때 다른 IRQ가 대기 중이면 복원과 재저장을 건너뛰고 바로 다음 ISR로 간다. Cortex-M4에서 6 사이클이다.",
                     "**Late arrival**: 스태킹 도중 더 높은 우선순위 IRQ가 도착하면 이미 하던 저장을 그대로 쓰고 높은 쪽 ISR을 먼저 실행한다."
                 ],
-                demo: "lesson"
+                demo: {
+                    type: "steps",
+                    nodes: [
+                        { id: "per", label: "타이머", sub: "overflow", x: 0, y: 0 },
+                        { id: "nvic", label: "NVIC", sub: "우선순위 비교", x: 1, y: 0 },
+                        { id: "cpu", label: "CPU", sub: "main 실행 중", x: 2, y: 0 },
+                        { id: "stk", label: "스택", sub: "8 레지스터", x: 3, y: 0 },
+                        { id: "isr", label: "TIM2_IRQHandler", sub: "ISR", x: 3, y: 1 },
+                        { id: "ret", label: "복귀", sub: "EXC_RETURN", x: 2, y: 1 }
+                    ],
+                    edges: [
+                        { from: "per", to: "nvic", label: "IRQ 28" },
+                        { from: "nvic", to: "cpu", label: "선점" },
+                        { from: "cpu", to: "stk", label: "push" },
+                        { from: "stk", to: "isr" },
+                        { from: "isr", to: "ret" },
+                        { from: "ret", to: "cpu", label: "pop" }
+                    ],
+                    steps: [
+                        { on: ["per"], text: "타이머 카운터 오버플로 → **UIF 플래그** set" },
+                        { on: ["per>nvic", "nvic"], text: "NVIC: IRQ 대기(pending) · 현재 우선순위보다 높은가?" },
+                        { on: ["nvic>cpu", "cpu"], text: "높음 → 현재 명령 마치고 예외 진입(exception entry)" },
+                        { on: ["cpu>stk", "stk"], text: "하드웨어가 R0–R3, R12, LR, PC, xPSR **자동 저장**(stacking)" },
+                        { on: ["stk>isr", "isr"], text: "벡터 테이블(vector table)의 ISR 주소로 점프 · 플래그 클리어" },
+                        { on: ["isr>ret", "ret"], text: "`bx lr` (EXC_RETURN) · 대기 IRQ 있으면 tail-chain" },
+                        { on: ["ret>cpu", "cpu"], text: "레지스터 복원(unstacking) · 중단 지점부터 main 계속" }
+                    ]
+                }
             },
             {
                 h: "우선순위: 숫자, 구현 비트, 그룹",

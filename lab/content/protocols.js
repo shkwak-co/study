@@ -185,7 +185,7 @@ UBRR0 = (F_CPU + 4UL * BAUD) / (8UL * BAUD) - 1;  // 반올림 → 16
             level: 2,
             mins: 14,
             pre: ["embedded/gpio", "embedded/bits"],
-            checked: "2026-11-16",
+            checked: "2026-11-17",
             key: [
                 "2선(SCL·SDA) **오픈드레인(open-drain) + 풀업(pull-up)** · 여러 장치가 버스 공유",
                 "START → 7bit 주소(7-bit address) + R/W → ACK → 데이터 … → STOP",
@@ -199,23 +199,7 @@ UBRR0 = (F_CPU + 4UL * BAUD) / (8UL * BAUD) - 1;  // 반올림 → 16
                 { term: "속도 모드", en: "Bus speed modes", def: "Standard 100 kHz · Fast 400 kHz · Fast-mode Plus 1 MHz" },
                 { term: "풀업 크기", en: "Pull-up resistor sizing", def: "버스 용량·속도로 결정 · 클수록 상승 느림, 작을수록 전류↑" }
             ],
-            demo: {
-                type: "wave",
-                signals: [
-                    { name: "SCL", wave: "1.0p.................01.." },
-                    { name: "SDA", wave: "10.1.010.....1.0101.0..1." },
-                    { name: "필드", wave: "z=.=......===.......==..z", data: ["S", "주소 0x68", "W", "ACK", "데이터 0x6B", "ACK", "P"] }
-                ],
-                steps: [
-                    { from: 0, to: 2, tag: "START", text: "SCL High 인 동안 SDA ↓ = **START** · 버스 점유 시작" },
-                    { from: 3, to: 10, tag: "ADDR", text: "7bit 주소 `0x68` = `110 1000` · **MSB 먼저** · SCL High 동안 SDA 고정" },
-                    { from: 10, to: 11, tag: "W", text: "8번째 비트 0 = Write · 주소 바이트 = `0xD0` (Read 면 `0xD1`)" },
-                    { from: 11, to: 12, tag: "ACK", text: "9번째 클럭: **슬레이브**가 SDA 를 Low 로 = ACK · 응답 없으면 High = NACK" },
-                    { from: 12, to: 20, tag: "DATA", text: "데이터 `0x6B` = `0110 1011` · 예: MPU-6050 레지스터 주소" },
-                    { from: 20, to: 21, tag: "ACK", text: "바이트마다 수신 측이 ACK · Read 의 마지막 바이트엔 마스터가 NACK" },
-                    { from: 21, to: 25, tag: "STOP", text: "SDA Low 로 준비 → SCL High 인 동안 SDA ↑ = **STOP**" }
-                ]
-            },
+            demo: { type: "sim", name: "i2c", addr: 0x68, op: "read", reg: 0x75, data: [0x68] },
             code: [
                 {
                     lang: "c",
@@ -299,7 +283,8 @@ hi2c1.Init.DutyCycle  = I2C_DUTYCYCLE_2;
                 { type: "num", q: "VDD 5 V, Fast mode(VOL 0.4 V @ 3 mA) 에서 풀업 Rp 최소값은 몇 Ω?", answer: 1533, tol: 5, unit: "Ω", why: "Rp(min) = (VDD − VOL) / IOL = 4.6 V / 3 mA · 더 작으면 Low 가 0.4 V 까지 안 내려감" },
                 { type: "text", q: "7bit 주소 `0x3C` 장치에 **쓰기** 할 때 버스에 나가는 첫 바이트는? (16진)", answer: ["0x78", "78", "120"], why: "(0x3C << 1) | 0 = 0x78 · 데이터시트의 0x78 과 0x3C 는 같은 장치" },
                 { type: "num", q: "400 kHz 에서 주소W + 레지스터 + 주소R + 데이터 6 B (9 B × 9 클럭)의 클럭 시간은 몇 µs? (START·STOP 제외)", answer: 202.5, tol: 1, unit: "µs", why: "81 클럭 × 2.5 µs · 1 바이트씩 6 번이면 216 클럭으로 2.7 배" },
-                { type: "order", q: "레지스터 1 바이트 읽기의 버스 순서", items: ["START", "주소+W → ACK", "레지스터 주소 → ACK", "Repeated START", "주소+R → ACK", "데이터 → 컨트롤러 NACK", "STOP"], why: "쓰기로 레지스터 포인터를 놓고 Sr 로 방향 전환 · 마지막 바이트는 NACK 로 끝을 알림" }
+                { type: "order", q: "레지스터 1 바이트 읽기의 버스 순서", items: ["START", "주소+W → ACK", "레지스터 주소 → ACK", "Repeated START", "주소+R → ACK", "데이터 → 컨트롤러 NACK", "STOP"], why: "쓰기로 레지스터 포인터를 놓고 Sr 로 방향 전환 · 마지막 바이트는 NACK 로 끝을 알림" },
+                { type: "text", q: "레지스터 2 바이트 읽기(주소+W · 레지스터 · 주소+R · 데이터 1 · 데이터 2)에서 각 바이트 뒤 9번째 클럭의 SDA 를 순서대로 쓰면? (ACK=0, NACK=1)", answer: ["00001"], why: "앞 세 바이트는 슬레이브가, 데이터 1 은 마스터가 ACK(0) · 마지막 데이터는 마스터가 NACK(1) 로 끝을 알림 · 실험에서 레지스터 읽기 + 데이터 2 바이트로 확인" }
             ],
             refs: [
                 { title: "UM10204 I2C-bus specification and user manual (Rev. 7.0)", by: "NXP Semiconductors", year: 2021, url: "https://www.nxp.com/docs/en/user-guide/UM10204.pdf", kind: "spec" },
@@ -313,7 +298,7 @@ hi2c1.Init.DutyCycle  = I2C_DUTYCYCLE_2;
             level: 1,
             mins: 12,
             pre: ["embedded/gpio"],
-            checked: "2026-11-16",
+            checked: "2026-11-17",
             key: [
                 "4선: SCLK·MOSI·MISO·CS · **마스터가 클럭**을 만듦",
                 "**전이중(full duplex)**: 8 클럭에 1 바이트 송신 + 1 바이트 수신 동시에",
@@ -326,23 +311,7 @@ hi2c1.Init.DutyCycle  = I2C_DUTYCYCLE_2;
                 { term: "시프트 레지스터 교환", en: "Shift register exchange", def: "마스터·슬레이브 레지스터가 링으로 연결 · 8 클럭 후 내용이 서로 바뀜" },
                 { term: "더미 바이트", en: "Dummy byte", def: "읽으려면 뭔가 보내야 함 → 0x00/0xFF 를 보내며 수신" }
             ],
-            demo: {
-                type: "wave",
-                signals: [
-                    { name: "CS", wave: "10................1." },
-                    { name: "SCLK", wave: "0.1010101010101010.." },
-                    { name: "MOSI", wave: "x1.0.1.0...1.0.1.x.." },
-                    { name: "MISO", wave: "z0...1.......0...xz." },
-                    { name: "비트", wave: "z=.=.=.=.=.=.=.=.z..", data: ["b7", "b6", "b5", "b4", "b3", "b2", "b1", "b0"] }
-                ],
-                steps: [
-                    { from: 0, to: 2, tag: "CS↓", text: "CS Low = 선택 · mode 0 은 첫 비트(b7)를 **첫 클럭 전에** 내보냄" },
-                    { from: 2, to: 3, tag: "↑ 샘플", text: "SCLK **상승 에지**: 마스터는 MISO, 슬레이브는 MOSI 를 동시에 읽음" },
-                    { from: 3, to: 4, tag: "↓ 시프트", text: "**하강 에지**(falling edge): 양쪽 모두 다음 비트를 출력" },
-                    { from: 1, to: 17, tag: "8 클럭", text: "MOSI `0xA5` 를 보내는 동안 MISO 로 `0x3C` 수신 = **전이중**" },
-                    { from: 17, to: 20, tag: "CS↑", text: "CS High → 슬레이브 MISO 는 Hi-Z · 다른 슬레이브가 버스 사용" }
-                ]
-            },
+            demo: { type: "sim", name: "spi", byte: 0x96, master: 0, slave: 0 },
             code: [
                 {
                     lang: "c",
@@ -416,7 +385,9 @@ HAL_SPI_Transmit_DMA(&hspi1, buf, n);  // 클럭 연속 · CPU 는 다른 일
                 { type: "num", q: "APB 84 MHz, SPI 분주 8 이면 SCLK 는 몇 MHz?", answer: 10.5, tol: 0.01, unit: "MHz", why: "84 / 8 · 레슨 예의 분주 4 면 21 MHz" },
                 { type: "num", q: "SCLK 20 MHz 로 Read Data(명령 + 주소 4 B) 뒤 4096 B 를 읽는 순수 전송 시간은 몇 µs? (바이트 간 공백 0)", answer: 1640, tol: 1, unit: "µs", why: "(4 + 4096) × 8 비트 / 20 MHz · 바이트마다 호출하면 공백이 더해짐" },
                 { type: "text", q: "`flash_read_id()` 가 이 4 바이트를 받으면 반환값은? (16진)", code: { lang: "c", src: "uint8_t rx[4] = { 0xFF, 0xEF, 0x40, 0x17 };\nreturn ((uint32_t)rx[1] << 16) | ((uint32_t)rx[2] << 8) | rx[3];" }, answer: ["0xEF4017", "EF4017", "15679511"], why: "rx[0] 은 명령을 보내는 동안 들어온 값이라 버림 · EF = Winbond, 4017 = W25Q64" },
-                { type: "order", q: "SPI NOR 플래시 한 페이지 쓰기 순서", items: ["CS↓ · 0x06 Write Enable · CS↑", "CS↓ · 0x02 + 주소 3 B + 데이터", "CS↑ → 내부 프로그램 시작", "0x05 로 상태 읽기 반복", "BUSY = 0 → 완료"], why: "WEL 래치가 먼저 · 명령은 CS↑ 에서 확정 · BUSY 폴링으로 끝을 확인" }
+                { type: "order", q: "SPI NOR 플래시 한 페이지 쓰기 순서", items: ["CS↓ · 0x06 Write Enable · CS↑", "CS↓ · 0x02 + 주소 3 B + 데이터", "CS↑ → 내부 프로그램 시작", "0x05 로 상태 읽기 반복", "BUSY = 0 → 완료"], why: "WEL 래치가 먼저 · 명령은 CS↑ 에서 확정 · BUSY 폴링으로 끝을 확인" },
+                { type: "num", q: "mode 0 마스터와 CPOL 은 다르지만 **같은 상승 엣지**에서 샘플하는 슬레이브 모드 번호는?", answer: 3, why: "mode 0 은 CPOL 0 의 첫(상승) 엣지, mode 3 은 CPOL 1 의 둘째(상승) 엣지에서 샘플 · 그래서 많은 장치가 0 과 3 을 함께 지원 · 1 과 2 는 하강 엣지" },
+                { type: "text", q: "마스터 mode 1, 슬레이브 mode 0, MSB 먼저 `0xA5`. 슬레이브가 데이터가 바뀌기 **직전** 값을 읽는다면 받는 8비트는? (모르는 비트는 ?)", answer: ["?1010010"], why: "mode 1 마스터는 상승 엣지에서 MOSI 를 바꾸는데 mode 0 슬레이브도 상승 엣지에서 샘플 → 매번 경합 · 직전 값이면 한 비트씩 늦어 첫 비트는 알 수 없음, 직후 값이면 우연히 맞음" }
             ],
             refs: [
                 { title: "Understanding the SPI Bus", by: "Y. Pan", year: 2025, url: "https://www.ti.com/lit/pdf/sboa621", kind: "doc" },

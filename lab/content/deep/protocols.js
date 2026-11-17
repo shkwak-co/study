@@ -204,7 +204,23 @@ for name, f, os_, fb in cases:
                         ["P", "마스터", "STOP", "-"]
                     ]
                 },
-                demo: "lesson"
+                demo: {
+                    type: "wave",
+                    signals: [
+                        { name: "SCL", wave: "1.0p.................01.." },
+                        { name: "SDA", wave: "10.1.010.....1.0101.0..1." },
+                        { name: "필드", wave: "z=.=......===.......==..z", data: ["S", "주소 0x68", "W", "ACK", "데이터 0x6B", "ACK", "P"] }
+                    ],
+                    steps: [
+                        { from: 0, to: 2, tag: "START", text: "SCL High 인 동안 SDA ↓ = **START** · 버스 점유 시작" },
+                        { from: 3, to: 10, tag: "ADDR", text: "7bit 주소 `0x68` = `110 1000` · **MSB 먼저** · SCL High 동안 SDA 고정" },
+                        { from: 10, to: 11, tag: "W", text: "8번째 비트 0 = Write · 주소 바이트 = `0xD0` (Read 면 `0xD1`)" },
+                        { from: 11, to: 12, tag: "ACK", text: "9번째 클럭: **슬레이브**가 SDA 를 Low 로 = ACK · 응답 없으면 High = NACK" },
+                        { from: 12, to: 20, tag: "DATA", text: "데이터 `0x6B` = `0110 1011` · 예: MPU-6050 레지스터 주소" },
+                        { from: 20, to: 21, tag: "ACK", text: "바이트마다 수신 측이 ACK · Read 의 마지막 바이트엔 마스터가 NACK" },
+                        { from: 21, to: 25, tag: "STOP", text: "SDA Low 로 준비 → SCL High 인 동안 SDA ↑ = **STOP**" }
+                    ]
+                }
             },
             {
                 h: "주소 공간: 예약 주소와 10bit 주소",
@@ -308,7 +324,23 @@ void i2c_bus_clear(void) {
                         ["3", "1", "1", "High", "상승", "하강"]
                     ]
                 },
-                demo: "lesson"
+                demo: {
+                    type: "wave",
+                    signals: [
+                        { name: "CS", wave: "10................1." },
+                        { name: "SCLK", wave: "0.1010101010101010.." },
+                        { name: "MOSI", wave: "x1.0.1.0...1.0.1.x.." },
+                        { name: "MISO", wave: "z0...1.......0...xz." },
+                        { name: "비트", wave: "z=.=.=.=.=.=.=.=.z..", data: ["b7", "b6", "b5", "b4", "b3", "b2", "b1", "b0"] }
+                    ],
+                    steps: [
+                        { from: 0, to: 2, tag: "CS↓", text: "CS Low = 선택 · mode 0 은 첫 비트(b7)를 **첫 클럭 전에** 내보냄" },
+                        { from: 2, to: 3, tag: "↑ 샘플", text: "SCLK **상승 에지**: 마스터는 MISO, 슬레이브는 MOSI 를 동시에 읽음" },
+                        { from: 3, to: 4, tag: "↓ 시프트", text: "**하강 에지**(falling edge): 양쪽 모두 다음 비트를 출력" },
+                        { from: 1, to: 17, tag: "8 클럭", text: "MOSI `0xA5` 를 보내는 동안 MISO 로 `0x3C` 수신 = **전이중**" },
+                        { from: 17, to: 20, tag: "CS↑", text: "CS High → 슬레이브 MISO 는 Hi-Z · 다른 슬레이브가 버스 사용" }
+                    ]
+                }
             },
             {
                 h: "실전 트랜잭션: SPI NOR 플래시 쓰기",

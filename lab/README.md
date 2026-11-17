@@ -12,11 +12,20 @@ Plain HTML/CSS/JS, no build, no CDN — open `lab/index.html` directly (`file://
 | `lesson.html?t=<track>&l=<lesson>` | key points · demo · code · optimization · terms · quiz · memo |
 | `deep.html?t=<track>&l=<lesson>` | long-form explanation (상세 설명) from `content/deep/<track>.js` |
 | `labs.html` / `labs.html?lab=<track>/<lesson>` | every interactive sim in one place, filter by tag, open one full-width |
-| `glossary.html` | all terms, search, flashcards |
+| `glossary.html` | all terms, search, flashcards with 알아요 / 몰라요 (spaced repetition) · `?review=1` = cards due today |
 | `refs.html` | all cited papers, standards, docs · filter by track/kind, links back to lessons |
-| `me.html` | progress, wrong answers, notes, bookmarks, save/sync |
+| `me.html` | progress, 오늘 복습 (due quiz items), 모의고사 (cross-track exam), wrong answers, notes, bookmarks, save/sync |
 
-`Ctrl+K` search · `Ctrl+S` save progress.
+`Ctrl+K` search (lessons, terms, concept cards, article headings, labs) · `Ctrl+S` save progress.
+Quiz: `1`–`6` / `A`–`F` pick an option, `Enter` → next. Flashcards: `Space` flip, `←`/`→`, `1` 몰라요, `2` 알아요.
+
+## Review (spaced repetition)
+
+Every answered quiz item (any quiz: lesson, track mix, wrong-answer retry, exam) and every flashcard rated 알아요/몰라요 gets a Leitner box:
+right → next box, due after 1 / 2 / 4 / 8 / 16 days · wrong → box 1, due tomorrow (`LAB.srsNext`, tested in `check.mjs`).
+Stored in `srs` inside the progress state (`"track/lesson#quizIndex"`, `"g:<term>"`), merged and synced like the rest.
+Home shows "오늘 복습 N" when items are due; `me.html#review` runs them (20 at a time).
+Only a full lesson quiz records a score (`best` / `last`); mixed, retry, review and exam answers update wrong answers and the review schedule only.
 
 ## Progress sync between PCs
 
@@ -129,7 +138,6 @@ References: `refs` on lessons and trends — original papers (arXiv/DOI), offici
 | `bitops` | `a b width n op` | 8/16/32-bit ALU: logic, shifts, rotates, add/sub/neg, bit tricks, NZCV flags · A/B accept `0x3C`, `0b1010`, `-4` |
 | `float` | `format value` | IEEE 754 fp32 / fp16 / bf16 / fp8 E5M2: click bits or type a value, stored value, error, ±1 ULP |
 | `crc` | `poly msg` | CRC long division step by step (`crc3`, `crc8`, `crc16`), receive check, click bits to inject errors |
-
 | `cpu` | `code expect regs? c? cTitle? title? intro? speed?` | Thumb-2 assembly stepper: registers, NZCV, RAM (data + stack), undo, edit. `expect: { r0: 14 }` is checked by `check.mjs` |
 | `cache` | `size block ways pattern` | cache sim: address → tag/index/offset bits, sets × ways, LRU, hit rate · pattern `seq` `stride` `row` `col` `conflict` `reuse` |
 | `layout` | `fields:[[type, name]] arch value?` | struct layout: padding, sizeof/alignof, reorder, packed · arch `32` (Arm AAPCS) / `64` (LP64) · types in `LAB.LAYOUT_TYPES` · endianness of `value` |
@@ -138,18 +146,23 @@ References: `refs` on lessons and trends — original papers (arXiv/DOI), offici
 | `heap` | `kind values` | binary heap (`min` / `max`): insert, extract, heapify · tree + array view, sift steps |
 | `bst` | `values` | binary search tree insert/search/delete · path, height, in-order |
 | `sort` | `algo n input` | sorting animation · algo `bubble` `insertion` `selection` `merge` `quick` `heap` · input `random` `nearly` `reversed` `few` · comparisons / swaps |
-
 | `uart` | `byte baud fclk bits parity stop oversample` | UART frame on the wire (LSB first), divider and baud error, receiver sample drift → framing / bit errors |
 | `can` | `ids data` | CAN bitwise arbitration of 2–3 IDs (dominant 0 wins), then bit stuffing of the winner's SOF…data bits |
 | `bpe` | `corpus merges word` | byte-pair-encoding merges step by step on a tiny corpus, tokenizing a new word |
 | `vector` | `docs:[{ t, v:[x, y] }] query k metric` | 2-D vector search: drag the query, cosine vs dot vs L2, normalization, top-k |
+| `i2c` | `addr op reg data` | I2C register write / read (`op` `write` `read`) bit by bit on the wave renderer: address + R/W, ACK/NACK, repeated START, clock stretching, missing device, bus time |
+| `spi` | `byte master slave` | SPI modes 0–3: where the slave samples vs where the master changes MOSI · mismatched modes show the race (value before / after the change) |
+| `nvic` | `preset` | Cortex-M exception timeline for 3 IRQs (priority, arrival, length): entry 12 / return 12 / tail-chain 6 cycles, preemption, late arrival, PRIGROUP split · presets `preempt` `same` `late` `group` |
+| `race` | `mode n` | two threads doing `count++` as load/add/store: step A / B by hand, worst or random order, lost updates · mode `plain` `mutex` `atomic` · wrong rate over 1000 random orders |
+| `quant` | `bits scheme` | INT8 / INT4 quantization of two weight channels: `sym` / `asym`, per-tensor vs per-channel scale, an outlier · integers used, max error |
+| `graph` | `algo src` | BFS / DFS / Dijkstra / topological sort on a 6-node graph, frame by frame: queue / stack / priority queue, distances · algo `bfs` `dfs` `dijkstra` `topo` |
 
 **cpu** program rules: Armv7-M Thumb-2 UAL subset — `mov mvn add adc sub sbc rsb neg mul udiv sdiv and orr eor bic lsl lsr asr ror cmp cmn tst` (+`s` suffix sets flags; operand 2 may be `#imm`, a register, or `rX, lsl #n`), `b` + condition (`eq ne cs/hs cc/lo mi pl vs vc hi ls ge lt gt le`), `cbz cbnz bl bx blx`, `push pop` (`{r4-r7, lr}`, `pop {.., pc}` returns), `ldr str ldrb strb ldrh strh ldrsb ldrsh` with `[rn]`, `[rn, #imm]`, `[rn, rm]`, `[rn, rm, lsl #2]`, pre-index `[rn, #4]!`, post-index `[rn], #4`, and `ldr rX, =label|imm`.
 Data: `.data` / `.text`, `label: .word 1, 2` · `.hword` `.byte` `.space n` `.asciz "s"` → RAM from `0x20000000`. Comments `@` `;` `//`.
 LR starts at `0xFFFFFFFF`: `bx lr` from the top level ends the program (or falling off the end). SP starts at `0x20001000`. Out-of-RAM access → HardFault. Simplified: 4 bytes per instruction, no IT blocks, no `ldm/stm`, no reading `pc`.
 
 Every sim also needs a line in `LAB.SIM_INFO` (`assets/anim.js`): `[title, one line, tag]` — it is listed on `labs.html`.
-The bit-lab math lives in `LAB.num` (`alu`, `fenc`/`fdec`, `crcDiv`) and is tested by `check.mjs`.
+Pure models are tested by `check.mjs`: `LAB.num` (`alu`, `fenc`/`fdec`, `crcDiv`, `quant`), `LAB.proto` (UART, CAN, `i2cTxn`, `spiEdges`), `LAB.sys` (`nvicRun`, `raceRun`), `LAB.ds` (cache, layout, ring, hash, heap, BST, sorts, `graphRun`), `LAB.ai` (BPE, vector ranking).
 
 ## Long-form articles (상세 설명)
 

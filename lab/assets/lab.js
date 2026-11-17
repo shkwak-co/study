@@ -58,8 +58,18 @@
 
     /* ---------- progress state ---------- */
     const KEY = "lab.v1";
-    const MAPS = ["lessons", "quiz", "notes", "marks"];
-    const blank = () => ({ lessons: {}, quiz: {}, notes: {}, marks: {}, days: {}, last: null, resetAt: 0 });
+    const MAPS = ["lessons", "quiz", "notes", "marks", "srs"];
+    const blank = () => ({ lessons: {}, quiz: {}, notes: {}, marks: {}, srs: {}, days: {}, last: null, resetAt: 0 });
+
+    // spaced repetition (Leitner): box 1..5, next review after 1/2/4/8/16 days; wrong → box 1, tomorrow
+    // keys: "track/lesson#quizIndex" for quiz items, "g:<term>" for flashcards
+    const SRS_DAYS = [1, 2, 4, 8, 16];
+    const addDays = (day, n) => { const d = new Date(`${day}T12:00:00`); d.setDate(d.getDate() + n); return dayOf(d); };
+    function srsNext(cur, ok, today) {
+        const box = ok ? Math.min(SRS_DAYS.length, ((cur && cur.box) || 0) + 1) : 1;
+        return { box, due: addDays(today, ok ? SRS_DAYS[box - 1] : 1) };
+    }
+    LAB.srsNext = srsNext;
 
     // Per-entry newest-wins merge; quiz best keeps the max. Used for localStorage + my/progress.js.
     function merge(a, b) {
@@ -120,6 +130,9 @@
     LAB.visit = (id) => { S.last = { id, t: Date.now() }; commit(); };
     LAB.importState = (obj) => { S = merge(S, obj); commit(); };
     LAB.resetAll = () => { S = { ...blank(), resetAt: Date.now() }; commit(); };
+    // write a review result without its own activity tick (the answer that caused it already counts)
+    LAB.srsPut = (key, ok) => { S.srs[key] = { ...srsNext(S.srs[key], ok, dayOf(Date.now())), t: Date.now() }; };
+    const isDue = (key) => { const v = S.srs[key]; return !!v && v.due <= dayOf(Date.now()); };
     const isDone = (t, l) => !!(S.lessons[keyOf(t, l)] || {}).done;
     const trackDone = (t) => t.lessons.filter((l) => isDone(t.id, l.id)).length;
     const pct = (a, b) => b ? Math.round((a / b) * 100) : 0;
@@ -442,8 +455,27 @@
     LAB.grade = grade;
     LAB.Q_TYPES = Object.keys(Q_LABEL);
 
+    // keys for the quiz last touched (or the only one) while it is on screen: 1–6 / A–F pick an option, Enter → next
+    let activeQuiz = null;
+    if (window.document && document.addEventListener) {
+        document.addEventListener("keydown", (e) => {
+            const h = activeQuiz;
+            const el = e.target instanceof Element ? e.target : document.body;
+            if (!h || !h.isConnected || e.ctrlKey || e.metaKey || e.altKey || el.closest("input, textarea, select, [contenteditable]")) return;
+            const r = h.getBoundingClientRect();
+            if (r.bottom < 0 || r.top > innerHeight) return;
+            if (e.key === "Enter" && !el.closest("button, a")) { const n = $(".qz-next button", h); if (n) { e.preventDefault(); n.click(); } return; }
+            const k = "123456".indexOf(e.key) >= 0 ? "123456".indexOf(e.key) : "abcdef".indexOf(e.key.toLowerCase());
+            const b = k >= 0 && e.key.length === 1 && $$(".qz-opts button", h)[k];
+            if (b && !b.disabled) { e.preventDefault(); b.click(); }
+        });
+    }
+
     // items: [{ ...question, src?, key?, idx? }]
+    // opts: onAnswer(it, ok) · onDone(score, total, retry) · retry (wrong-only rerun) · endBtn: [label, fn] (extra button on the result screen)
     function quiz(host, items, opts = {}) {
+        activeQuiz = host;
+        host.onpointerdown = () => { activeQuiz = host; };
         let i = 0;
         let score = 0;
         let cur = [];
@@ -540,28 +572,43 @@
                 + `<p class="muted">${p === 100 ? "완벽합니다" : p >= 70 ? "좋아요. 틀린 문제만 한 번 더." : "핵심을 다시 보고 재도전."}</p>`
                 + `<div class="btns"><button type="button" class="btn small" data-a="again">다시 풀기</button>`
                 + (res.includes(false) ? `<button type="button" class="btn small primary" data-a="wrong">틀린 것만</button>` : "")
+                + (opts.endBtn ? `<button type="button" class="btn small" data-a="extra">${esc(opts.endBtn[0])}</button>` : "")
                 + `</div></div>`;
             observe(host);
             if (p === 100) confetti();
-            if (opts.onDone) opts.onDone(score, items.length);
+            if (opts.onDone) opts.onDone(score, items.length, !!opts.retry);
             $("[data-a=again]", host).onclick = () => quiz(host, items, opts);
             const w = $("[data-a=wrong]", host);
-            if (w) w.onclick = () => quiz(host, items.filter((_, k) => res[k] === false), opts);
+            if (w) w.onclick = () => quiz(host, items.filter((_, k) => res[k] === false), { ...opts, retry: true });
+            const x = $("[data-a=extra]", host);
+            if (x) x.onclick = opts.endBtn[1];
         }
         if (!items.length) { host.innerHTML = `<div class="empty">문제가 없습니다</div>`; return; }
         render();
     }
     LAB.quiz = quiz;
 
-    // keep each lesson's wrong-answer list in sync with answers from any quiz
+    // keep each lesson's wrong-answer list and the review schedule in sync with answers from any quiz
+    // (no best/last here: only a full lesson quiz records a score)
+    // ponytail: items are keyed by quiz index, so reordering a lesson's quiz shifts wrong/srs entries; stable item ids if that bites
     function trackAnswer(it, ok) {
         if (!it.key) return;
-        const cur = S.quiz[it.key] || { best: 0, last: 0, wrong: [] };
+        const cur = S.quiz[it.key] || { wrong: [] };
         const wrong = new Set(cur.wrong || []);
         if (ok) wrong.delete(it.idx); else wrong.add(it.idx);
+        LAB.srsPut(`${it.key}#${it.idx}`, ok);
         LAB.put("quiz", it.key, { ...cur, wrong: [...wrong].sort((a, b) => a - b) });
     }
     const itemsOf = (t, l) => (l.quiz || []).map((q, idx) => ({ ...q, key: keyOf(t.id, l.id), idx, src: `${t.icon} ${t.name} › ${l.title}` }));
+    // quiz items due for review today, most overdue first (keys that no longer resolve are skipped)
+    const dueItems = () => Object.keys(S.srs).filter((k) => !k.startsWith("g:") && isDue(k))
+        .sort((a, b) => S.srs[a].due.localeCompare(S.srs[b].due) || S.srs[a].box - S.srs[b].box)
+        .map((k) => {
+            const [tl, idx] = k.split("#");
+            const f = findLesson(tl);
+            const q = f && (f.l.quiz || [])[+idx];
+            return q ? { ...q, key: tl, idx: +idx, src: `${f.t.icon} ${f.t.name} › ${f.l.title}` } : null;
+        }).filter(Boolean);
 
     /* ---------- chrome: header, palette, footer ---------- */
     function navLinks(page) {
@@ -590,8 +637,8 @@
 <div class="cursor-glow" aria-hidden="true"></div>`);
         document.body.insertAdjacentHTML("beforeend", `
 <footer class="foot"><div class="wrap"><span>Study Lab · shkwak-co/study</span><span>기록: lab/my/progress.js</span></div></footer>
-<div class="palette" id="palette"><div class="box">
-  <input id="palIn" placeholder="강의, 용어, 트랙 검색…" autocomplete="off">
+<div class="palette" id="palette" role="dialog" aria-modal="true" aria-label="검색"><div class="box">
+  <input id="palIn" placeholder="강의, 용어, 개념, 상세 설명 검색…" autocomplete="off" aria-label="검색어">
   <ul id="palList"></ul>
   <div class="hint"><span><kbd>↑</kbd><kbd>↓</kbd> 이동</span><span><kbd>Enter</kbd> 열기</span><span><kbd>Esc</kbd> 닫기</span></div>
 </div></div>`);
@@ -617,6 +664,13 @@
                 (l.glossary || []).forEach((g) => out.push({
                     ico: "§", title: g.term + (g.en ? ` · ${g.en}` : ""), sub: `${l.title} · ${plain(g.def)}`, href: `${lessonHref(t.id, l.id)}#s-terms`, w: 1
                 }));
+                (l.concepts || []).forEach((c) => out.push({
+                    ico: "◇", title: plain(c.term) + (c.en ? ` · ${c.en}` : ""), sub: `${l.title} · 핵심 · ${plain(c.def)}`, href: `${lessonHref(t.id, l.id)}#s-key`, w: 1
+                }));
+                const a = articleOf(t, l);
+                if (a) a.sections.forEach((s, i) => out.push({
+                    ico: "≡", title: plain(s.h), sub: `${l.title} · 상세 설명 ${i + 1}절`, href: `${deepHref(t.id, l.id)}#d${i + 1}`, w: 1
+                }));
             });
         }
         allLabs().forEach(({ t, l, info }) => out.push({ ico: "⚗", title: `${info[0]} 실험`, sub: `실험실 · ${info[1]} · ${l.title}`, href: labHref(t.id, l.id), w: 2 }));
@@ -624,15 +678,29 @@
         return out;
     }
     let INDEX = null;
+    let palBack = null;
     function openPalette() {
         INDEX = INDEX || searchIndex();
+        if (!$("#palette").classList.contains("on")) palBack = document.activeElement;
         $("#palette").classList.add("on");
         const inp = $("#palIn");
         inp.value = "";
         inp.focus();
         runSearch("");
+        // article headings: deep files load only on track pages, so pull the rest in on first search
+        if (!INDEX.full) {
+            INDEX.full = true;
+            Promise.all(TRACK_IDS.map((id) => load(`content/deep/${id}.js`))).then(() => {
+                INDEX = Object.assign(searchIndex(), { full: true });
+                if ($("#palette").classList.contains("on")) runSearch(inp.value);
+            });
+        }
     }
-    function closePalette() { $("#palette").classList.remove("on"); }
+    function closePalette() {
+        $("#palette").classList.remove("on");
+        if (palBack && palBack.focus) palBack.focus();
+        palBack = null;
+    }
     function runSearch(q) {
         q = q.trim().toLowerCase();
         palItems = (q ? INDEX.filter((o) => o.hay.includes(q)) : INDEX.filter((o) => o.w >= 2))
@@ -798,6 +866,8 @@
         const terms = allTerms();
         const up = nextUp();
         const labs = allLabs();
+        const due = dueItems().length;
+        const dueCards = Object.keys(S.srs).filter((k) => k.startsWith("g:") && isDue(k)).length;
         const app = $("#app");
         app.innerHTML = `
 <section class="hero"><canvas id="heroCv"></canvas><div class="wrap">
@@ -805,7 +875,7 @@
   <h1><span class="grad">Study Lab</span></h1>
   <div class="type-line" id="typeLine"></div>
   <p class="lead">임베디드에서 AI까지. 보고, 돌려보고, 풀면서 익히는 실험실.</p>
-  <div class="cta">${up ? `<a class="btn primary" href="${lessonHref(up.t.id, up.l.id)}">이어서 학습 →</a>` : ""}<a class="btn" href="#tracks">트랙 둘러보기</a></div>
+  <div class="cta">${up ? `<a class="btn primary" href="${lessonHref(up.t.id, up.l.id)}">이어서 학습 →</a>` : ""}${due ? `<a class="btn" href="me.html#review">오늘 복습 ${due}문제</a>` : ""}<a class="btn" href="#tracks">트랙 둘러보기</a></div>
   <div class="stats">
     <div><b data-count="${lessons}">0</b><span>강의</span></div>
     <div><b data-count="${terms.length}">0</b><span>용어</span></div>
@@ -850,7 +920,8 @@ ${LAB.paths.length ? `<section class="sec wrap">
       <div class="big-ico">${up.t.icon}</div>
       <div><p class="eyebrow">${S.last ? "이어서" : "시작"}</p><h3>${esc(up.l.title)}</h3><span class="muted">${esc(up.t.name)} · ${up.l.mins || 10}분</span></div>
       <span class="arrow" style="margin-left:auto;color:var(--c)">→</span></a>` : "<div></div>"}
-    <div class="card reveal" style="--i:1"><p class="eyebrow">Activity</p><h3 style="margin:4px 0 12px">연속 ${streak()}일</h3>${heatmap()}</div>
+    <div class="card reveal" style="--i:1"><p class="eyebrow">Activity</p><h3 style="margin:4px 0 12px">연속 ${streak()}일</h3>${heatmap()}
+      ${due || dueCards ? `<div class="btns" style="margin-top:12px">${due ? `<a class="btn small primary" href="me.html#review">복습 ${due}문제 →</a>` : ""}${dueCards ? `<a class="btn small" href="glossary.html?review=1">카드 복습 ${dueCards}장 →</a>` : ""}</div>` : ""}</div>
   </div>
 </section>
 ${terms.length ? (() => {
@@ -1020,7 +1091,7 @@ ${terms.length ? (() => {
             return `<a class="card lesson-row reveal ${ok ? "done" : ""}" style="--i:${i}" href="${lessonHref(t.id, l.id)}">
       <span class="num">${ok ? "✓" : i + 1}</span>
       <div><h3>${esc(l.title)}${mark ? " <span style=\"color:var(--warn)\">★</span>" : ""}</h3>
-      <div class="meta">${lvl(l.level || 1)}<span class="chip">${l.mins || 10}분</span>${articleOf(t, l) ? `<span class="chip">≡ 상세</span>` : ""}${l.checked ? `<span class="chip ok">✓ 검증</span>` : ""}${l.demo && l.demo.type === "sim" ? `<span class="chip">⚗ 실험</span>` : ""}${qz && qz.t ? `<span class="chip c">퀴즈 최고 ${qz.best || 0}%</span>` : ""}${qz && qz.wrong && qz.wrong.length ? `<span class="chip" style="color:var(--bad)">오답 ${qz.wrong.length}</span>` : ""}</div></div>
+      <div class="meta">${lvl(l.level || 1)}<span class="chip">${l.mins || 10}분</span>${articleOf(t, l) ? `<span class="chip">≡ 상세</span>` : ""}${l.checked ? `<span class="chip ok">✓ 검증</span>` : ""}${l.demo && l.demo.type === "sim" ? `<span class="chip">⚗ 실험</span>` : ""}${qz && qz.best != null ? `<span class="chip c">퀴즈 최고 ${qz.best}%</span>` : ""}${qz && qz.wrong && qz.wrong.length ? `<span class="chip" style="color:var(--bad)">오답 ${qz.wrong.length}</span>` : ""}</div></div>
       <span class="arrow" style="color:var(--c)">→</span></a>`;
         }).join("")}</div>
 </section>
@@ -1148,8 +1219,8 @@ ${(t.trends || []).length ? `<section class="sec wrap">
         if (has("s-quiz")) {
             quiz($("#quiz"), itemsOf(t, l), {
                 onAnswer: trackAnswer,
-                onDone: (score, total) => {
-                    if (total !== l.quiz.length) return; // wrong-only retry: no score record
+                onDone: (score, total, retry) => {
+                    if (retry) return; // wrong-only retry: no score record
                     const p = pct(score, total);
                     const cur = S.quiz[k] || { wrong: [] };
                     LAB.put("quiz", k, { ...cur, last: p, best: Math.max(cur.best || 0, p) });
@@ -1279,9 +1350,12 @@ ${sel ? `<section class="sec wrap" id="lab">
     PAGES.glossary = (q) => {
         const terms = allTerms().sort((a, b) => a.term.localeCompare(b.term, "ko"));
         let filter = LAB.tracks[q.get("t")] ? q.get("t") : "";
-        let mode = "list";
+        let review = q.get("review") === "1"; // flashcards due today only
+        let mode = review ? "card" : "list";
         let fcI = 0;
         let fcOrder = [];
+        const gk = (g) => `g:${g.term.toLowerCase()}`;
+        const dueN = () => terms.filter((g) => isDue(gk(g))).length;
         const app = $("#app");
         app.innerHTML = `
 <section class="band"><div class="wrap">
@@ -1291,13 +1365,30 @@ ${sel ? `<section class="sec wrap" id="lab">
 <section class="sec wrap">
   <div class="searchbar"><input id="gq" placeholder="용어, 영문, 설명 검색…" autocomplete="off"></div>
   <div class="filters" id="gf"></div>
-  <div class="tabs"><button type="button" data-mode="list" class="on">목록</button><button type="button" data-mode="card">플래시카드</button></div>
+  <div class="tabs"><button type="button" data-mode="list" class="${review ? "" : "on"}">목록</button><button type="button" data-mode="card" class="${review ? "on" : ""}">플래시카드</button><button type="button" class="chip" id="grev"></button></div>
   <div id="gout"></div>
 </section>`;
         const gq = $("#gq");
         const pool = () => {
             const s = gq.value.trim().toLowerCase();
-            return terms.filter((g) => (!filter || g.t.id === filter) && (!s || `${g.term} ${g.en || ""} ${plain(g.def)}`.toLowerCase().includes(s)));
+            return terms.filter((g) => (!filter || g.t.id === filter) && (!review || isDue(gk(g)))
+                && (!s || `${g.term} ${g.en || ""} ${plain(g.def)}`.toLowerCase().includes(s)));
+        };
+        const drawRev = () => {
+            const b = $("#grev");
+            b.classList.toggle("on", review);
+            b.textContent = `복습 대상만 · ${dueN()}장`;
+        };
+        $("#grev").onclick = () => { review = !review; fcOrder = []; drawRev(); draw(); };
+        // 알아요 / 몰라요 → Leitner box; the next card comes up
+        const rate = (ok) => {
+            const items = pool();
+            if (!items.length) return;
+            const g = items[fcOrder[fcI % items.length]];
+            LAB.put("srs", gk(g), srsNext(S.srs[gk(g)], ok, dayOf(Date.now())));
+            if (!review) fcI = (fcI + 1) % items.length; // in review mode the card leaves the pool instead
+            drawRev();
+            draw();
         };
         const drawFilters = () => {
             $("#gf").innerHTML = `<button type="button" class="chip ${filter ? "" : "on"}" data-f="">전체</button>`
@@ -1312,15 +1403,18 @@ ${sel ? `<section class="sec wrap" id="lab">
                 observe(out);
                 return;
             }
-            if (!items.length) { out.innerHTML = `<div class="empty">결과 없음</div>`; return; }
+            if (!items.length) { out.innerHTML = `<div class="empty">${review ? "오늘 복습할 카드가 없습니다 · 카드에서 알아요/몰라요를 누르면 일정이 잡힙니다" : "결과 없음"}</div>`; return; }
             if (fcOrder.length !== items.length) { fcOrder = items.map((_, i) => i); fcI = 0; }
             const g = items[fcOrder[fcI % items.length]];
+            const sr = S.srs[gk(g)];
             out.innerHTML = `<div class="fc"><div class="flip" id="fc" style="--c:${g.t.color}"><div class="flip-in">
-              <div class="flip-face"><span class="chip c">${g.t.icon} ${esc(g.t.name)}</span><h3>${esc(g.term)}</h3><span class="muted">${esc(g.en || "")}</span></div>
+              <div class="flip-face"><span class="chip c">${g.t.icon} ${esc(g.t.name)}</span><h3>${esc(g.term)}</h3><span class="muted">${esc(g.en || "")}</span>${sr ? `<small class="muted">상자 ${sr.box} · 다음 복습 ${esc(sr.due.slice(5))}</small>` : ""}</div>
               <div class="flip-face back"><p style="margin:0;font-size:18px">${fmt(g.def)}</p><a class="chip c" href="${lessonHref(g.t.id, g.l.id)}">${esc(g.l.title)} →</a></div>
             </div></div>
-            <div class="fc-ctl"><button type="button" class="btn small" data-fc="-1">←</button><span class="chip">${(fcI % items.length) + 1} / ${items.length}</span><button type="button" class="btn small" data-fc="1">→</button><button type="button" class="btn small" data-fc="s">섞기</button><span class="muted" style="font-size:12px">Space 뒤집기 · ←/→ 이동</span></div></div>`;
+            <div class="fc-ctl"><button type="button" class="btn small" data-rate="0">몰라요</button><button type="button" class="btn small primary" data-rate="1">알아요</button></div>
+            <div class="fc-ctl"><button type="button" class="btn small" data-fc="-1">←</button><span class="chip">${(fcI % items.length) + 1} / ${items.length}</span><button type="button" class="btn small" data-fc="1">→</button><button type="button" class="btn small" data-fc="s">섞기</button><span class="muted" style="font-size:12px">Space 뒤집기 · ←/→ 이동 · 1 몰라요 · 2 알아요</span></div></div>`;
             $("#fc").onclick = (e) => { if (!e.target.closest("a")) $("#fc").classList.toggle("on"); };
+            $$("[data-rate]").forEach((b) => { b.onclick = () => rate(b.dataset.rate === "1"); });
             $$("[data-fc]").forEach((b) => {
                 b.onclick = () => {
                     const v = b.dataset.fc;
@@ -1334,12 +1428,14 @@ ${sel ? `<section class="sec wrap" id="lab">
             if (e.key === " ") { e.preventDefault(); const f = $("#fc"); if (f) f.classList.toggle("on"); }
             if (e.key === "ArrowRight") $("[data-fc='1']")?.click();
             if (e.key === "ArrowLeft") $("[data-fc='-1']")?.click();
+            if (e.key === "1" || e.key === "2") rate(e.key === "2");
         });
         $$("[data-mode]").forEach((b) => {
             b.onclick = () => { mode = b.dataset.mode; $$("[data-mode]").forEach((x) => x.classList.toggle("on", x === b)); fcOrder = []; draw(); };
         });
         gq.addEventListener("input", () => { fcOrder = []; draw(); });
         drawFilters();
+        drawRev();
         draw();
     };
 
@@ -1390,8 +1486,49 @@ ${sel ? `<section class="sec wrap" id="lab">
             unsupported: "이 브라우저는 폴더 저장을 지원하지 않습니다 (Chrome/Edge 권장) · 다운로드 후 lab/my 에 덮어쓰기"
         }[Sync.s]);
         const saveLabel = () => Sync.api ? (Sync.dir ? "지금 저장" : "저장 폴더 연결") : "progress.js 다운로드";
+        const exam = { tracks: new Set(tracks.map((t) => t.id)), n: 20 };
+        const mmss = (ms) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, "0")}`;
+        // cross-track exam: items spread evenly over the chosen tracks, then a per-track score
+        const startExam = () => {
+            const pools = tracks.filter((t) => exam.tracks.has(t.id)).map((t) => shuffle(t.lessons.flatMap((l) => itemsOf(t, l))));
+            const items = [];
+            for (let k = 0; items.length < exam.n && pools.some((p) => p.length); k = (k + 1) % pools.length) if (pools[k].length) items.push(pools[k].pop());
+            if (!items.length) return toast("트랙을 하나 이상 고르세요");
+            const box = $("#examBox");
+            box.innerHTML = `<div id="exQ"></div><div id="exRes"></div>`;
+            let t0 = Date.now();
+            const log = [];
+            quiz($("#exQ"), shuffle(items), {
+                onAnswer: (it, ok) => {
+                    if (!log.length) $("#exRes").innerHTML = "";
+                    trackAnswer(it, ok);
+                    log.push({ key: it.key, ok });
+                },
+                onDone: () => {
+                    const by = {};
+                    const miss = {};
+                    log.forEach(({ key, ok }) => {
+                        const tid = key.split("/")[0];
+                        by[tid] = by[tid] || [0, 0];
+                        by[tid][1]++;
+                        if (ok) by[tid][0]++; else miss[key] = (miss[key] || 0) + 1;
+                    });
+                    const weak = Object.entries(miss).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => findLesson(k)).filter(Boolean);
+                    $("#exRes").innerHTML = `<div class="exam-res"><p class="eyebrow">소요 ${mmss(Date.now() - t0)}</p>
+                      <div class="track-bars">${tracks.filter((t) => by[t.id]).map((t) => { const [r, n] = by[t.id]; return `<a href="${trackHref(t.id)}" style="--c:${t.color}"><span>${t.icon}</span><div class="bar"><i data-w="${pct(r, n)}%"></i></div><span>${r}/${n}</span></a>`; }).join("")}</div>
+                      ${weak.length ? `<p class="muted" style="margin:14px 0 8px">다시 볼 강의</p><div class="filters">${weak.map((s) => `<a class="chip c" style="--c:${s.t.color}" href="${lessonHref(s.t.id, s.l.id)}">${s.t.icon} ${esc(s.l.title)}</a>`).join("")}</div>` : ""}</div>`;
+                    observe($("#exRes"));
+                    log.length = 0;
+                    t0 = Date.now(); // "다시 풀기" times from here
+                },
+                endBtn: ["새 모의고사", () => { draw(); $("#exam").scrollIntoView(); }]
+            });
+        };
         const draw = () => {
             const done = tracks.reduce((n, t) => n + trackDone(t), 0);
+            const due = dueItems();
+            const dueCards = Object.keys(S.srs).filter((k) => k.startsWith("g:") && isDue(k)).length;
+            const boxes = [1, 2, 3, 4, 5].map((b) => Object.entries(S.srs).filter(([k, v]) => !k.startsWith("g:") && v.box === b).length);
             const qs = Object.values(S.quiz).filter((x) => x.t && x.best != null && x.last != null);
             const avg = qs.length ? Math.round(qs.reduce((n, x) => n + x.best, 0) / qs.length) : 0;
             const wrongs = [];
@@ -1404,8 +1541,23 @@ ${sel ? `<section class="sec wrap" id="lab">
             app.innerHTML = `
 <section class="band"><div class="wrap">
   <div class="crumb"><a href="index.html">홈</a><span>›</span><span>내 학습</span></div>
-  <div class="row"><div class="big-ico">◎</div><div><p class="eyebrow">My Lab</p><h1>내 학습</h1><p>완료 ${done}/${lessonsN} · 평균 퀴즈 ${avg}% · 연속 ${streak()}일 · 오답 ${wrongs.length}</p></div>${ring(pct(done, lessonsN), 96)}</div>
+  <div class="row"><div class="big-ico">◎</div><div><p class="eyebrow">My Lab</p><h1>내 학습</h1><p>완료 ${done}/${lessonsN} · 평균 퀴즈 ${avg}% · 연속 ${streak()}일 · 오답 ${wrongs.length} · 복습 ${due.length}</p></div>${ring(pct(done, lessonsN), 96)}</div>
 </div></section>
+<section class="sec wrap" id="review">
+  <div class="sec-head"><div><p class="eyebrow">Review</p><h2>오늘 복습</h2></div>${due.length ? `<button type="button" class="btn small primary" id="revGo">${Math.min(20, due.length)}문제 복습 시작</button>` : ""}</div>
+  <div id="revBox"><div class="card reveal">
+    <p style="margin:0 0 10px">${due.length ? `복습 날짜가 된 문제 <b>${due.length}</b>개${due.length > 20 ? " · 한 번에 20개씩" : ""}` : "오늘 복습할 문제가 없습니다"}${dueCards ? ` · <a href="glossary.html?review=1">용어 카드 ${dueCards}장 →</a>` : ""}</p>
+    <p class="muted" style="margin:0;font-size:13px">퀴즈를 풀면 맞힌 문제는 1·2·4·8·16일 뒤, 틀린 문제는 다음 날 다시 나옵니다 (라이트너 상자, Leitner system) · 상자별 ${boxes.map((n, i) => `${i + 1}: ${n}`).join(" · ")}</p>
+  </div></div>
+</section>
+<section class="sec wrap" id="exam">
+  <div class="sec-head"><div><p class="eyebrow">Exam</p><h2>모의고사</h2></div><span class="muted">여러 트랙에서 고르게 섞어 출제</span></div>
+  <div class="card reveal" id="examBox">
+    <div class="filters">${tracks.map((t) => `<button type="button" class="chip ${exam.tracks.has(t.id) ? "on" : ""}" style="--c:${t.color}" data-ex="${t.id}">${t.icon} ${esc(t.name)}</button>`).join("")}</div>
+    <div class="btns" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${[10, 20, 30].map((n) => `<button type="button" class="chip ${exam.n === n ? "on" : ""}" data-exn="${n}">${n}문제</button>`).join("")}
+      <button type="button" class="btn small primary" id="exGo">시작 →</button></div>
+  </div>
+</section>
 <section class="sec wrap"><div class="me-grid">
   <div class="card reveal">
     <p class="eyebrow">Save & Sync</p><h3 style="margin:4px 0 8px">저장 · 동기화</h3>
@@ -1464,7 +1616,14 @@ ${sel ? `<section class="sec wrap" id="lab">
                 draw();
             };
             const retry = $("#retry");
-            if (retry) retry.onclick = () => { $("#wrongBox").innerHTML = `<div class="card" id="wq"></div>`; quiz($("#wq"), shuffle(wrongs), { onAnswer: trackAnswer }); };
+            if (retry) retry.onclick = () => { $("#wrongBox").innerHTML = `<div class="card" id="wq"></div>`; quiz($("#wq"), shuffle(wrongs), { onAnswer: trackAnswer, endBtn: ["오답노트 새로고침", draw] }); };
+            const rev = $("#revGo");
+            if (rev) rev.onclick = () => { $("#revBox").innerHTML = `<div class="card" id="rq"></div>`; quiz($("#rq"), due.slice(0, 20), { onAnswer: trackAnswer, endBtn: ["복습 목록 새로고침", () => { draw(); $("#review").scrollIntoView(); }] }); };
+            $$("[data-ex]").forEach((b) => {
+                b.onclick = () => { const id = b.dataset.ex; if (exam.tracks.has(id)) exam.tracks.delete(id); else exam.tracks.add(id); b.classList.toggle("on", exam.tracks.has(id)); };
+            });
+            $$("[data-exn]").forEach((b) => { b.onclick = () => { exam.n = +b.dataset.exn; $$("[data-exn]").forEach((x) => x.classList.toggle("on", x === b)); }; });
+            $("#exGo").onclick = startExam;
         };
         draw();
         LAB.onChange((_, why) => {
@@ -1475,7 +1634,10 @@ ${sel ? `<section class="sec wrap" id="lab">
     };
 
     /* ---------- boot ---------- */
+    const loaded = new Set();
     const load = (src) => new Promise((res) => {
+        if (loaded.has(src)) return res();
+        loaded.add(src);
         const s = document.createElement("script");
         s.src = src;
         s.onload = s.onerror = res;

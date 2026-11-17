@@ -686,7 +686,20 @@ print(list(g))                  # [] : 이미 끝난 제너레이터`
                     "두 스레드가 각각 한 번씩 증가시키는 경우, 둘 다 0 을 읽은 뒤 각자 1 을 쓰면 결과는 2 가 아니라 1 이다. 한 스레드의 증가가 사라졌으므로 이를 갱신 손실(lost update)이라 한다. 10만 번씩 반복하면 이런 겹침이 수없이 일어나 결과가 실행마다 달라진다. 아래 데모가 이 순서를 한 단계씩 보여 준다.",
                     "경쟁 조건과 데이터 경쟁은 같은 말이 아니다. 데이터 경쟁은 '같은 메모리에 동시 접근, 하나 이상이 쓰기, 동기화 없음'이라는 좁은 정의다. 모든 접근을 원자 연산으로 바꿔 데이터 경쟁을 없애도, '잔액을 확인하고(check) 출금한다(act)'처럼 두 단계 사이에 다른 스레드가 끼어드는 경쟁 조건은 남을 수 있다. 불변식(invariant)을 지키려면 두 단계를 하나의 임계 구역(critical section)으로 묶어야 한다."
                 ],
-                demo: "lesson"
+                demo: {
+                    type: "seq",
+                    actors: ["스레드 A", "counter (메모리)", "스레드 B"],
+                    msgs: [
+                        { from: 1, to: 0, label: "load → 0", text: "A: `counter` 를 레지스터로 읽음 (0)" },
+                        { from: 1, to: 2, label: "load → 0", text: "A 가 쓰기 전에 B 도 읽음 → 둘 다 0" },
+                        { from: 0, to: 0, label: "reg = 0 + 1", text: "`counter++` 는 읽기·더하기·쓰기 **3단계** · A 레지스터에서 1" },
+                        { from: 2, to: 2, label: "reg = 0 + 1", text: "B 도 자기 레지스터에서 1" },
+                        { from: 0, to: 1, label: "store 1", text: "A 가 1 저장" },
+                        { from: 2, to: 1, label: "store 1", text: "B 도 1 저장 → A 의 증가가 사라짐 (**lost update**) · 기대값 2" },
+                        { from: 0, to: 1, label: "fetch_add(1): 0→1", text: "해결 (다시 0 에서): 원자적(atomic) `fetch_add` · 읽기~쓰기가 분할 불가" },
+                        { from: 2, to: 1, label: "fetch_add(1): 1→2", text: "B 는 A 의 결과 위에서 실행 → 최종 2 · 뮤텍스(mutex)로 감싸도 같은 효과" }
+                    ]
+                }
             },
             {
                 h: "왜 C/C++ 은 데이터 경쟁을 UB 로 정했나",

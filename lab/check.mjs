@@ -248,6 +248,7 @@ for (const [tid, map] of Object.entries(LAB.articles || {})) {
 
 // every sim is listed on the labs page
 LAB.SIM_NAMES.forEach((n) => { if (!(LAB.SIM_INFO || {})[n]) err("anim.js", `SIM_INFO missing "${n}"`); });
+Object.entries(LAB.SIM_INFO || {}).forEach(([n, info]) => { if (!LAB.SIM_TAGS.includes(info[2])) err("anim.js", `SIM_INFO "${n}" tag "${info[2]}" not in SIM_TAGS`); });
 
 // bit labs math: ALU flags, float encode vs the platform, CRC check values
 {
@@ -293,6 +294,68 @@ LAB.SIM_NAMES.forEach((n) => { if (!(LAB.SIM_INFO || {})[n]) err("anim.js", `SIM
     assert.ok(P.uartRx(P.uartFrame(0x41), 0.05).ok && !P.uartRx(P.uartFrame(0x41), 0.06).stopOk, "uart sampling drift → framing error");
     assert.equal(P.canArb([0x123, 0x120, 0x7ff]).winner, 1, "can lowest id wins");
     assert.equal(P.canStuff([0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]).stuffed.join(","), "5,12", "can stuff bit after 5 equal bits");
+    // I2C: address byte = addr << 1 | R/W, 9 clocks per byte, last read byte NACKed by the master
+    const bytes = (f) => f.filter((x) => x.k === "byte").map((x) => x.v);
+    const wr = P.i2cTxn({ addr: 0x68, op: "write", reg: 0x6b, data: [0x00] });
+    assert.deepEqual([...bytes(wr)], [0xd0, 0x6b, 0x00], "i2c write bytes");
+    const rd = P.i2cTxn({ addr: 0x68, op: "read", reg: 0x75, data: [0x68, 0x01] });
+    assert.deepEqual([...bytes(rd)], [0xd0, 0x75, 0xd1, 0x68, 0x01], "i2c read: addr+W, reg, Sr, addr+R, data");
+    assert.equal(rd.filter((x) => x.k === "ack").map((x) => x.v).join(""), "00001", "i2c read: master NACKs the last byte");
+    assert.equal(P.i2cTxn({ addr: 0x50, absent: true }).map((x) => x.k + (x.k === "ack" ? x.v : "")).join(" "), "S byte ack1 P", "i2c no device: NACK then STOP");
+    const iw = P.i2cWave(rd);
+    assert.ok(iw.signals.every((s) => s.wave.length === iw.signals[0].wave.length), "i2c wave rows same length");
+    assert.equal(iw.signals[0].wave.length, 1 + 1 + 3 + 5 * 18 + 3 + 1, "i2c wave slots: idle, S, Sr, 5 bytes × 9 bits × 2, P, idle");
+    // SPI: modes 0/3 and 1/2 sample on the same edge; mode 1 master vs mode 0 slave races on every sample
+    assert.ok(P.spiEdges(0xa5, 0, 0).ok && P.spiEdges(0xa5, 0, 3).ok && P.spiEdges(0xa5, 1, 2).ok && P.spiEdges(0xa5, 3, 0).ok, "spi compatible modes");
+    const sp = P.spiEdges(0xa5, 1, 0);
+    assert.ok(sp.race && sp.samples.every((s) => s.race), "spi mode 1 → 0: every sample on a data change");
+    assert.equal(sp.readNew.v, 0xa5, "spi race: value after the change is the byte");
+    assert.equal(sp.readOld.bits, "?1010010", "spi race: value before the change is one bit late");
+    assert.equal(P.spiEdges(0x01, 0, 0, true).readOld.v, 0x01, "spi LSB first");
+    assert.ok(P.spiWave(0xa5, 2, 2).spec.signals.every((s) => s.wave.length === 38), "spi wave rows same length");
+}
+
+// system labs: Cortex-M exception timing (TRM: entry 12, return 12, tail-chain 6), count++ races
+{
+    const Y = LAB.sys;
+    const run = (irqs, pre = 4) => Y.nvicRun(irqs.map(([prio, at, dur]) => ({ prio, at, dur })), { pre });
+    const one = run([[8, 10, 20]]);
+    assert.deepEqual([one.irqs[0].start, one.irqs[0].end, one.cycles], [22, 42, 55], "nvic single: 12 in, 20 run, 12 out, then main");
+    const same = run([[6, 10, 20], [6, 15, 10]]);
+    assert.deepEqual([same.irqs[1].start, same.tail], [48, 1], "nvic same priority: waits, then tail-chains (6)");
+    const pe = run([[2, 10, 30], [1, 30, 10]]);
+    assert.deepEqual([pe.irqs[1].start, pe.irqs[0].end], [42, 86], "nvic preemption: B in at 42, A resumes after B's return");
+    const g0 = run([[2, 10, 30], [1, 30, 10]], 0);
+    assert.deepEqual([g0.irqs[1].start, g0.tail], [58, 1], "nvic 0 preemption bits: no nesting, tail-chain");
+    const late = run([[2, 10, 10], [1, 14, 10]]);
+    assert.deepEqual([late.irqs[1].start, late.irqs[1].lat, late.irqs[0].start, late.lates], [22, 8, 38, 1], "nvic late arrival takes over the stacking");
+    const r1 = Y.raceRun(["A", "B", "A", "B", "A", "B"], "plain", 1);
+    assert.deepEqual([r1.mem, r1.lost], [1, 1], "race: interleaved count++ loses one update");
+    assert.equal(Y.raceRun(["A", "B", "A", "B", "A", "B"], "mutex", 1).mem, 2, "race: mutex");
+    assert.equal(Y.raceRun(["A", "B"], "atomic", 1).mem, 2, "race: atomic");
+    assert.equal(Y.raceRun(["A", "A", "A", "B", "B", "B"], "plain", 1).mem, 2, "race: no overlap, no loss");
+    assert.equal(Y.raceRun(["A", "B"], "plain", 1, false).trace.length, 2, "race: manual stepping stops with the schedule");
+    for (let m = 0; m < 1 << 10; m++) { // every interleaving of 2 × (lock load add store unlock): mutex never loses, never hangs
+        const r = Y.raceRun(Array.from({ length: 10 }, (_, i) => ((m >> i) & 1 ? "A" : "B")), "mutex", 1);
+        assert.ok(r.mem === 2 && r.th.A.pc === 5 && r.th.B.pc === 5, `race: mutex schedule ${m}`);
+    }
+}
+
+// quantization (article example) and graph traversal
+{
+    const q = LAB.num.quant([-1, 0, 0.5, 3], 8, "asym");
+    assert.deepEqual([q.z, ...q.q], [64, 0, 64, 96, 255], "quant asym uint8: z=64, q=[0 64 96 255]");
+    assert.ok(Math.abs(q.s - 4 / 255) < 1e-12 && Math.abs(q.deq[2] - 0.50196) < 1e-4, "quant scale and dequant");
+    const sq = LAB.num.quant([-1, 0.5, 1], 8, "sym");
+    assert.deepEqual([...sq.q], [-127, 64, 127], "quant sym int8: 0.5·127 = 63.5 → 64 (half to even)");
+    const o = LAB.num.quant([0.05, -0.08, 0.1, 10], 8, "sym");
+    assert.equal(new Set(o.q.slice(0, 3)).size, 2, "quant outlier squeezes small weights into a few integers");
+    const D = LAB.ds;
+    assert.equal(D.graphRun(D.GRAPH0, "bfs", "A").order.join(""), "ABCDEF", "bfs order");
+    assert.equal(D.graphRun(D.GRAPH0, "bfs", "D").order.join(""), "DBCFAE", "bfs from D");
+    assert.equal(D.graphRun(D.GRAPH0, "dfs", "A").order.join(""), "ABDCEF", "dfs order");
+    assert.equal(JSON.stringify(D.graphRun(D.GRAPH0, "dijkstra", "A").dist), JSON.stringify({ A: 0, B: 4, C: 1, D: 5, E: 4, F: 8 }), "dijkstra distances");
+    assert.equal(D.graphRun(D.GRAPH0, "topo").order.join(""), "ABCDEF", "kahn order");
 }
 
 // AI labs: BPE merges (Sennrich et al. 2016 toy corpus), similarity ranking
@@ -382,6 +445,18 @@ assert.equal(m.days["2026-01-01"], 3, "days max");
 const r = LAB.merge({ resetAt: 25, lessons: {} }, { lessons: { "a/x": { done: true, t: 10 }, "a/z": { done: true, t: 30 } } });
 assert.ok(!r.lessons["a/x"] && r.lessons["a/z"], "reset drops older");
 assert.equal(LAB.stable({ b: 1, a: { d: 1, c: 2 } }), LAB.stable({ a: { c: 2, d: 1 }, b: 1 }), "stable key order");
+assert.equal(LAB.merge({ srs: { "a/x#0": { box: 2, due: "2026-01-03", t: 5 } } }, { srs: { "a/x#0": { box: 1, due: "2026-01-02", t: 9 } } }).srs["a/x#0"].box, 1, "srs merges newest");
+assert.equal(Object.keys(LAB.merge({ lessons: {} }, null).srs).length, 0, "old progress files without srs");
+
+// spaced repetition: right → next box (1, 2, 4, 8, 16 days, capped), wrong → box 1 tomorrow; month/year rollover
+{
+    const n = LAB.srsNext;
+    assert.deepEqual({ ...n(null, true, "2026-11-17") }, { box: 1, due: "2026-11-18" }, "first right");
+    assert.deepEqual({ ...n({ box: 1 }, true, "2026-11-17") }, { box: 2, due: "2026-11-19" }, "box 2: 2 days");
+    assert.deepEqual({ ...n({ box: 4 }, true, "2026-12-20") }, { box: 5, due: "2027-01-05" }, "box 5: 16 days, year rollover");
+    assert.deepEqual({ ...n({ box: 5 }, true, "2026-02-20") }, { box: 5, due: "2026-03-08" }, "box capped at 5, February");
+    assert.deepEqual({ ...n({ box: 4 }, false, "2026-11-30") }, { box: 1, due: "2026-12-01" }, "wrong: box 1, tomorrow");
+}
 
 // --links: every ref url must answer 2xx/3xx (some publishers block bots with 403: warn only)
 if (links) {

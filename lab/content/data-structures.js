@@ -968,7 +968,7 @@ print(" ".join(n for n, _ in sorted(rows, key=lambda r: r[1])))` }, answer: ["a 
             level: 3,
             mins: 18,
             pre: ["data-structures/ds-ring", "data-structures/ds-heap"],
-            checked: "2026-11-16",
+            checked: "2026-11-17",
             key: [
                 "그래프(graph) = 정점(vertex) + 간선(edge) · 도로망, 빌드 의존성, 상태 공간",
                 "인접 리스트(adjacency list) 메모리 O(V+E) · 인접 행렬(adjacency matrix) O(V²) · 희소하면 리스트",
@@ -982,36 +982,7 @@ print(" ".join(n for n, _ in sorted(rows, key=lambda r: r[1])))` }, answer: ["a 
                 { term: "위상 정렬", en: "Topological sort", def: "DAG 의 정점을 '의존 대상이 먼저' 순서로 · Kahn: 진입 차수 0 인 정점을 큐로 꺼냄" },
                 { term: "Dijkstra + 힙", en: "Dijkstra's algorithm with a binary heap", def: "음수 없는 가중치 최단 경로 · 가장 가까운 미확정 정점을 힙에서 꺼내 확정 · O((V+E) log V)" }
             ],
-            demo: {
-                type: "steps",
-                nodes: [
-                    { id: "A", label: "A", sub: "출발", x: 0, y: 1 },
-                    { id: "B", label: "B", x: 1, y: 0 },
-                    { id: "C", label: "C", x: 1, y: 2 },
-                    { id: "D", label: "D", x: 2, y: 1 },
-                    { id: "E", label: "E", x: 2, y: 2 },
-                    { id: "F", label: "F", sub: "목표", x: 3, y: 1 }
-                ],
-                edges: [
-                    { from: "A", to: "B", both: true },
-                    { from: "A", to: "C", both: true },
-                    { from: "B", to: "D", both: true },
-                    { from: "C", to: "D", both: true },
-                    { from: "C", to: "E", both: true },
-                    { from: "D", to: "F", both: true },
-                    { from: "E", to: "F", both: true }
-                ],
-                steps: [
-                    { on: ["A"], text: "BFS 시작: `dist[A] = 0`, 큐 = [A] · 방문 표시는 큐에 **넣을 때**" },
-                    { on: ["A", "A>B", "A>C", "B", "C"], text: "A 꺼냄 → 이웃 B, C 를 거리 1 로 표시하고 넣음 · 큐 = [B, C]" },
-                    { on: ["B", "B>D", "D"], text: "B 꺼냄 → D (거리 2) · A 는 이미 방문 · 큐 = [C, D]" },
-                    { on: ["C", "C>E", "E"], text: "C 꺼냄 → D 는 이미 표시됨, E 만 추가 (거리 2) · 큐 = [D, E]" },
-                    { on: ["D", "D>F", "F"], text: "D 꺼냄 → F (거리 3) · 큐 = [E, F]" },
-                    { on: ["E", "E>F"], text: "E 꺼냄 → F 는 이미 방문 · 큐 = [F] → F 꺼내면 끝" },
-                    { on: ["A", "A>B", "B", "B>D", "D", "D>F", "F"], text: "parent 를 거꾸로 따라가면 A → B → D → F (간선 3개) · 전체 O(V+E)" },
-                    { on: ["A", "B", "C", "D", "E", "F", "A>B", "B>D", "C>D", "C>E", "E>F"], text: "DFS(스택·재귀)라면 A → B → D → C → E → F 로 한 갈래를 끝까지 · 최단 경로 보장 없음" }
-                ]
-            },
+            demo: { type: "sim", name: "graph", algo: "bfs", src: "A" },
             code: [
                 {
                     lang: "python",
@@ -1141,7 +1112,8 @@ def dfs(u):
             dfs(v)
 dfs("A")
 print(" ".join(out))` }, answer: ["A B D C E"], why: "B 로 끝까지(D) 들어갔다가 돌아와 C · D 는 이미 방문이라 E 만" },
-                { type: "order", q: "인접 리스트 A: [D, B], B: [E], D: [C, E], C: [F], E: [F] 에서 A 부터 BFS 로 방문(꺼내는) 순서", items: ["A", "D", "B", "C", "E", "F"], why: "이웃은 리스트 순서대로 넣음 · 1층 D, B → 2층 C, E (E 는 D 가 먼저 넣음) → 3층 F" }
+                { type: "order", q: "인접 리스트 A: [D, B], B: [E], D: [C, E], C: [F], E: [F] 에서 A 부터 BFS 로 방문(꺼내는) 순서", items: ["A", "D", "B", "C", "E", "F"], why: "이웃은 리스트 순서대로 넣음 · 1층 D, B → 2층 C, E (E 는 D 가 먼저 넣음) → 3층 F" },
+                { type: "text", q: "무방향 간선 A–B, A–C, B–D, C–D, C–E, D–F, E–F. 이웃을 알파벳 순으로 보는 DFS 를 A 에서 시작한 방문 순서는? (공백 없이)", answer: ["ABDCEF"], why: "A → B → D(B 의 다음 이웃) → C(D 의 이웃 중 미방문 첫째) → E → F · 한 갈래를 끝까지 · 실험에서 DFS 로 확인" }
             ],
             refs: [
                 { title: "A note on two problems in connexion with graphs", by: "Dijkstra", year: 1959, url: "https://doi.org/10.1007/BF01386390", kind: "paper" },

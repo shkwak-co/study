@@ -396,7 +396,7 @@ while (x) { x &= x - 1; n++; }  /* 1 비트 수만큼만 */
             level: 2,
             mins: 14,
             pre: ["embedded/mcu", "data-structures/ds-ring"],
-            checked: "2026-11-16",
+            checked: "2026-11-17",
             key: [
                 "이벤트 → 플래그 → NVIC → CPU 가 하던 일 저장(context save) → ISR",
                 "ISR 은 **짧게**: 플래그 지우고, 데이터 넘기고, 끝",
@@ -409,34 +409,7 @@ while (x) { x &= x - 1; n++; }  /* 1 비트 수만큼만 */
                 { term: "Tail-chaining", def: "ISR 끝나자마자 다음 대기 ISR 로 바로 이동 (복원/저장 생략)" },
                 { term: "인터럽트 지연", en: "Interrupt latency", def: "이벤트 → ISR 첫 명령까지 · Cortex-M4 최대 12 사이클 (0 대기 상태 메모리)" }
             ],
-            demo: {
-                type: "steps",
-                nodes: [
-                    { id: "per", label: "타이머", sub: "overflow", x: 0, y: 0 },
-                    { id: "nvic", label: "NVIC", sub: "우선순위 비교", x: 1, y: 0 },
-                    { id: "cpu", label: "CPU", sub: "main 실행 중", x: 2, y: 0 },
-                    { id: "stk", label: "스택", sub: "8 레지스터", x: 3, y: 0 },
-                    { id: "isr", label: "TIM2_IRQHandler", sub: "ISR", x: 3, y: 1 },
-                    { id: "ret", label: "복귀", sub: "EXC_RETURN", x: 2, y: 1 }
-                ],
-                edges: [
-                    { from: "per", to: "nvic", label: "IRQ 28" },
-                    { from: "nvic", to: "cpu", label: "선점" },
-                    { from: "cpu", to: "stk", label: "push" },
-                    { from: "stk", to: "isr" },
-                    { from: "isr", to: "ret" },
-                    { from: "ret", to: "cpu", label: "pop" }
-                ],
-                steps: [
-                    { on: ["per"], text: "타이머 카운터 오버플로 → **UIF 플래그** set" },
-                    { on: ["per>nvic", "nvic"], text: "NVIC: IRQ 대기(pending) · 현재 우선순위보다 높은가?" },
-                    { on: ["nvic>cpu", "cpu"], text: "높음 → 현재 명령 마치고 예외 진입(exception entry)" },
-                    { on: ["cpu>stk", "stk"], text: "하드웨어가 R0–R3, R12, LR, PC, xPSR **자동 저장**(stacking)" },
-                    { on: ["stk>isr", "isr"], text: "벡터 테이블(vector table)의 ISR 주소로 점프 · 플래그 클리어" },
-                    { on: ["isr>ret", "ret"], text: "`bx lr` (EXC_RETURN) · 대기 IRQ 있으면 tail-chain" },
-                    { on: ["ret>cpu", "cpu"], text: "레지스터 복원(unstacking) · 중단 지점부터 main 계속" }
-                ]
-            },
+            demo: { type: "sim", name: "nvic", preset: "preempt" },
             code: [
                 {
                     lang: "c",
@@ -511,7 +484,9 @@ do { hi = ms_hi; lo = ms_lo; } while (hi != ms_hi); // 재확인 루프` },
                 { type: "num", q: "`__NVIC_PRIO_BITS = 4` 칩에서 `NVIC_SetPriority(TIM2_IRQn, 5)` 가 IPR 바이트에 쓰는 값은? (10진 또는 0x)", answer: 80, why: "구현 비트는 상위 니블 → `5 << (8 − 4)` = `0x50` = 80" },
                 { type: "num", q: "115200 baud, 8N1 UART 의 바이트 간격은 몇 µs?", answer: 86.8, tol: 0.1, unit: "µs", why: "시작 + 데이터 8 + 정지 = 10bit · 10 / 115200 s ≈ 86.8 µs · FIFO 가 없으면 이 안에 DR 을 읽어야 함" },
                 { type: "num", q: "Cortex-M4F 에서 FPU 문맥까지 쌓는 예외 프레임은 몇 바이트?", answer: 104, unit: "B", why: "기본 8워드 + S0–S15 · FPSCR · 예약 1워드 = 26워드 × 4 B" },
-                { type: "order", q: "타이머 오버플로에서 ISR 첫 명령까지 순서", items: ["주변장치 플래그 set (UIF)", "NVIC 에서 pending", "현재 실행 우선순위와 비교", "8워드 스태킹 + 벡터 읽기", "LR ← EXC_RETURN, ISR 시작"], why: "플래그 → pending → 선점 판단 → 하드웨어 진입 · 스태킹과 벡터 인출은 병렬로 진행" }
+                { type: "order", q: "타이머 오버플로에서 ISR 첫 명령까지 순서", items: ["주변장치 플래그 set (UIF)", "NVIC 에서 pending", "현재 실행 우선순위와 비교", "8워드 스태킹 + 벡터 읽기", "LR ← EXC_RETURN, ISR 시작"], why: "플래그 → pending → 선점 판단 → 하드웨어 진입 · 스태킹과 벡터 인출은 병렬로 진행" },
+                { type: "num", q: "우선순위가 같은 IRQ A(사이클 10 에 요청, 실행 20 사이클)와 B(사이클 15 에 요청). 0 대기 상태 Cortex-M4 에서 B 의 ISR 첫 명령은 몇 번째 사이클? (진입 12, tail-chain 6)", answer: 48, why: "A: 10+12=22 시작, 42 끝 · B 는 같은 순위라 기다렸다가 복귀 없이 tail-chain 6 → 48 · 실험의 '같은 순위' 예제" },
+                { type: "num", q: "tail-chaining 한 번이 아끼는 사이클은? (복귀 12, 진입 12, tail-chain 6)", answer: 18, why: "복귀 12 + 다시 진입 12 = 24 대신 6 → 18 사이클 절약 · Cortex-M4 TRM 3.9.1 수치" }
             ],
             refs: [
                 { title: "Cortex-M4 Devices Generic User Guide", by: "Arm", year: 2010, url: "https://documentation-service.arm.com/static/5f2ac4ab60a93e65927bbdbf", kind: "doc" },

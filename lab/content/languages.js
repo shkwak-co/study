@@ -687,7 +687,7 @@ with ProcessPoolExecutor() as ex:
             level: 3,
             mins: 16,
             pre: ["languages/cpp-raii", "languages/python-internals"],
-            checked: "2026-11-16",
+            checked: "2026-11-17",
             key: [
                 "`count++` = 읽기 → 더하기 → 쓰기 · 사이에 끼어들면 **lost update**",
                 "C/C++ 에서 비원자(non-atomic) 변수의 데이터 경쟁(data race)은 **UB** · Rust 는 컴파일 거부",
@@ -700,20 +700,7 @@ with ProcessPoolExecutor() as ex:
                 { term: "뮤텍스 vs 원자 연산", en: "Mutex vs atomic operation", def: "구간 전체 상호배제 / 변수 하나의 분할 불가 RMW (`fetch_add`)" },
                 { term: "협력형 전환", en: "Cooperative multitasking", def: "async 는 `await` 지점에서만 전환 · 블로킹 호출은 루프 전체를 멈춤" }
             ],
-            demo: {
-                type: "seq",
-                actors: ["스레드 A", "counter (메모리)", "스레드 B"],
-                msgs: [
-                    { from: 1, to: 0, label: "load → 0", text: "A: `counter` 를 레지스터로 읽음 (0)" },
-                    { from: 1, to: 2, label: "load → 0", text: "A 가 쓰기 전에 B 도 읽음 → 둘 다 0" },
-                    { from: 0, to: 0, label: "reg = 0 + 1", text: "`counter++` 는 읽기·더하기·쓰기 **3단계** · A 레지스터에서 1" },
-                    { from: 2, to: 2, label: "reg = 0 + 1", text: "B 도 자기 레지스터에서 1" },
-                    { from: 0, to: 1, label: "store 1", text: "A 가 1 저장" },
-                    { from: 2, to: 1, label: "store 1", text: "B 도 1 저장 → A 의 증가가 사라짐 (**lost update**) · 기대값 2" },
-                    { from: 0, to: 1, label: "fetch_add(1): 0→1", text: "해결 (다시 0 에서): 원자적(atomic) `fetch_add` · 읽기~쓰기가 분할 불가" },
-                    { from: 2, to: 1, label: "fetch_add(1): 1→2", text: "B 는 A 의 결과 위에서 실행 → 최종 2 · 뮤텍스(mutex)로 감싸도 같은 효과" }
-                ]
-            },
+            demo: { type: "sim", name: "race", mode: "plain", n: 1 },
             code: [
                 {
                     lang: "cpp",
@@ -813,7 +800,8 @@ total += local;                          // 스레드당 1번` },
                 { type: "order", q: "출력되는 줄을 순서대로", code: { lang: "python", src: "async def fetch(name, delay):\n    print(f\"{name} 시작\")\n    await asyncio.sleep(delay)\n    print(f\"{name} 끝\")\n    return delay\n\nasync def main():\n    print(await asyncio.gather(fetch(\"A\", 1), fetch(\"B\", 2)))\n\nasyncio.run(main())" }, items: ["A 시작", "B 시작", "A 끝", "B 끝", "[1, 2]"], why: "A 가 `await` 에서 양보하자 루프가 B 를 시작 · 1초 뒤 A, 2초 뒤 B 재개 · 결과는 인자 순서" },
                 { type: "text", q: "출력은?", code: { lang: "python", src: "balance = 100\n\nasync def withdraw(amount):\n    global balance\n    if balance >= amount:\n        await asyncio.sleep(0)\n        balance -= amount\n\nasync def main():\n    await asyncio.gather(withdraw(80), withdraw(80))\n    print(balance)\n\nasyncio.run(main())" }, answer: ["-60"], why: "둘 다 100 을 보고 확인 통과 → `await` 에서 전환 → 둘 다 출금 · 단일 스레드여도 `await` 사이는 경쟁" },
                 { type: "num", q: "초기값 0, 두 스레드가 `count++` (load → add → store) 를 **각 1번** 할 때 나올 수 있는 최솟값은?", answer: 1, why: "둘 다 0 을 읽고 각자 1 을 저장하면 1 · 하나의 증가가 사라지는 lost update" },
-                { type: "order", q: "release/acquire 로 데이터를 넘길 때 보장되는 순서대로", items: ["생산자: `data = 42`", "생산자: `ready.store(true, release)`", "소비자: `ready.load(acquire)` 가 true", "소비자: `data` 를 읽으면 42"], why: "release 이전의 쓰기는 그 값을 acquire 로 읽은 스레드에 모두 보임 (happens-before)" }
+                { type: "order", q: "release/acquire 로 데이터를 넘길 때 보장되는 순서대로", items: ["생산자: `data = 42`", "생산자: `ready.store(true, release)`", "소비자: `ready.load(acquire)` 가 true", "소비자: `data` 를 읽으면 42"], why: "release 이전의 쓰기는 그 값을 acquire 로 읽은 스레드에 모두 보임 (happens-before)" },
+                { type: "num", q: "두 스레드가 각자 `count++` (load → add → store) 를 **2번씩** 한다. 초기값 0 일 때 끼어들기 순서에 따라 나올 수 있는 최솟값은?", answer: 2, why: "4 가 아니라 2 까지 떨어짐 · A 가 0 을 읽은 채 멈추고 B 가 한 번 끝내면, A 의 쓰기(1)가 B 의 갱신을 덮고 이후 B 가 1 을 읽어 2 를 쓰는 식 · 모든 순서를 전수 탐색해 확인" }
             ],
             refs: [
                 { title: "How to Make a Multiprocessor Computer That Correctly Executes Multiprocess Programs", by: "Lamport", year: 1979, url: "https://lamport.azurewebsites.net/pubs/multi.pdf", kind: "paper" },

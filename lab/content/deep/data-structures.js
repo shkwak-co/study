@@ -790,7 +790,36 @@ print(quick(list(range(n)), lambda lo, hi: random.randint(lo, hi)))   # 24969`,
                     "방문 표시는 **넣을 때** 한다. 실험에서 D는 B와 C 둘 다의 이웃이다. 꺼낼 때 표시하면 B를 처리할 때 D를 넣고, C를 처리할 때 아직 표시 전인 D를 또 넣는다. 넣을 때 표시하면 각 정점이 큐에 정확히 한 번 들어간다.",
                     "비용은 정점마다 넣고 꺼내기 한 번(O(V))과 인접 리스트를 정점마다 한 번 훑기(무방향이면 항목 2E개, O(E))를 더한 O(V + E)다. 행렬이면 이웃 찾기가 정점마다 V칸이라 O(V²)이 된다."
                 ],
-                demo: "lesson",
+                demo: {
+                    type: "steps",
+                    nodes: [
+                        { id: "A", label: "A", sub: "출발", x: 0, y: 1 },
+                        { id: "B", label: "B", x: 1, y: 0 },
+                        { id: "C", label: "C", x: 1, y: 2 },
+                        { id: "D", label: "D", x: 2, y: 1 },
+                        { id: "E", label: "E", x: 2, y: 2 },
+                        { id: "F", label: "F", sub: "목표", x: 3, y: 1 }
+                    ],
+                    edges: [
+                        { from: "A", to: "B", both: true },
+                        { from: "A", to: "C", both: true },
+                        { from: "B", to: "D", both: true },
+                        { from: "C", to: "D", both: true },
+                        { from: "C", to: "E", both: true },
+                        { from: "D", to: "F", both: true },
+                        { from: "E", to: "F", both: true }
+                    ],
+                    steps: [
+                        { on: ["A"], text: "BFS 시작: `dist[A] = 0`, 큐 = [A] · 방문 표시는 큐에 **넣을 때**" },
+                        { on: ["A", "A>B", "A>C", "B", "C"], text: "A 꺼냄 → 이웃 B, C 를 거리 1 로 표시하고 넣음 · 큐 = [B, C]" },
+                        { on: ["B", "B>D", "D"], text: "B 꺼냄 → D (거리 2) · A 는 이미 방문 · 큐 = [C, D]" },
+                        { on: ["C", "C>E", "E"], text: "C 꺼냄 → D 는 이미 표시됨, E 만 추가 (거리 2) · 큐 = [D, E]" },
+                        { on: ["D", "D>F", "F"], text: "D 꺼냄 → F (거리 3) · 큐 = [E, F]" },
+                        { on: ["E", "E>F"], text: "E 꺼냄 → F 는 이미 방문 · 큐 = [F] → F 꺼내면 끝" },
+                        { on: ["A", "A>B", "B", "B>D", "D", "D>F", "F"], text: "parent 를 거꾸로 따라가면 A → B → D → F (간선 3개) · 전체 O(V+E)" },
+                        { on: ["A", "B", "C", "D", "E", "F", "A>B", "B>D", "C>D", "C>E", "E>F"], text: "DFS(스택·재귀)라면 A → B → D → C → E → F 로 한 갈래를 끝까지 · 최단 경로 보장 없음" }
+                    ]
+                },
                 list: [
                     "로봇 격자 경로 계획: 가중치 없는 4방향 격자에서 BFS는 목표까지 최단 칸 수를 준다. 목표에서 거꾸로 퍼뜨린 거리표는 어느 칸에서든 값이 줄어드는 쪽만 따라가면 되는 경로 지도가 된다",
                     "빌드 시스템: 파일 하나가 바뀌면 '이 파일을 쓰는 것' 방향 간선으로 BFS해 다시 빌드할 타깃을 모두 찾는다",
@@ -855,7 +884,7 @@ print(build_order(deps))  # ['main.c', 'util.h', 'main.o', 'util.c', 'util.o', '
                         ["(6,D)", "낡음 → 버림", "최종", "빔"]
                     ]
                 },
-                demo: { type: "sim", name: "astar" }
+                demo: { type: "sim", name: "graph", algo: "dijkstra", src: "A" }
             },
             {
                 h: "위상 정렬: 빌드 순서와 병렬성",

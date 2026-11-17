@@ -3552,6 +3552,648 @@
         cv.fit();
     };
 
+    /* ---------- round-5 labs: pure models (tested by check.mjs) ---------- */
+    const hex2 = (v) => `0x${(v & 0xff).toString(16).toUpperCase().padStart(2, "0")}`;
+
+    // I2C transaction (NXP UM10204). Each byte is 8 bits MSB first + a 9th clock where the receiver pulls SDA low (ACK) or leaves it high (NACK).
+    // write: S · addr+W · reg · data… · P      read: S · addr+W · reg · Sr · addr+R · data from the slave (master ACKs, NACKs the last) · P
+    // absent: nobody answers the address → NACK → master sends STOP. stretch: slave holds SCL low for that many slots before the first read byte.
+    function i2cTxn({ addr = 0x68, op = "write", reg = 0x6b, data = [0x00], absent = false, stretch = 0 } = {}) {
+        const f = [];
+        const byte = (v, by, label, text) => f.push({ k: "byte", v: v & 0xff, by, label, text });
+        const ack = (ok, by, text) => f.push({ k: "ack", v: ok ? 0 : 1, by, label: ok ? "A" : "N", text });
+        const a7 = addr & 0x7f;
+        f.push({ k: "S", by: "M", label: "S", text: "SCL High 동안 SDA ↓ = **START** · 버스 점유" });
+        byte(a7 << 1, "M", `${hex2(a7)}+W`, `주소 ${hex2(a7)} 를 왼쪽으로 1비트 + R/W=0 → \`${hex2(a7 << 1)}\` · MSB 먼저`);
+        if (absent) {
+            ack(false, "-", "아무도 SDA 를 당기지 않음 → 풀업 때문에 High = **NACK** · 주소가 틀렸거나 장치가 없음");
+            f.push({ k: "P", by: "M", label: "P", text: "마스터는 STOP 으로 포기 · 드라이버는 보통 `-ENXIO` / `HAL_ERROR`" });
+            return f;
+        }
+        ack(true, "S", "9번째 클럭에서 **슬레이브**가 SDA 를 Low 로 = ACK");
+        byte(reg, "M", `reg ${hex2(reg)}`, `레지스터 번호 ${hex2(reg)} (장치 안의 주소)`);
+        ack(true, "S", "슬레이브 ACK");
+        if (op === "write") {
+            data.forEach((d, i) => { byte(d, "M", hex2(d), `데이터 ${i + 1}: ${hex2(d)} · 마스터가 씀`); ack(true, "S", "슬레이브 ACK · 많은 장치가 레지스터 번호를 자동 증가"); });
+        } else {
+            f.push({ k: "Sr", by: "M", label: "Sr", text: "STOP 없이 다시 START = **반복 시작(repeated START)** · 버스를 놓지 않고 방향만 바꿈" });
+            byte((a7 << 1) | 1, "M", `${hex2(a7)}+R`, `같은 주소 + R/W=1 → \`${hex2((a7 << 1) | 1)}\``);
+            ack(true, "S", "슬레이브 ACK · 이제 SDA 는 슬레이브가 구동");
+            if (stretch) f.push({ k: "stretch", n: stretch, by: "S", label: "늘림", text: "슬레이브가 SCL 을 Low 로 붙잡음 = **클럭 스트레칭(clock stretching)** · 마스터는 SCL 이 실제로 올라갈 때까지 기다림" });
+            data.forEach((d, i) => {
+                const last = i === data.length - 1;
+                byte(d, "S", hex2(d), `읽은 데이터 ${i + 1}: ${hex2(d)} · **슬레이브**가 구동`);
+                ack(!last, "M", last ? "마지막 바이트는 마스터가 **NACK** → 슬레이브가 SDA 를 놓음" : "마스터 ACK = 더 읽겠다");
+            });
+        }
+        f.push({ k: "P", by: "M", label: "P", text: "SCL High 동안 SDA ↑ = **STOP** · 버스 해제" });
+        return f;
+    }
+    // fields → wave spec: 2 slots per bit (SCL low: SDA may change · SCL high: SDA must hold)
+    function i2cWave(f) {
+        let scl = "1";
+        let sda = "1";
+        let who = "z";
+        let fld = "z";
+        const wd = [];
+        const fd = [];
+        const steps = [];
+        const add = (c, d, by, label) => {
+            const from = scl.length;
+            scl += c; sda += d;
+            who += "=" + ".".repeat(c.length - 1); wd.push(by === "S" ? "슬레이브" : by === "M" ? "마스터" : "풀업");
+            fld += "=" + ".".repeat(c.length - 1); fd.push(label);
+            return from;
+        };
+        f.forEach((x) => {
+            let from;
+            if (x.k === "S") from = add("1", "0", x.by, x.label);
+            else if (x.k === "Sr") from = add("011", "110", x.by, x.label);
+            else if (x.k === "P") from = add("011", "001", x.by, x.label);
+            else if (x.k === "stretch") from = add("0".repeat(x.n), sda[sda.length - 1].repeat(x.n), x.by, x.label);
+            else if (x.k === "ack") from = add("01", `${x.v}${x.v}`, x.by, x.label);
+            else from = add("01".repeat(8), [...Array(8)].map((_, i) => ((x.v >> (7 - i)) & 1).toString().repeat(2)).join(""), x.by, x.label);
+            steps.push({ from, to: scl.length, tag: x.label, text: x.text });
+        });
+        scl += "1"; sda += "1"; who += "z"; fld += "z";
+        return { signals: [{ name: "SCL", wave: scl }, { name: "SDA", wave: sda }, { name: "필드", wave: fld, data: fd }, { name: "SDA 구동", wave: who, data: wd }], steps };
+    }
+
+    // SPI mode = CPOL·2 + CPHA. CPOL = idle clock level. Edge k (1..16, in half clock periods after CS↓) is a leading edge when k is odd.
+    // CPHA 0: the first bit is on the line at CS↓, sampled on leading edges, the next bit is shifted out on trailing edges.
+    // CPHA 1: bits are shifted out on leading edges and sampled on trailing edges.
+    // A slave samples on rising edges in modes 0 and 3, on falling edges in modes 1 and 2. If that is an edge where the master
+    // changes MOSI, the read is a race: the value just before (old) or just after (new) the change, depending on timing.
+    function spiEdges(byte, mMode, sMode, lsb = false) {
+        const bits = Array.from({ length: 8 }, (_, i) => (byte >> (lsb ? i : 7 - i)) & 1);
+        const cpol = mMode >> 1;
+        const cpha = mMode & 1;
+        const rising = (k) => (k % 2 === 1) !== (cpol === 1);
+        const dataAt = (t) => { // t: half periods since CS↓, not exactly on an edge
+            const i = cpha ? Math.floor((t - 1) / 2) : Math.floor(t / 2);
+            return t < 0 || i < 0 || i > 7 ? "x" : bits[i];
+        };
+        const changes = new Set(Array.from({ length: 8 }, (_, i) => (cpha ? 2 * i + 1 : 2 * i + 2)));
+        const sRise = sMode === 0 || sMode === 3;
+        const samples = [];
+        for (let k = 1; k <= 16; k++) {
+            if (rising(k) !== sRise) continue;
+            const race = changes.has(k);
+            samples.push({ k, rise: rising(k), race, old: dataAt(k - 0.5), now: dataAt(k + 0.5), v: race ? null : dataAt(k) });
+        }
+        const read = (pick) => {
+            const b = samples.map(pick);
+            const v = b.includes("x") ? null : b.reduce((acc, x, i) => acc | (x << (lsb ? i : 7 - i)), 0);
+            return { bits: b.map((x) => (x === "x" ? "?" : x)).join(""), v };
+        };
+        const race = samples.some((s) => s.race);
+        const readOld = read((s) => (s.race ? s.old : s.v));
+        const readNew = read((s) => (s.race ? s.now : s.v));
+        return { bits, cpol, cpha, rising, dataAt, changes, samples, race, readOld, readNew, ok: !race && readOld.v === (byte & 0xff) };
+    }
+    // wave spec: 2 slots per half period, CS↓ at slot 2, edge k at slot boundary 2 + 2k
+    function spiWave(byte, mMode, sMode, lsb) {
+        const R = spiEdges(byte, mMode, sMode, lsb);
+        const N = 38;
+        let cs = "", sck = "", mosi = "";
+        for (let s = 0; s < N; s++) {
+            const t = (s - 2) / 2 + 0.25;
+            const on = s >= 2 && s < 36;
+            cs += on ? "0" : "1";
+            const edges = t < 0 ? 0 : Math.min(16, Math.floor(t));
+            sck += String(R.cpol ^ (edges & 1));
+            const d = on ? R.dataAt(t) : "x";
+            mosi += d === "x" ? "x" : String(d);
+        }
+        const tag = (s) => (s.race ? "?" : String(s.v));
+        const steps = [{ from: 0, to: 3, tag: "CS↓", text: `CS Low = 선택 · 마스터 mode ${mMode} (CPOL=${R.cpol}, CPHA=${R.cpha}) · ${R.cpha ? "첫 엣지에서 첫 비트를 내보냄" : "첫 비트를 **첫 클럭 전에** 미리 내보냄"}` }]
+            .concat(R.samples.map((s, i) => ({
+                from: 2 * s.k + 1, to: 2 * s.k + 3, tag: `${i + 1}:${tag(s)}`,
+                text: s.race ? `슬레이브 샘플 ${i + 1} (${s.rise ? "↑" : "↓"}): 마스터가 **같은 엣지에서 MOSI 를 바꿈** → 경합 · 직전 ${s.old} / 직후 ${s.now}`
+                    : `슬레이브 샘플 ${i + 1} (${s.rise ? "↑" : "↓"}): MOSI 가 안정된 구간 → ${s.v}`
+            })))
+            .concat([{ from: 2, to: 36, tag: R.ok ? "OK" : "!", text: R.race ? `경합 ${R.samples.filter((s) => s.race).length}개 · 직전 값을 읽으면 \`${R.readOld.bits}\`, 직후 값이면 \`${R.readNew.bits}\` · 타이밍마다 달라짐` : `슬레이브가 읽은 비트 \`${R.readOld.bits}\` = ${hex2(R.readOld.v)} ${R.ok ? "✓" : "✗"}` }]);
+        return { R, spec: { signals: [{ name: "CS", wave: cs }, { name: "SCLK", wave: sck }, { name: "MOSI", wave: mosi }], steps } };
+    }
+    Object.assign(LAB.proto, { i2cTxn, i2cWave, spiEdges, spiWave });
+
+    // Cortex-M exception timing (Cortex-M4 TRM 3.9.1, zero wait state): entry ≤ 12 cycles, return 12 cycles, tail-chaining 6 cycles.
+    // Priority p (4 implemented bits, 0 = highest): the top `pre` bits are the group (preemption) priority, the rest the subpriority.
+    // Only a strictly higher group priority preempts; among pending ones the lowest (group, sub, IRQ number) goes first.
+    // Late arrival: a higher one that arrives during stacking takes over the vector; stacking is not restarted.
+    // ponytail: a pending IRQ that arrives during unstacking waits for the return to finish (real cores can abandon the pop); cycle loop, fine for a few hundred cycles
+    const NVIC_T = { entry: 12, exit: 12, tail: 6 };
+    function nvicRun(irqs, { bits = 4, pre = 4 } = {}) {
+        const shift = bits - pre;
+        const grp = (p) => p >> shift;
+        const q = irqs.map((x, i) => ({ name: x.name || "ABCDEFG"[i], prio: x.prio, at: x.at, dur: x.dur, left: x.dur, i, start: null, end: null }));
+        const order = (a, b) => grp(q[a].prio) - grp(q[b].prio) || q[a].prio - q[b].prio || a - b;
+        const pend = new Set();
+        const stack = [];
+        let phase = "run";
+        let cnt = 0;
+        let target = -1;
+        let exiting = -1;
+        const ctxGrp = () => (stack.length ? grp(q[stack[stack.length - 1]].prio) : Infinity);
+        const best = (limit) => [...pend].filter((i) => grp(q[i].prio) < limit).sort(order)[0];
+        const horizon = Math.max(...q.map((x) => x.at)) + q.reduce((n, x) => n + x.dur + 32, 0) + 8;
+        const cells = [];
+        let tail = 0;
+        let lates = 0;
+        for (let t = 0; t < horizon; t++) {
+            q.forEach((x) => { if (x.at === t) pend.add(x.i); });
+            if (phase === "run") {
+                const b = best(ctxGrp());
+                if (b !== undefined) { pend.delete(b); target = b; phase = "entry"; cnt = NVIC_T.entry; }
+            }
+            if (phase === "entry") {
+                const b = best(grp(q[target].prio));
+                if (b !== undefined && cnt > 1) { pend.delete(b); pend.add(target); target = b; lates++; } // late arrival
+                cells.push({ who: target, kind: "entry" });
+                if (--cnt === 0) { stack.push(target); q[target].start = t + 1; phase = "run"; }
+                continue;
+            }
+            if (phase === "tail" || phase === "exit") {
+                cells.push({ who: phase === "tail" ? target : exiting, kind: phase });
+                if (--cnt === 0) { if (phase === "tail") { stack.push(target); q[target].start = t + 1; } phase = "run"; }
+                continue;
+            }
+            if (!stack.length) { cells.push({ who: -1, kind: "run" }); continue; }
+            const top = stack[stack.length - 1];
+            cells.push({ who: top, kind: "run" });
+            if (--q[top].left === 0) {
+                q[top].end = t + 1;
+                stack.pop();
+                const b = best(ctxGrp());
+                if (b !== undefined) { pend.delete(b); target = b; phase = "tail"; cnt = NVIC_T.tail; tail++; } else { phase = "exit"; cnt = NVIC_T.exit; exiting = top; }
+            }
+        }
+        while (cells.length && cells[cells.length - 1].who === -1 && cells[cells.length - 2] && cells[cells.length - 2].who === -1) cells.pop();
+        const segs = [];
+        cells.forEach((c, t) => {
+            const s = segs[segs.length - 1];
+            if (s && s.who === c.who && s.kind === c.kind && s.to === t) s.to = t + 1; else segs.push({ ...c, from: t, to: t + 1 });
+        });
+        return {
+            segs, cycles: cells.length, tail, lates,
+            irqs: q.map(({ name, prio, at, dur, start, end }) => ({ name, prio, group: grp(prio), sub: prio & ((1 << shift) - 1), at, dur, start, end, lat: start == null ? null : start - at })),
+            overhead: cells.filter((c) => c.kind !== "run").length
+        };
+    }
+
+    // count++ as load / add / store in two threads, run in a given interleaving.
+    // mode "plain": lost updates possible · "mutex": lock … unlock (a blocked lock wastes the turn) · "atomic": one fetch_add
+    const RACE_OPS = { plain: ["load", "add", "store"], mutex: ["lock", "load", "add", "store", "unlock"], atomic: ["fetch_add"] };
+    // finish=false stops when the schedule runs out (manual stepping); otherwise the rest runs A then B
+    function raceRun(schedule, mode = "plain", n = 1, finish = true) {
+        const ops = Array.from({ length: n }, () => RACE_OPS[mode]).flat();
+        const th = { A: { pc: 0, reg: 0 }, B: { pc: 0, reg: 0 } };
+        let mem = 0;
+        let lock = null;
+        const trace = [];
+        const done = (w) => th[w].pc >= ops.length;
+        const blocked = (w) => ops[th[w].pc] === "lock" && lock && lock !== w;
+        const step = (w) => {
+            const T = th[w];
+            const op = ops[T.pc];
+            if (op === "lock" && lock && lock !== w) { trace.push({ w, op: "wait", mem, reg: T.reg }); return; }
+            if (op === "lock") lock = w;
+            else if (op === "unlock") lock = null;
+            else if (op === "load") T.reg = mem;
+            else if (op === "add") T.reg += 1;
+            else if (op === "store") mem = T.reg;
+            else if (op === "fetch_add") { T.reg = mem; mem += 1; }
+            T.pc++;
+            trace.push({ w, op, mem, reg: T.reg });
+        };
+        const sched = schedule.slice();
+        let guard = 0;
+        while (!(done("A") && done("B")) && (finish || sched.length) && guard++ < 1000) {
+            let w = sched.length ? sched.shift() : done("A") || blocked("A") ? "B" : "A"; // unscheduled rest: never spin on a held lock
+            if (done(w)) w = w === "A" ? "B" : "A";
+            step(w);
+        }
+        return { mem, expect: 2 * n, lost: 2 * n - mem, trace, ops, th };
+    }
+
+    // affine quantization (Jacob et al. 2018): x ≈ s·(q − z).
+    // asym: uint [0, 2^b − 1], range widened to include 0, z = round(−xmin/s) · sym: z = 0, q in ±(2^(b−1) − 1), s = max|x| / (2^(b−1) − 1)
+    // rne (round half to even, like np.round / torch.round) is shared with the float lab
+    function quant(values, bits = 8, scheme = "sym") {
+        let s, z, qmin, qmax;
+        if (scheme === "sym") {
+            qmax = 2 ** (bits - 1) - 1;
+            qmin = -qmax;
+            s = Math.max(...values.map(Math.abs)) / qmax || 1;
+            z = 0;
+        } else {
+            qmin = 0;
+            qmax = 2 ** bits - 1;
+            const lo = Math.min(0, ...values);
+            const hi = Math.max(0, ...values);
+            s = (hi - lo) / qmax || 1;
+            z = rne(-lo / s);
+        }
+        const q = values.map((x) => clamp(rne(x / s) + z, qmin, qmax));
+        const deq = q.map((v) => s * (v - z));
+        const err = values.map((x, i) => Math.abs(x - deq[i]));
+        return { s, z, qmin, qmax, q, deq, maxErr: Math.max(...err), meanErr: err.reduce((a, b) => a + b, 0) / (err.length || 1) };
+    }
+
+    // graph traversal frames: BFS (queue), DFS (stack, lazy: visited nodes are skipped when popped),
+    // Dijkstra (priority queue, lazy deletion), topological sort (Kahn, smallest ready node first). Neighbors in id order.
+    const GRAPH0 = {
+        nodes: { A: [0, 1], B: [1, 0], C: [1, 2], D: [2, 1], E: [2, 2], F: [3, 1] },
+        edges: [["A", "B", 4], ["A", "C", 1], ["B", "D", 1], ["C", "D", 5], ["C", "E", 3], ["D", "F", 3], ["E", "F", 6]]
+    };
+    function graphRun(g, algo, src = "A") {
+        const ids = Object.keys(g.nodes).sort();
+        const dir = algo === "topo";
+        const adj = Object.fromEntries(ids.map((v) => [v, []]));
+        g.edges.forEach(([u, v, w]) => { adj[u].push([v, w]); if (!dir) adj[v].push([u, w]); });
+        ids.forEach((v) => adj[v].sort((a, b) => (a[0] < b[0] ? -1 : 1)));
+        const order = [];
+        const dist = {};
+        const frames = [];
+        const snap = (o) => frames.push({ order: order.slice(), dist: { ...dist }, ...o });
+        if (algo === "bfs") {
+            const q = [src];
+            dist[src] = 0;
+            snap({ cur: null, front: q.slice(), text: `시작 ${src} 를 **큐**에 넣음 · 거리 0` });
+            while (q.length) {
+                const u = q.shift();
+                order.push(u);
+                const add = adj[u].map(([v]) => v).filter((v) => !(v in dist));
+                add.forEach((v) => { dist[v] = dist[u] + 1; q.push(v); });
+                snap({ cur: u, front: q.slice(), edges: add.map((v) => [u, v]), text: add.length ? `${u} 꺼냄 · 처음 보는 이웃 ${add.join(", ")} → 큐 뒤에 (거리 ${dist[u] + 1})` : `${u} 꺼냄 · 새 이웃 없음` });
+            }
+        } else if (algo === "dfs") {
+            const st = [src];
+            snap({ cur: null, front: st.slice(), text: `시작 ${src} 를 **스택**에 넣음` });
+            while (st.length) {
+                const u = st.pop();
+                if (order.includes(u)) { snap({ cur: u, front: st.slice(), skip: true, text: `${u} 는 이미 방문 → 건너뜀` }); continue; }
+                order.push(u);
+                dist[u] = order.length - 1;
+                const add = adj[u].map(([v]) => v).filter((v) => !order.includes(v));
+                st.push(...add.slice().reverse());
+                snap({ cur: u, front: st.slice(), edges: add.map((v) => [u, v]), text: `${u} 방문 · 이웃 ${add.join(", ") || "없음"} 을 역순으로 쌓음 → 다음은 ${st[st.length - 1] || "끝"}` });
+            }
+        } else if (algo === "dijkstra") {
+            const pq = [[0, src]];
+            dist[src] = 0;
+            snap({ cur: null, front: pq.map((x) => `${x[1]}:${x[0]}`), text: `시작 ${src} 거리 0 · 나머지 ∞` });
+            while (pq.length) {
+                pq.sort((a, b) => a[0] - b[0] || (a[1] < b[1] ? -1 : 1));
+                const [d, u] = pq.shift();
+                if (order.includes(u) || d > dist[u]) { snap({ cur: u, front: pq.map((x) => `${x[1]}:${x[0]}`), skip: true, text: `${u}:${d} 는 낡은 항목 → 버림 (지연 삭제)` }); continue; }
+                order.push(u);
+                const rel = [];
+                adj[u].forEach(([v, w]) => { if (!order.includes(v) && (!(v in dist) || d + w < dist[v])) { dist[v] = d + w; pq.push([d + w, v]); rel.push(`${v}=${d + w}`); } });
+                snap({ cur: u, front: pq.slice().sort((a, b) => a[0] - b[0]).map((x) => `${x[1]}:${x[0]}`), edges: rel.map((r) => [u, r[0]]), text: `가장 가까운 ${u}(${d}) 확정 · 완화 ${rel.join(", ") || "없음"}` });
+            }
+        } else {
+            const indeg = Object.fromEntries(ids.map((v) => [v, 0]));
+            g.edges.forEach(([, v]) => { indeg[v]++; });
+            const ready = ids.filter((v) => !indeg[v]);
+            snap({ cur: null, front: ready.slice(), text: `들어오는 간선이 0 인 ${ready.join(", ")} 부터 · 간선은 왼쪽 → 오른쪽 방향` });
+            while (ready.length) {
+                ready.sort();
+                const u = ready.shift();
+                order.push(u);
+                dist[u] = order.length - 1;
+                const add = [];
+                adj[u].forEach(([v]) => { if (--indeg[v] === 0) { ready.push(v); add.push(v); } });
+                snap({ cur: u, front: ready.slice().sort(), edges: adj[u].map(([v]) => [u, v]), text: `${u} 출력 · 나가는 간선 제거 → 새로 준비된 ${add.join(", ") || "없음"}` });
+            }
+        }
+        return { frames, order, dist };
+    }
+    LAB.sys = { nvicRun, NVIC_T, raceRun, RACE_OPS };
+    LAB.num.quant = quant;
+    LAB.ds.graphRun = graphRun;
+    LAB.ds.GRAPH0 = GRAPH0;
+
+    const hexList = (s, max) => {
+        const v = String(s).split(/[\s,]+/).filter(Boolean).map((x) => parseInt2(/^(0x|0b)/i.test(x) ? x : `0x${x}`, 8));
+        return v.length && v.length <= max && !v.includes(null) ? v : null;
+    };
+
+    // I2C: a register write or read built bit by bit, drawn with the wave renderer
+    SIMS.i2c = (host, spec) => {
+        let addr = spec.addr ?? 0x68;
+        let op = spec.op || "read";
+        let reg = spec.reg ?? 0x75;
+        let data = spec.data || [0x68];
+        let absent = false;
+        let stretch = 0;
+        let khz = 100;
+        const bar = ctlBar(host);
+        const bar2 = ctlBar(host);
+        const box = document.createElement("div");
+        host.append(box);
+        const out = readout(host);
+        const build = () => {
+            const f = i2cTxn({ addr, op, reg, data, absent, stretch });
+            box.innerHTML = "";
+            wave(box, { ...i2cWave(f), interval: 2200 });
+            const clocks = f.filter((x) => x.k === "byte").length * 9;
+            out([
+                ["주소 바이트", f.filter((x) => x.k === "byte" && /\+/.test(x.label)).map((x) => `${hex2(x.v)} (${x.label.slice(-1)})`).join(" · ")],
+                ["SCL 클럭", `${clocks} (바이트당 9)`],
+                [`${khz >= 1000 ? `${khz / 1000} MHz` : `${khz} kHz`} 에서`, `약 ${Math.round((clocks * 1000) / khz)} µs`],
+                ["결과", absent ? "주소 NACK → 실패" : op === "write" ? `쓰기 ${data.length}바이트` : `읽음 ${data.map(hex2).join(" ")}`, absent ? "bad" : "good"]
+            ]);
+        };
+        textIn(bar, "주소(7bit)", hex2(addr), (s) => { const v = parseInt2(s, 8); if (v === null || v > 0x7f) LAB.toast("7bit 주소: 0x00~0x7F"); else { addr = v; build(); } });
+        seg(bar, "동작", [["write", "쓰기"], ["read", "레지스터 읽기"]], op, (v) => { op = v; build(); });
+        textIn(bar, "레지스터", hex2(reg), (s) => { const v = parseInt2(s, 8); if (v === null) LAB.toast("예: 0x75"); else { reg = v; build(); } });
+        textIn(bar, "데이터", data.map((x) => x.toString(16).toUpperCase().padStart(2, "0")).join(" "), (s) => { const v = hexList(s, 4); if (!v) LAB.toast("16진 바이트 1~4개 (예: 68 01)"); else { data = v; build(); } }, true);
+        seg(bar2, "속도", [[100, "100k"], [400, "400k"], [1000, "1M"]], khz, (v) => { khz = +v; build(); });
+        seg(bar2, "장치", [["0", "응답"], ["1", "없음"]], "0", (v) => { absent = v === "1"; build(); });
+        seg(bar2, "클럭 스트레칭", [["0", "없음"], ["4", "있음 (읽기)"]], "0", (v) => { stretch = +v; build(); });
+        build();
+    };
+
+    // SPI: master mode vs slave mode, where the slave samples and whether that collides with a data change
+    SIMS.spi = (host, spec) => {
+        let byte = (spec.byte ?? 0x96) & 0xff;
+        let m = spec.master ?? 0;
+        let s = spec.slave ?? 0;
+        let lsb = false;
+        const bar = ctlBar(host);
+        const bar2 = ctlBar(host);
+        const box = document.createElement("div");
+        host.append(box);
+        const out = readout(host);
+        const edge = (mode) => (mode === 0 || mode === 3 ? "↑" : "↓");
+        const build = () => {
+            const { R, spec: w } = spiWave(byte, m, s, lsb);
+            box.innerHTML = "";
+            wave(box, { ...w, interval: 1500 });
+            out([
+                ["마스터 송신", `${hex2(byte)} → ${R.bits.join("")}`],
+                ["샘플 엣지", `마스터 ${edge(m)} · 슬레이브 ${edge(s)}`, edge(m) === edge(s) ? "good" : "bad"],
+                ["슬레이브 수신", R.race ? `경합 · ${R.readOld.bits} 또는 ${R.readNew.bits}` : `${R.readOld.bits} = ${hex2(R.readOld.v)}`, R.ok ? "good" : "bad"]
+            ]);
+        };
+        textIn(bar, "바이트", hex2(byte), (v) => { const x = parseInt2(v, 8); if (x === null) LAB.toast("예: 0xA5"); else { byte = x; build(); } });
+        seg(bar, "비트 순서", [["0", "MSB 먼저"], ["1", "LSB 먼저"]], "0", (v) => { lsb = v === "1"; build(); });
+        seg(bar2, "마스터 mode", [0, 1, 2, 3].map((v) => [v, v]), m, (v) => { m = +v; build(); });
+        seg(bar2, "슬레이브 mode", [0, 1, 2, 3].map((v) => [v, v]), s, (v) => { s = +v; build(); });
+        build();
+    };
+
+    // NVIC: three interrupts on a cycle timeline — entry, return, tail-chaining, late arrival, priority grouping
+    SIMS.nvic = (host, spec) => {
+        const PRESETS = {
+            preempt: { pre: 4, irqs: "8 10 40 | 4 30 14 | 12 35 10" },
+            same: { pre: 4, irqs: "6 10 24 | 6 18 12 | 6 20 10" },
+            late: { pre: 4, irqs: "8 10 20 | 2 15 12 |" },
+            group: { pre: 2, irqs: "6 10 30 | 4 22 10 | 5 24 8" }
+        };
+        let preset = spec.preset || "preempt";
+        let pre = PRESETS[preset].pre;
+        let rows = PRESETS[preset].irqs.split("|").map((x) => x.trim());
+        const st = stage(host);
+        const bar = ctlBar(host);
+        const bar2 = ctlBar(host);
+        const out = readout(host);
+        const parse = () => rows.map((r, i) => {
+            const v = r.split(/\s+/).filter(Boolean).map(Number);
+            return v.length === 3 && v.every((x) => Number.isInteger(x) && x >= 0) && v[0] < 16 && v[2] > 0 ? { name: "ABC"[i], prio: v[0], at: v[1], dur: v[2] } : null;
+        }).filter(Boolean);
+        const cv = canvas(st, () => 56 + (parse().length + 1) * 38);
+        const draw = () => {
+            const { ctx, w, h } = cv;
+            if (!w) return;
+            const C = vars(host);
+            const irqs = parse();
+            ctx.clearRect(0, 0, w, h);
+            if (!irqs.length) return;
+            const R = nvicRun(irqs, { pre });
+            const L = 64;
+            const X = (t) => L + (t / R.cycles) * (w - L - 10);
+            const Y = (r) => 26 + r * 38;
+            const col = (i) => PALETTE[i % PALETTE.length];
+            ctx.font = "12px Consolas, monospace";
+            ctx.textBaseline = "middle";
+            ["main", ...R.irqs.map((x) => `${x.name} p${x.prio}`)].forEach((s, r) => { ctx.fillStyle = C.muted; ctx.textAlign = "left"; ctx.fillText(s, 4, Y(r) + 13); });
+            ctx.strokeStyle = C.line;
+            ctx.lineWidth = 1;
+            const tick = R.cycles > 160 ? 20 : 10;
+            ctx.textAlign = "center";
+            for (let t = 0; t <= R.cycles; t += tick) {
+                ctx.beginPath(); ctx.moveTo(X(t), 18); ctx.lineTo(X(t), h - 22); ctx.stroke();
+                ctx.fillStyle = C.dim; ctx.fillText(t, X(t), h - 10);
+            }
+            R.segs.forEach((s) => {
+                const r = s.who + 1;
+                const x0 = X(s.from);
+                const x1 = X(s.to);
+                const c = s.who < 0 ? C.dim : col(s.who);
+                ctx.fillStyle = s.kind === "run" ? rgba(c, s.who < 0 ? 0.35 : 0.85) : s.kind === "tail" ? rgba(C.ok, 0.55) : rgba(C.warn, s.kind === "entry" ? 0.55 : 0.3);
+                ctx.fillRect(x0, Y(r), Math.max(1, x1 - x0), 26);
+                if (s.kind !== "run" && x1 - x0 > 26) {
+                    ctx.fillStyle = C.text;
+                    ctx.fillText({ entry: "진입", exit: "복귀", tail: "tail" }[s.kind], (x0 + x1) / 2, Y(r) + 13);
+                }
+            });
+            R.irqs.forEach((x, i) => {
+                const y = Y(i + 1);
+                ctx.fillStyle = col(i);
+                ctx.beginPath(); ctx.moveTo(X(x.at), y - 2); ctx.lineTo(X(x.at) - 5, y - 10); ctx.lineTo(X(x.at) + 5, y - 10); ctx.fill();
+                if (x.start != null) {
+                    ctx.strokeStyle = col(i);
+                    ctx.setLineDash([3, 3]);
+                    ctx.beginPath(); ctx.moveTo(X(x.at), y - 4); ctx.lineTo(X(x.start), y - 4); ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+            });
+            ctx.textAlign = "left";
+            ctx.fillStyle = C.muted;
+            ctx.fillText("▼ 요청  ┄ 지연(요청 → ISR 첫 명령)   진입 12 · 복귀 12 · tail-chain 6 사이클", L, 8);
+            out([
+                ...R.irqs.map((x) => [`${x.name} (그룹 ${x.group} · 서브 ${x.sub})`, x.lat == null ? "실행 안 됨" : `지연 ${x.lat} · 끝 ${x.end}`, x.lat != null && x.lat <= 12 ? "good" : ""]),
+                ["tail-chain", R.tail ? `${R.tail}회 · 아낀 사이클 ${R.tail * (NVIC_T.exit + NVIC_T.entry - NVIC_T.tail)}` : "0"],
+                ["late arrival", R.lates],
+                ["오버헤드", `${R.overhead} / ${R.cycles} 사이클`]
+            ]);
+        };
+        cv.draw = draw;
+        const ins = [];
+        const sync = () => { ins.forEach((inp, i) => { inp.value = rows[i] || ""; }); grp.querySelectorAll("button").forEach((b) => b.classList.toggle("on", +b.dataset.v === pre)); };
+        seg(bar, "예제", [["preempt", "선점"], ["same", "같은 순위"], ["late", "늦은 도착"], ["group", "그룹·서브"]], preset, (v) => {
+            preset = v; pre = PRESETS[v].pre; rows = PRESETS[v].irqs.split("|").map((x) => x.trim()); sync(); cv.fit(); draw();
+        });
+        const grp = seg(bar, "선점 비트", [4, 3, 2, 1, 0].map((v) => [v, `${v}`]), pre, (v) => { pre = +v; draw(); });
+        ["A", "B", "C"].forEach((n, i) => ins.push(textIn(bar2, `${n} 순위 도착 길이`, rows[i] || "", (s) => { rows[i] = s; cv.fit(); draw(); }, true)));
+        cv.fit();
+    };
+
+    // two threads doing counter++: step them yourself, or run every interleaving at random
+    SIMS.race = (host, spec) => {
+        let mode = spec.mode || "plain";
+        let n = spec.n || 1;
+        let sched = [];
+        let auto = false; // preset orders run to the end; A ▶ / B ▶ stop where you are
+        const bar = ctlBar(host);
+        const st = stage(host);
+        const bar2 = ctlBar(host);
+        const out = readout(host);
+        const LBL = { load: "reg ← counter", add: "reg ← reg + 1", store: "counter ← reg", lock: "lock(m)", unlock: "unlock(m)", fetch_add: "atomic counter++" };
+        const R0 = rng(7);
+        const wrongRate = () => {
+            const len = RACE_OPS[mode].length * n * 2;
+            let bad = 0;
+            for (let k = 0; k < 1000; k++) if (raceRun(Array.from({ length: len }, () => (R0() < 0.5 ? "A" : "B")), mode, n).lost) bad++;
+            return bad / 10;
+        };
+        let rate = wrongRate();
+        const draw = () => {
+            const R = raceRun(sched, mode, n, auto);
+            const fin = R.th.A.pc >= R.ops.length && R.th.B.pc >= R.ops.length;
+            const col = (w) => `<div class="race-th"><h4>스레드 ${w} · reg = ${R.th[w].reg}</h4><ol>${R.ops.map((op, i) => `<li class="${i < R.th[w].pc ? "done" : i === R.th[w].pc ? "cur" : ""}">${LBL[op]}</li>`).join("")}</ol></div>`;
+            st.innerHTML = `<div class="race">${col("A")}<div class="race-mem${fin && R.lost ? " bad" : ""}"><span>counter</span><b>${R.mem}</b><small>기대 ${R.expect}</small></div>${col("B")}</div>`
+                + `<div class="race-log">${R.trace.slice(-6).map((x) => `${x.w}: ${x.op === "wait" ? "lock 대기 (다른 스레드가 잡고 있음)" : LBL[x.op]} → counter=${x.mem}, reg=${x.reg}`).join("<br>") || "A ▶ / B ▶ 로 한 단계씩 · 순서를 직접 정해 보세요"}</div>`;
+            bA.disabled = R.th.A.pc >= R.ops.length;
+            bB.disabled = R.th.B.pc >= R.ops.length;
+            out([
+                ["결과", fin ? (R.lost ? `${R.mem} · 갱신 ${R.lost}개 잃음` : `${R.mem} ✓`) : "실행 중", fin ? (R.lost ? "bad" : "good") : ""],
+                ["단계", R.trace.length],
+                ["랜덤 순서 1000번 중 틀림", `${rate}%`, rate ? "bad" : "good"]
+            ]);
+        };
+        const bA = button(bar, "A ▶", () => { if (auto) { auto = false; sched = []; } sched.push("A"); draw(); }, true);
+        const bB = button(bar, "B ▶", () => { if (auto) { auto = false; sched = []; } sched.push("B"); draw(); }, true);
+        button(bar, "최악 순서", () => { auto = true; sched = Array.from({ length: RACE_OPS[mode].length * n * 2 }, (_, i) => "AB"[i % 2]); draw(); });
+        button(bar, "랜덤 순서", () => { auto = true; const r = rng((Date.now() & 0xffff) + 1); sched = Array.from({ length: RACE_OPS[mode].length * n * 2 }, () => (r() < 0.5 ? "A" : "B")); draw(); });
+        button(bar, "↺", () => { auto = false; sched = []; draw(); });
+        seg(bar2, "방식", [["plain", "그냥 count++"], ["mutex", "뮤텍스"], ["atomic", "원자 연산"]], mode, (v) => { mode = v; sched = []; auto = false; rate = wrongRate(); draw(); });
+        seg(bar2, "반복", [1, 2, 3].map((v) => [v, `${v}회`]), n, (v) => { n = +v; sched = []; auto = false; rate = wrongRate(); draw(); });
+        draw();
+    };
+
+    // quantization: two weight channels (small and large range), per-tensor vs per-channel, symmetric vs asymmetric, an outlier
+    SIMS.quant = (host, spec) => {
+        let bits = spec.bits || 8;
+        let scheme = spec.scheme || "sym";
+        let perCh = false;
+        let outlier = false;
+        const r = rng(11);
+        const base = [Array.from({ length: 24 }, () => clamp(gauss(r) * 0.04, -0.1, 0.1)), Array.from({ length: 24 }, () => clamp(gauss(r) * 0.4, -1, 1))];
+        const st = stage(host);
+        const cv = canvas(st, 250);
+        const bar = ctlBar(host);
+        const out = readout(host);
+        const draw = () => {
+            const { ctx, w, h } = cv;
+            if (!w) return;
+            const C = vars(host);
+            const ch = base.map((v, i) => (outlier && i === 1 ? [...v.slice(0, -1), 6] : v));
+            const res = perCh ? ch.map((v) => quant(v, bits, scheme)) : (() => {
+                const all = quant(ch.flat(), bits, scheme);
+                const k = ch[0].length;
+                const part = (a, b) => ({ ...all, q: all.q.slice(a, b), deq: all.deq.slice(a, b) });
+                return [part(0, k), part(k)];
+            })();
+            ctx.clearRect(0, 0, w, h);
+            ctx.font = "11px Consolas, monospace";
+            ctx.textBaseline = "middle";
+            ch.forEach((vals, i) => {
+                const R = res[i];
+                const span = Math.max(...vals.map(Math.abs)) * 1.08 || 1;
+                const X = (x) => 70 + ((x + span) / (2 * span)) * (w - 90);
+                const y0 = 30 + i * 112;
+                const y1 = y0 + 54;
+                ctx.fillStyle = C.muted;
+                ctx.textAlign = "left";
+                ctx.fillText(i ? "채널 1" : "채널 0", 4, y0);
+                ctx.fillText("양자화", 4, y1);
+                // integer grid inside this channel's view
+                const lo = Math.ceil(-span / R.s + R.z);
+                const hi = Math.floor(span / R.s + R.z);
+                const levels = [];
+                for (let q = Math.max(lo, R.qmin); q <= Math.min(hi, R.qmax); q++) levels.push(q);
+                if (levels.length <= 140) {
+                    ctx.strokeStyle = rgba(C.c, 0.28);
+                    levels.forEach((q) => { const x = X(R.s * (q - R.z)); ctx.beginPath(); ctx.moveTo(x, y1 - 12); ctx.lineTo(x, y1 + 12); ctx.stroke(); });
+                }
+                ctx.strokeStyle = C.line;
+                [y0, y1].forEach((y) => { ctx.beginPath(); ctx.moveTo(X(-span), y); ctx.lineTo(X(span), y); ctx.stroke(); });
+                vals.forEach((x, k) => {
+                    const d = R.deq[k];
+                    ctx.strokeStyle = rgba(Math.abs(x - d) > R.s / 2 + 1e-12 ? C.bad : C.muted, 0.5);
+                    ctx.beginPath(); ctx.moveTo(X(x), y0); ctx.lineTo(X(clamp(d, -span, span)), y1); ctx.stroke();
+                    ctx.fillStyle = C.text;
+                    ctx.beginPath(); ctx.arc(X(x), y0, 3, 0, 7); ctx.fill();
+                    ctx.fillStyle = C.c;
+                    ctx.beginPath(); ctx.arc(X(clamp(d, -span, span)), y1, 3, 0, 7); ctx.fill();
+                });
+                ctx.fillStyle = C.dim;
+                ctx.textAlign = "center";
+                ctx.fillText(`−${span.toFixed(2)}`, X(-span), y1 + 22);
+                ctx.fillText("0", X(0), y1 + 22);
+                ctx.fillText(span.toFixed(2), X(span), y1 + 22);
+            });
+            const used = (R) => new Set(R.q).size;
+            const err = (R, vals) => Math.max(...vals.map((x, k) => Math.abs(x - R.deq[k])));
+            out([
+                ["형식", `${scheme === "sym" ? "int" : "uint"}${bits} · q ∈ [${res[0].qmin}, ${res[0].qmax}]`],
+                ...res.map((R, i) => [`채널 ${i}`, `s=${R.s.toPrecision(3)} z=${R.z} · 쓰인 정수 ${used(R)}개 · 최대 오차 ${err(R, ch[i]).toPrecision(2)}`, used(R) <= 5 ? "bad" : ""]),
+                ["크기", `FP32 대비 ${bits === 8 ? "1/4" : "1/8"}${perCh ? " + 채널마다 s" : ""}`]
+            ]);
+        };
+        cv.draw = draw;
+        seg(bar, "비트", [[8, "INT8"], [4, "INT4"]], bits, (v) => { bits = +v; draw(); });
+        seg(bar, "방식", [["sym", "대칭 (z=0)"], ["asym", "비대칭"]], scheme, (v) => { scheme = v; draw(); });
+        seg(bar, "스케일", [["0", "텐서 하나"], ["1", "채널별"]], "0", (v) => { perCh = v === "1"; draw(); });
+        seg(bar, "이상치", [["0", "없음"], ["1", "채널 1 에 6.0"]], "0", (v) => { outlier = v === "1"; draw(); });
+        cv.fit();
+    };
+
+    // graph traversal: BFS / DFS / Dijkstra / topological sort, frame by frame
+    SIMS.graph = (host, spec) => {
+        let algo = spec.algo || "bfs";
+        let src = spec.src || "A";
+        const g = LAB.ds.GRAPH0;
+        const bar = ctlBar(host);
+        const box = document.createElement("div");
+        host.append(box);
+        let stepCtl = null;
+        const P = (id) => [60 + g.nodes[id][0] * 150, 36 + g.nodes[id][1] * 72];
+        const FRONT = { bfs: "큐 (앞 → 뒤)", dfs: "스택 (아래 → 위)", dijkstra: "우선순위 큐 (노드:거리)", topo: "준비된 노드" };
+        const DIST = { bfs: "거리(간선 수)", dfs: "방문 순서", dijkstra: "최단 거리", topo: "출력 순서" };
+        const build = () => {
+            if (stepCtl) stepCtl.stop();
+            const R = graphRun(g, algo, src);
+            const dir = algo === "topo";
+            box.innerHTML = `<div class="demo-stage gr"><svg viewBox="0 0 570 196">
+              <defs><marker id="grArr" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--muted)"/></marker></defs>
+              ${g.edges.map(([u, v, wt]) => { const [x1, y1] = P(u); const [x2, y2] = P(v); return `<line data-e="${u}${v}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"${dir ? " marker-end=\"url(#grArr)\"" : ""}/>${algo === "dijkstra" ? `<text class="w" x="${(x1 + x2) / 2 + 8}" y="${(y1 + y2) / 2 - 8}">${wt}</text>` : ""}`; }).join("")}
+              ${Object.keys(g.nodes).map((id) => { const [x, y] = P(id); return `<g data-n="${id}"><circle cx="${x}" cy="${y}" r="18"/><text x="${x}" y="${y}">${id}</text><text class="d" x="${x}" y="${y + 30}"></text></g>`; }).join("")}
+            </svg><div class="gr-row" data-r="front"></div><div class="gr-row" data-r="order"></div></div>`;
+            const svg = box.querySelector("svg");
+            stepCtl = stepper(box, R.frames.length, (i) => {
+                const f = R.frames[i];
+                const front = new Set(f.front.map((x) => String(x).split(":")[0]));
+                svg.querySelectorAll("[data-n]").forEach((el) => {
+                    const id = el.dataset.n;
+                    el.setAttribute("class", `${f.order.includes(id) ? "done" : ""}${front.has(id) ? " front" : ""}${f.cur === id ? " cur" : ""}`);
+                    el.querySelector(".d").textContent = id in f.dist ? f.dist[id] : algo === "dijkstra" ? "∞" : "";
+                });
+                const on = new Set((f.edges || []).flatMap(([u, v]) => [u + v, v + u]));
+                svg.querySelectorAll("[data-e]").forEach((el) => el.classList.toggle("on", on.has(el.dataset.e)));
+                box.querySelector("[data-r=front]").innerHTML = `${FRONT[algo]}: <b>[${f.front.join(", ")}]</b>`;
+                box.querySelector("[data-r=order]").innerHTML = `${algo === "topo" ? "출력" : algo === "dijkstra" ? "확정" : "방문"} 순서: <b>${f.order.join(" → ") || "–"}</b> · 숫자 = ${DIST[algo]}`;
+                return f.text;
+            }, { interval: 1700 });
+        };
+        seg(bar, "알고리즘", [["bfs", "BFS"], ["dfs", "DFS"], ["dijkstra", "Dijkstra"], ["topo", "위상 정렬"]], algo, (v) => { algo = v; build(); });
+        seg(bar, "시작", Object.keys(g.nodes).map((id) => [id, id]), src, (v) => { src = v; build(); });
+        build();
+    };
+
     LAB.SIM_INFO = {
         reg: ["레지스터 비트", "MASK·결과 미리보기 · set/clear/toggle · 필드 읽기·쓰기", "비트"],
         bitops: ["비트 연산 ALU", "AND·OR·XOR·시프트·회전 · 2의 보수 · NZCV 플래그", "비트"],
@@ -3581,7 +4223,13 @@
         uart: ["UART 프레임", "비트 순서 · 패리티 · 보레이트 오차 · 수신 샘플 드리프트", "통신"],
         can: ["CAN 중재", "ID 비트별 중재 · 우성/열성 · 비트 스터핑", "통신"],
         bpe: ["BPE 토크나이저", "자주 붙는 쌍 병합 한 단계씩 · 새 단어 토큰화", "AI"],
-        vector: ["벡터 검색", "질의 드래그 · 코사인 vs 내적 vs L2 · top-k", "AI"]
+        vector: ["벡터 검색", "질의 드래그 · 코사인 vs 내적 vs L2 · top-k", "AI"],
+        i2c: ["I2C 트랜잭션", "주소+R/W · ACK/NACK · 반복 시작 · 클럭 스트레칭", "통신"],
+        spi: ["SPI 모드", "CPOL·CPHA 4모드 · 샘플 엣지 · 모드 불일치 경합", "통신"],
+        nvic: ["NVIC 우선순위", "선점 · tail-chaining · late arrival · 그룹/서브 우선순위", "시스템"],
+        race: ["경쟁 조건", "count++ 끼어들기 · lost update · 뮤텍스 vs 원자 연산", "시스템"],
+        quant: ["INT8 양자화", "scale·zero-point · 대칭 vs 비대칭 · 채널별 스케일 · 이상치", "AI"],
+        graph: ["그래프 탐색", "BFS · DFS · Dijkstra · 위상 정렬 · 큐/스택 상태", "자료구조"]
     };
     LAB.SIM_TAGS = ["비트", "CPU·메모리", "자료구조", "통신", "신호", "제어·로봇", "시스템", "AI"];
 

@@ -1021,7 +1021,7 @@ opt = torch.optim.AdamW([
             level: 3,
             mins: 14,
             pre: ["languages/float", "memory/mem-hierarchy"],
-            checked: "2026-11-16",
+            checked: "2026-11-17",
             key: [
                 "양자화(quantization): `x ≈ s·(q − z)` · FP32 → INT8 이면 크기 **1/4**",
                 "PTQ 는 빠르고 간단 · 정확도(accuracy) 하락이 크면 QAT",
@@ -1035,42 +1035,7 @@ opt = torch.optim.AdamW([
                 { term: "이상치", en: "Outlier", def: "큰 값 하나가 범위를 키워 나머지 해상도를 떨어뜨림" },
                 { term: "Weight-only", def: "가중치만 INT8/INT4, 연산은 FP16/BF16 · 메모리 대역폭 병목에 유리" }
             ],
-            demo: {
-                type: "steps",
-                nodes: [
-                    { id: "fp32", label: "FP32 모델", sub: "가중치당 4 byte", x: 0, y: 0 },
-                    { id: "calib", label: "캘리브레이션", sub: "대표 입력 수백 개", x: 1, y: 0 },
-                    { id: "scale", label: "스케일 계산", sub: "s = max|x| / 127", x: 2, y: 0 },
-                    { id: "int8", label: "INT8 모델", sub: "크기 1/4", x: 3, y: 0 },
-                    { id: "prune", label: "가지치기", sub: "작은 가중치 제거", x: 0, y: 1 },
-                    { id: "distill", label: "지식 증류", sub: "교사 → 학생", x: 1, y: 1 },
-                    { id: "qat", label: "QAT", sub: "fake quant 로 학습", x: 2, y: 1 },
-                    { id: "eval", label: "정확도 검증", sub: "FP32 대비 하락", x: 3, y: 1 },
-                    { id: "deploy", label: "배포", sub: "GPU · NPU · CPU", x: 3, y: 2 }
-                ],
-                edges: [
-                    { from: "fp32", to: "calib" },
-                    { from: "calib", to: "scale", label: "범위 관측" },
-                    { from: "scale", to: "int8", label: "round·clip" },
-                    { from: "int8", to: "eval" },
-                    { from: "eval", to: "qat", label: "하락 큼" },
-                    { from: "qat", to: "int8", label: "재변환" },
-                    { from: "fp32", to: "prune" },
-                    { from: "prune", to: "distill", label: "회복" },
-                    { from: "eval", to: "deploy", label: "OK" }
-                ],
-                steps: [
-                    { on: ["fp32"], text: "학습이 끝난 FP32 모델 · 가중치 하나에 4 byte, 추론(inference)엔 과한 정밀도(precision)" },
-                    { on: ["fp32>calib", "calib"], text: "캘리브레이션(calibration): 대표 입력을 흘려 층별 **활성값 범위**(activation range)를 관측" },
-                    { on: ["calib>scale", "scale"], text: "대칭(symmetric) INT8: `s = max|x|/127`, `q = round(x/s)` · 가중치는 채널별(per-channel) s" },
-                    { on: ["scale>int8", "int8"], text: "INT8 모델(PTQ): 크기 1/4 · 정수 연산으로 메모리 대역폭(memory bandwidth)·전력↓" },
-                    { on: ["int8>eval", "eval"], text: "검증 세트(validation set)로 FP32 대비 정확도 하락을 측정" },
-                    { on: ["eval>qat", "qat", "qat>int8"], text: "하락이 크면 QAT: 순전파(forward pass)에 반올림(rounding)을 흉내 내며 미세조정(fine-tuning) 후 재변환" },
-                    { on: ["fp32>prune", "prune"], text: "가지치기: 작은 가중치·채널 제거 · 채널 단위여야 일반 하드웨어에서 빨라짐" },
-                    { on: ["prune>distill", "distill"], text: "지식 증류(knowledge distillation): 큰 교사(teacher)의 부드러운 확률로 작은 학생(student)을 학습해 정확도 회복" },
-                    { on: ["eval>deploy", "deploy"], text: "통과 → 대상 런타임(runtime) 형식으로 변환해 배포(deployment)" }
-                ]
-            },
+            demo: { type: "sim", name: "quant", bits: 8, scheme: "sym" },
             code: [
                 {
                     lang: "python",
@@ -1157,7 +1122,8 @@ quantize_(model, Int8WeightOnlyConfig())   # 채널별 INT8 가중치 · 제자�
                 { type: "num", q: "같은 s, z 로 x = 0.5 를 양자화했다 되돌린 값은? (소수 셋째 자리)", answer: 0.502, tol: 0.001, why: "q = round(31.875) + 64 = 96 → s·(96 − 64) ≈ 0.502 · 오차 ≤ s/2" },
                 { type: "num", q: "7B 모델을 INT4(그룹 128, FP16 스케일)로 저장하면 가중치는 약 몇 GB?", answer: 3.61, tol: 0.05, unit: "GB", why: "가중치당 4 + 16/128 = 4.125 bit → 7e9 × 4.125 / 8 · FP16 이면 14 GB" },
                 { type: "num", q: "FP8 E4M3 의 최대 유한값은?", answer: 448, why: "S.1111.110 = 1.75 × 2⁸ · 무한대를 두지 않아 범위를 넓힘 · E5M2 는 57,344" },
-                { type: "order", q: "INT8 PTQ 의 순서", items: ["대표 입력 수백 개 준비", "층별 활성값 범위 관측", "스케일·제로포인트 계산", "round·clip 으로 INT8 변환", "검증 세트로 정확도 비교"], why: "캘리브레이션 데이터가 실제 입력 분포를 닮아야 범위가 맞음" }
+                { type: "order", q: "INT8 PTQ 의 순서", items: ["대표 입력 수백 개 준비", "층별 활성값 범위 관측", "스케일·제로포인트 계산", "round·clip 으로 INT8 변환", "검증 세트로 정확도 비교"], why: "캘리브레이션 데이터가 실제 입력 분포를 닮아야 범위가 맞음" },
+                { type: "num", q: "`[0.05, −0.08, 0.1, 10]` 을 대칭 INT8 (텐서 하나의 스케일)로 양자화하면 `0.1` 의 정수값은?", answer: 1, why: "s = 10/127 ≈ 0.0787 · 0.1/s ≈ 1.27 → 1 · 작은 값 셋이 −1, 1, 1 로 뭉개짐 = 이상치(outlier) 하나가 격자를 망침 · 채널별 스케일로 피함" }
             ],
             refs: [
                 { title: "Quantization and Training of Neural Networks for Efficient Integer-Arithmetic-Only Inference", by: "Jacob et al.", year: 2017, url: "https://arxiv.org/abs/1712.05877", kind: "paper" },

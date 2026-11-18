@@ -1,6 +1,6 @@
 # Study Lab
 
-Interactive study site: embedded, assembly, memory, robotics, languages, data structures, protocols, deep learning, AI.
+Interactive study site: embedded, assembly, memory, robotics, languages, data structures, protocols, deep learning, AI, RAG & embeddings.
 Plain HTML/CSS/JS, no build, no CDN — open `lab/index.html` directly (`file://`).
 
 ## Pages
@@ -150,6 +150,8 @@ References: `refs` on lessons and trends — original papers (arXiv/DOI), offici
 | `can` | `ids data` | CAN bitwise arbitration of 2–3 IDs (dominant 0 wins), then bit stuffing of the winner's SOF…data bits |
 | `bpe` | `corpus merges word` | byte-pair-encoding merges step by step on a tiny corpus, tokenizing a new word |
 | `vector` | `docs:[{ t, v:[x, y] }] query k metric` | 2-D vector search: drag the query, cosine vs dot vs L2, normalization, top-k |
+| `context` | `at limit memory compact` | what the model receives each turn: 13-turn invented chat, context limit 2k–32k, memory file and compaction toggles, which facts are still known |
+| `hybrid` | `preset mode filter top k` | keyword (BM25) vs meaning (toy 6-axis embedding) vs RRF on 13 invented IT-helpdesk tickets · 4 preset questions with gold answers, building/floor filter, recall@k · `mode` `bm25` `dense` `hybrid` |
 | `i2c` | `addr op reg data` | I2C register write / read (`op` `write` `read`) bit by bit on the wave renderer: address + R/W, ACK/NACK, repeated START, clock stretching, missing device, bus time |
 | `spi` | `byte master slave` | SPI modes 0–3: where the slave samples vs where the master changes MOSI · mismatched modes show the race (value before / after the change) |
 | `nvic` | `preset` | Cortex-M exception timeline for 3 IRQs (priority, arrival, length): entry 12 / return 12 / tail-chain 6 cycles, preemption, late arrival, PRIGROUP split · presets `preempt` `same` `late` `group` |
@@ -162,7 +164,7 @@ Data: `.data` / `.text`, `label: .word 1, 2` · `.hword` `.byte` `.space n` `.as
 LR starts at `0xFFFFFFFF`: `bx lr` from the top level ends the program (or falling off the end). SP starts at `0x20001000`. Out-of-RAM access → HardFault. Simplified: 4 bytes per instruction, no IT blocks, no `ldm/stm`, no reading `pc`.
 
 Every sim also needs a line in `LAB.SIM_INFO` (`assets/anim.js`): `[title, one line, tag]` — it is listed on `labs.html`.
-Pure models are tested by `check.mjs`: `LAB.num` (`alu`, `fenc`/`fdec`, `crcDiv`, `quant`), `LAB.proto` (UART, CAN, `i2cTxn`, `spiEdges`), `LAB.sys` (`nvicRun`, `raceRun`), `LAB.ds` (cache, layout, ring, hash, heap, BST, sorts, `graphRun`), `LAB.ai` (BPE, vector ranking).
+Pure models are tested by `check.mjs`: `LAB.num` (`alu`, `fenc`/`fdec`, `crcDiv`, `quant`), `LAB.proto` (UART, CAN, `i2cTxn`, `spiEdges`), `LAB.sys` (`nvicRun`, `raceRun`), `LAB.ds` (cache, layout, ring, hash, heap, BST, sorts, `graphRun`), `LAB.ai` (BPE, vector ranking, `hybridRun`: BM25 / toy embedding / RRF / filter, `ctxRun`: context window).
 
 ## Long-form articles (상세 설명)
 

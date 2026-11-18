@@ -474,6 +474,268 @@ resp = client.messages.create(model="claude-opus-5-5", max_tokens=16000,
             ]
         },
         {
+            id: "assistant",
+            title: "AI 어시스턴트는 어떻게 일하나 — 모델과 하네스",
+            level: 1,
+            mins: 15,
+            pre: ["ai/llm"],
+            checked: "2026-11-18",
+            key: [
+                "**언어 모델(language model)**은 다음 토큰을 내놓을 뿐 · 파일을 열거나 명령을 실행하지 못함",
+                "Claude Code·Codex = 모델 + **하네스(harness)**: 도구·반복·권한·메모리를 쥔 프로그램",
+                "**도구 호출(tool calling)**: 모델이 '이 파일 읽기'를 JSON 으로 요청 → 하네스가 실행 → 결과를 다시 넣음",
+                "Ollama 는 **추론 서버(inference server)** · 도구 요청을 돌려줄 뿐 실행은 안 함 → 대답만",
+                "Qwen 도 도구 호출은 함 · 직접 짠 루프나 `codex --oss` 같은 하네스를 붙이면 파일도 읽음"
+            ],
+            concepts: [
+                { term: "언어 모델", en: "Language model", def: "토큰을 받아 다음 토큰 확률을 내는 함수 · 입력도 출력도 글자뿐" },
+                { term: "하네스", en: "Harness", def: "모델을 감싼 프로그램 · 시스템 프롬프트, 도구 실행, 반복, 권한, 메모리, 컨텍스트 관리를 맡음" },
+                { term: "도구 호출", en: "Tool calling (function calling)", def: "모델이 도구 이름과 인자를 구조화된 형식으로 출력 · 실행은 앱이 하고 결과를 다시 넣어 줌" },
+                { term: "추론 서버", en: "Inference server", def: "가중치를 GPU·CPU 에 올려 요청마다 토큰을 생성 · Ollama, vLLM, llama.cpp 서버" }
+            ],
+            demo: {
+                type: "seq",
+                actors: ["사용자", "하네스", "모델", "내 PC"],
+                msgs: [
+                    { from: 0, to: 1, label: "'README 요약해 줘'", text: "사용자는 모델이 아니라 **하네스(harness)**(Claude Code·Codex 같은 프로그램)와 대화" },
+                    { from: 1, to: 2, label: "규칙 + 도구 목록 + 대화", text: "하네스가 시스템 프롬프트, 쓸 수 있는 도구 설명, 지금까지의 대화를 한 요청에 담아 보냄" },
+                    { from: 2, to: 1, label: "도구 요청: read_file", text: "모델은 '이 파일을 읽고 싶다'를 정해진 JSON 모양으로 쓸 뿐 · 직접 열지 못함" },
+                    { from: 1, to: 3, label: "파일 읽기 (권한 확인)", text: "실행은 하네스가 · 작업 폴더 밖이나 위험한 명령은 사용자 승인" },
+                    { from: 3, to: 1, label: "파일 내용" , text: "결과는 그냥 글자" },
+                    { from: 1, to: 2, label: "도구 결과 + 이전 대화", text: "결과를 대화 끝에 붙여 모델을 다시 부름 · 이것이 에이전트 루프" },
+                    { from: 2, to: 1, label: "최종 답 (도구 요청 없음)", text: "더 할 일이 없으면 글로 답 → 반복 끝" },
+                    { from: 1, to: 0, label: "요약 표시", text: "Ollama 만 쓰면 이 가운데 '실행·반복' 칸이 통째로 비어 있음" }
+                ]
+            },
+            code: [
+                {
+                    lang: "python",
+                    title: "Ollama 모델에 read_file 도구 붙이기 — 작은 하네스 (표준 라이브러리)",
+                    src: `import json, os, pathlib, urllib.request
+
+OLLAMA = os.environ.get("OLLAMA_URL", "http://localhost:11434")
+MODEL = os.environ.get("OLLAMA_MODEL", "qwen3")       # 도구 호출을 지원하는 모델
+ROOT = pathlib.Path.cwd().resolve()                    # 이 폴더 밖은 못 읽게
+
+TOOLS = [{"type": "function", "function": {
+    "name": "read_file",
+    "description": "작업 폴더 안의 텍스트 파일 내용을 돌려준다",
+    "parameters": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]},
+}}]
+
+def read_file(path):
+    p = (ROOT / path).resolve()
+    if not p.is_relative_to(ROOT):
+        return "거부: 작업 폴더 밖"
+    try:
+        return p.read_text(encoding="utf-8")[:4000]
+    except OSError as e:
+        return f"오류: {e}"
+
+def chat(messages):
+    body = json.dumps({"model": MODEL, "messages": messages, "tools": TOOLS, "stream": False}).encode()
+    req = urllib.request.Request(f"{OLLAMA}/api/chat", body, {"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=300) as r:
+        return json.loads(r.read())["message"]
+
+messages = [{"role": "user", "content": "README.md 를 읽고 세 줄로 요약해 줘"}]
+for step in range(5):                                  # 단계 상한
+    msg = chat(messages)
+    messages.append(msg)
+    calls = msg.get("tool_calls") or []
+    if not calls:                                      # 도구 요청이 없으면 최종 답
+        print(msg["content"])
+        break
+    for c in calls:                                    # 실행은 이 프로그램이 한다
+        fn = c["function"]
+        result = read_file(**fn["arguments"]) if fn["name"] == "read_file" else "알 수 없는 도구"
+        messages.append({"role": "tool", "tool_name": fn["name"], "content": result})`,
+                    note: "Ollama 는 `tool_calls` 만 돌려줌 · 이 for 루프와 `read_file` 이 빠지면 모델은 '파일을 볼 수 없다'고 하거나 내용을 지어냄"
+                },
+                {
+                    lang: "python",
+                    title: "같은 구조를 Claude API 로 (Anthropic SDK 수동 루프)",
+                    src: `import anthropic
+
+client = anthropic.Anthropic()
+tools = [{"name": "read_file", "description": "작업 폴더 안의 텍스트 파일 내용을 돌려준다",
+          "input_schema": {"type": "object", "properties": {"path": {"type": "string"}},
+                           "required": ["path"]}}]
+messages = [{"role": "user", "content": "README.md 를 읽고 세 줄로 요약해 줘"}]
+
+while True:
+    response = client.messages.create(model="claude-opus-5-5", max_tokens=16000,
+                                      tools=tools, messages=messages)
+    if response.stop_reason == "end_turn":
+        break
+    messages.append({"role": "assistant", "content": response.content})
+    results = [{"type": "tool_result", "tool_use_id": b.id, "content": read_file(**b.input)}
+               for b in response.content if b.type == "tool_use"]
+    messages.append({"role": "user", "content": results})
+
+print(next(b.text for b in response.content if b.type == "text"))`,
+                    note: "모델이 `tool_use` 를 내고 실행·반복은 내 코드 · Claude Code 는 이 루프 위에 파일·검색·셸 도구, 권한, 메모리, 압축을 얹은 것"
+                }
+            ],
+            optimize: [
+                {
+                    title: "도구 없이 묻기 → 도구 + 루프",
+                    before: { lang: "python", src: `answer = chat([{"role": "user", "content": "README.md 요약해 줘"}])
+# "파일에 접근할 수 없습니다" 또는 그럴듯한 지어냄` },
+                    after: { lang: "python", src: `answer = run_agent("README.md 요약해 줘", tools=[read_file])
+# 모델이 요청 → 내 코드가 읽어서 결과를 넣어 줌` },
+                    gain: "실제 파일 내용을 근거로 답"
+                },
+                {
+                    title: "아무 경로나 읽기 → 작업 폴더 안만 (최소 권한)",
+                    before: { lang: "python", src: `return open(path).read()        # '../../.ssh/id_rsa' 도 읽힘` },
+                    after: { lang: "python", src: `p = (ROOT / path).resolve()
+if not p.is_relative_to(ROOT):
+    return "거부: 작업 폴더 밖"` },
+                    gain: "모델 실수·주입 공격의 피해 범위↓",
+                    note: "Codex 의 `--sandbox workspace-write`, Claude Code 의 실행 전 확인이 같은 발상 · **샌드박스(sandbox)**는 하네스가 거는 울타리"
+                }
+            ],
+            glossary: [
+                { term: "에이전트 하네스", en: "Agent harness", def: "모델을 감싸 도구 실행·반복·권한·기록을 맡는 프로그램 · Claude Code, Codex CLI" },
+                { term: "함수 호출", en: "Function calling", def: "도구 호출의 다른 이름 · 모델이 함수 이름과 인자를 JSON 으로 출력" },
+                { term: "샌드박스", en: "Sandbox", def: "명령이 닿을 수 있는 파일·네트워크 범위를 제한한 실행 환경 · Codex `read-only` / `workspace-write`" },
+                { term: "승인 정책", en: "Approval policy", def: "어떤 도구 실행을 사람에게 먼저 물을지 정한 규칙 · Codex `--ask-for-approval`" },
+                { term: "서버 도구", en: "Server tool", def: "모델 제공사 서버에서 실행되는 도구 (예: Claude API 의 web_search) · 내 PC 파일은 못 봄" }
+            ],
+            quiz: [
+                { q: "Ollama 로 Qwen 을 띄우고 '이 폴더 파일 읽어 줘'라고 하면 대답만 하는 이유는?", options: ["모델 파라미터 수가 너무 작아서", "도구를 실행할 하네스가 없어서", "한국어 지원이 약해서", "인터넷에 연결이 안 돼서"], a: 1, why: "Ollama 는 추론 서버 · 도구 요청(tool_calls)을 돌려줄 뿐 실행하는 프로그램이 없으면 아무 일도 안 일어남" },
+                { q: "도구 호출에서 실제로 파일을 여는 것은?", options: ["가중치 속 파일 읽기 회로", "GPU 드라이버의 파일 API", "토크나이저의 입력 단계", "모델을 부른 앱 프로그램"], a: 3, why: "모델은 '읽고 싶다'를 글로 쓸 뿐 · 열기·실행·권한 확인은 하네스(앱)" },
+                { q: "Claude Code·Codex 가 위험한 명령 전에 사용자에게 묻는 것은 무엇의 역할?", options: ["모델이 자신 없을 때의 습관", "하네스의 권한·승인 정책", "API 요금을 아끼는 장치", "컨텍스트 한도를 지키는 장치"], a: 1, why: "실행 권한은 하네스가 쥠 · Codex `--ask-for-approval`, `--sandbox` 같은 설정" },
+                { q: "Qwen 을 Codex CLI (`--oss`)로 Ollama 에 연결하면?", options: ["대답만 하는 것은 전혀 그대로", "하네스가 도구를 실행해 줌", "가중치가 Codex 용으로 재학습됨", "인터넷 연결 없이는 시작 불가"], a: 1, why: "`--oss` = 로컬 오픈 모델 제공자(Ollama·LM Studio) 사용 · 모델은 그대로, 실행 칸이 채워짐 (작은 모델은 도구 호출 품질이 낮을 수 있음)" },
+                { q: "모델이 도구 요청을 냈는데 프로그램이 실행하지 않으면?", options: ["실행된 것처럼 파일이 바뀜", "아무 일도 안 일어나고 요청만 남음", "모델이 스스로 다시 실행함", "Ollama 서버가 알아서 대신 실행해 줌"], a: 1, why: "요청은 그냥 출력 데이터 · 실행할 코드가 없으면 끝" },
+                { q: "MCP 는 무엇인가?", options: ["모델을 새로 학습시키는 공개 방법", "하네스에 도구를 꽂는 공개 표준", "GPU 사이 통신 방식", "토크나이저 파일 형식"], a: 1, why: "Model Context Protocol · AI 앱과 외부 시스템을 잇는 표준 ('AI 용 USB-C')" },
+                { type: "num", q: "파일 3개를 한 번에 하나씩 읽고 요약한다. 모델 호출은 최소 몇 번?", answer: 4, tol: 0, unit: "번", why: "읽기 요청 3번(결과를 받아야 다음 요청) + 최종 답 1번 · 세 개를 한 응답에서 병렬로 요청하면 2번" },
+                { type: "num", q: "시스템 프롬프트 + 도구 설명이 2,000 토큰이고 모델을 4번 부르면, 이 부분만의 입력 토큰 합은?", answer: 8000, tol: 0, unit: "토큰", why: "API 는 상태가 없어 매 호출에 다시 보냄 · 프롬프트 캐싱이 이 비용을 줄이는 장치" },
+                { type: "text", q: "출력은?", code: { lang: "python", src: "call = {\"function\": {\"name\": \"read_file\", \"arguments\": {\"path\": \"notes.txt\"}}}\nprint(call[\"function\"][\"name\"], call[\"function\"][\"arguments\"][\"path\"])" }, answer: ["read_file notes.txt"], why: "Ollama 응답의 `tool_calls` 한 항목 모양 · arguments 는 이미 객체(dict)" },
+                { type: "order", q: "에이전트 루프 한 바퀴", items: ["사용자 요청", "도구 목록과 함께 모델 호출", "모델이 도구 요청을 출력", "하네스가 도구 실행", "결과를 붙여 다시 모델 호출", "모델이 최종 답"], why: "가운데 넷이 도구가 필요 없을 때까지 반복 · 단계 상한으로 무한 루프 방지" }
+            ],
+            refs: [
+                { title: "ReAct: Synergizing Reasoning and Acting in Language Models", by: "Yao et al.", year: 2022, url: "https://arxiv.org/abs/2210.03629", kind: "paper" },
+                { title: "Tool use with Claude", by: "Anthropic", url: "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview", kind: "doc" },
+                { title: "Tool calling", by: "Ollama", url: "https://docs.ollama.com/capabilities/tool-calling", kind: "doc" },
+                { title: "Codex CLI", by: "OpenAI", url: "https://learn.chatgpt.com/docs/codex/cli", kind: "doc" }
+            ]
+        },
+        {
+            id: "ai-memory",
+            title: "AI 의 기억과 업데이트 — 가중치·컨텍스트·메모리 파일",
+            level: 1,
+            mins: 18,
+            pre: ["ai/assistant"],
+            checked: "2026-11-18",
+            key: [
+                "**가중치(weights)** = 학습 때 굳은 장기 지식 · 대화로는 안 바뀌고 새 버전이 나와야 바뀜",
+                "**컨텍스트 창(context window)** = **작업 기억(working memory)** · 모델은 이번 요청에 담긴 것만 봄",
+                "**무상태 API(stateless API)**: 앱이 매번 대화 전체를 다시 보냄 → 길면 잘리거나 **압축 요약(compaction)**",
+                "'계속 기억하는' 비밀 = **메모리 파일(memory file)**: CLAUDE.md·AGENTS.md·메모를 세션마다 다시 읽음",
+                "로컬 Ollama: 모델 파일이 그대로면 지식도 그대로 · 기본 컨텍스트가 작으면 금방 잊음"
+            ],
+            concepts: [
+                { term: "가중치", en: "Model weights", def: "학습으로 정해진 수십억 개 숫자 · 배포 뒤엔 고정 · 지식과 말투가 여기 들어 있음" },
+                { term: "컨텍스트 창", en: "Context window", def: "한 번의 요청에 넣을 수 있는 최대 토큰 · 시스템 프롬프트 + 대화 + 도구 결과 + 답 모두 포함" },
+                { term: "무상태 API", en: "Stateless API", def: "서버가 대화를 기억하지 않음 · 앱이 매 요청에 전체 기록을 다시 보냄" },
+                { term: "메모리 파일", en: "Memory file", def: "세션이 바뀌어도 남는 메모 · 하네스가 시작 때 읽어 프롬프트에 넣음" },
+                { term: "압축 요약", en: "Compaction", def: "컨텍스트가 차면 오래된 대화를 요약 한 덩어리로 바꿈 · 세부는 빠지기 쉬움" }
+            ],
+            demo: { type: "sim", name: "context", limit: 4096 },
+            code: [
+                {
+                    lang: "python",
+                    title: "기억은 서버가 아니라 내 리스트에 있다 (Ollama, 표준 라이브러리)",
+                    src: `import json, os, urllib.request
+
+OLLAMA = os.environ.get("OLLAMA_URL", "http://localhost:11434")
+MODEL = os.environ.get("OLLAMA_MODEL", "qwen3")
+history = []                                   # 대화 기록은 이 리스트가 전부
+
+def ask(text):
+    history.append({"role": "user", "content": text})
+    body = {"model": MODEL, "messages": history, "stream": False,
+            "options": {"num_ctx": 16384}}      # 컨텍스트 한도를 직접 지정
+    req = urllib.request.Request(f"{OLLAMA}/api/chat", json.dumps(body).encode(),
+                                 {"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=300) as r:
+        reply = json.loads(r.read())["message"]
+    history.append(reply)                      # 다음 호출 때 통째로 다시 보냄
+    return reply["content"]
+
+ask("나는 민수야. 기억해 줘")
+history.clear()                                # 리스트를 비우면
+print(ask("내 이름이 뭐야?"))                    # 모델은 모름: 서버 쪽엔 아무 기억도 없음`,
+                    note: "Ollama 기본 컨텍스트는 VRAM 에 따라 4k / 32k / 256k (공식 문서, 2026-11) · 넘치면 앞부분이 잘릴 수 있음"
+                },
+                {
+                    lang: "python",
+                    title: "세션을 넘는 기억: 메모리 파일을 시작 때 읽기",
+                    src: `import pathlib
+
+MEM = pathlib.Path("memory.md")                # Claude Code 의 CLAUDE.md, Codex 의 AGENTS.md 와 같은 발상
+
+def system_prompt():
+    notes = MEM.read_text(encoding="utf-8") if MEM.exists() else "(없음)"
+    return f"너는 도우미다. 아래는 이전 세션에서 남긴 메모다:\\n{notes}"
+
+def remember(fact):                            # '기억해 둘 것'이 생기면 하네스가 파일에 씀
+    with MEM.open("a", encoding="utf-8") as f:
+        f.write(f"- {fact}\\n")
+
+remember("사용자 이름: 민수 · 답은 짧게")
+print(system_prompt())                         # 새 세션은 이 글을 맨 앞에 넣고 시작`,
+                    note: "모델이 배우는 게 아니라 하네스가 글을 다시 읽어 주는 것 · 메모리도 매 요청의 토큰을 차지"
+                }
+            ],
+            optimize: [
+                {
+                    title: "넘치면 앞부분이 잘림 → 오래된 부분을 요약",
+                    before: { lang: "python", src: `messages = history[-20:]          # 처음에 말한 이름·목표가 사라짐` },
+                    after: { lang: "python", src: `if count_tokens(history) > LIMIT * 0.8:
+    summary = llm("지금까지 대화를 사실 위주로 요약: " + as_text(history[:-6]))
+    history = [{"role": "user", "content": "이전 대화 요약: " + summary}] + history[-6:]` },
+                    gain: "핵심 사실 유지 · 토큰 수 일정",
+                    note: "Claude Code 는 컨텍스트가 차면 자동 압축 · `/compact focus on …` 으로 초점 지정"
+                },
+                {
+                    title: "세션마다 같은 설명 → 프로젝트 메모리 파일",
+                    before: { lang: "text", src: `(새 세션마다) "이 저장소는 Python 3.12 이고 테스트는 pytest -q 로…"` },
+                    after: { lang: "markdown", src: `# AGENTS.md (Codex) / CLAUDE.md (Claude Code)
+- Python 3.12, 테스트는 \`pytest -q\`
+- 커밋 메시지는 영어, 한 줄 요약 + 본문` },
+                    gain: "세션 시작마다 자동으로 들어감"
+                }
+            ],
+            glossary: [
+                { term: "모델 버전", en: "Model version", def: "같은 이름이라도 가중치가 다른 배포본 · 지식·능력이 바뀌는 유일한 길" },
+                { term: "자동 메모리", en: "Auto memory", def: "Claude Code 가 스스로 쓰는 메모 · MEMORY.md 앞 200줄 또는 25KB 를 세션 시작 때 읽음" },
+                { term: "장기 기억", en: "Long-term memory", def: "세션이 끝나도 남는 기억 · AI 에선 가중치(학습)나 외부 파일·DB" },
+                { term: "작업 기억", en: "Working memory", def: "지금 처리 중인 내용 · LLM 에선 컨텍스트 창 안의 토큰" }
+            ],
+            quiz: [
+                { q: "어제 알려 준 내 이름을 오늘 새 세션의 Claude Code 가 안다면, 그 이유로 가장 맞는 것은?", options: ["모델이 밤사이 재학습돼서", "메모리 파일을 시작 때 읽어서", "서버가 대화를 영구 보관해서", "이름을 우연히 맞혀서"], a: 1, why: "공식 문서: 세션은 늘 새 컨텍스트로 시작 · CLAUDE.md 와 자동 메모리를 시작 때 불러옴" },
+                { q: "Ollama 로 받은 Qwen 이 지난달 소식을 모르는 이유는?", options: ["가중치가 굳어 있고 검색도 없어서", "Ollama 가 인터넷 접속을 늘 막아서", "한국어 뉴스를 학습 안 해서", "컨텍스트 창이 작아서"], a: 0, why: "지식은 학습 시점에 고정 · 새 소식은 검색 도구를 붙이거나 새 버전을 받아야 함" },
+                { q: "긴 대화에서 처음에 말한 이름을 잊는 가장 흔한 원인은?", options: ["모델이 대화가 길어 지쳐서", "앞부분이 한도 밖으로 밀려서", "가중치가 대화 중에 조금씩 바뀌어서", "온도(temperature)가 너무 높아서"], a: 1, why: "모델은 이번 요청에 담긴 것만 봄 · 한도를 넘은 앞부분은 아예 안 보냄" },
+                { q: "VRAM 16 GiB PC 에서 Ollama 기본 컨텍스트 길이는? (공식 문서, 2026-11)", options: ["4k", "32k", "256k", "1M"], a: 0, why: "24 GiB 미만 4k · 24–48 GiB 32k · 48 GiB 이상 256k · 에이전트·코딩 도구엔 64000 이상 권장" },
+                { q: "모델 업데이트와 앱 업데이트의 차이로 맞는 것은?", options: ["둘은 항상 같은 날 함께 바뀜", "앱은 기능, 모델은 가중치가 바뀜", "앱 업데이트가 가중치를 재학습", "모델은 대화할 때마다 조금씩 업데이트"], a: 1, why: "Claude Code 를 업데이트하면 도구·화면이 바뀜 · 지식이 바뀌려면 회사가 새 모델 버전을 내야 함" },
+                { q: "실험(4k)에서 메모리 파일을 켜자 오히려 잘린 메시지가 늘었다. 이유는?", options: ["메모리도 매 요청 토큰을 차지해서", "메모리 파일이 대화 기록을 지워서", "요약 기능이 자동으로 함께 켜져서", "모델이 메모리를 더 중요하게 봐서"], a: 0, why: "메모리 120 토큰만큼 대화 공간이 줄어 4개 → 6개가 잘림 · 메모리는 짧고 핵심만" },
+                { type: "num", q: "실험(한도 4k, 메모리·요약 끔)에서 13번째 메시지를 보낼 때 잘린 메시지는 몇 개?", answer: 4, tol: 0, unit: "개", why: "시스템 400 + 뒤에서부터 #5–#13 (3,680 토큰) = 4,080 · #4(700)를 넣으면 4,096 을 넘음" },
+                { type: "num", q: "시스템 400 + 대화 5,590 토큰. 한도가 8,192 면 남는 토큰은?", answer: 2202, tol: 0, unit: "토큰", why: "8,192 − 5,990 = 2,202 · 답을 쓸 자리도 이 안에서 나와야 함" },
+                { type: "num", q: "대화가 호출마다 300 토큰씩 늘고(1번째 호출 300) 시스템이 500 이면, 10번째 호출의 입력 토큰은?", answer: 3500, tol: 0, unit: "토큰", why: "500 + 300 × 10 = 3,500 · 무상태라 호출할수록 입력이 커짐" },
+                { type: "text", q: "출력은?", code: { lang: "python", src: "msgs = [120, 800, 300, 900, 60]   # 토큰 수, 오래된 것부터\nbudget, keep = 1300, []\nfor t in reversed(msgs):\n    if sum(keep) + t > budget:\n        break\n    keep.insert(0, t)\nprint(keep)" }, answer: ["[300, 900, 60]", "300,900,60"], why: "최신부터 60 → 960 → 1,260 · 800 을 넣으면 2,060 > 1,300 → 앞의 두 메시지는 잘림" },
+                { type: "order", q: "Claude Code 세션 한 번에서 일어나는 순서", items: ["CLAUDE.md 와 자동 메모리 읽기", "시스템 프롬프트 + 메모리 + 요청으로 모델 호출", "도구로 파일을 읽고 작업", "컨텍스트가 차면 자동 압축", "남길 내용은 메모리 파일에 기록"], why: "세션은 새 컨텍스트로 시작 → 메모리로 채움 · 작업 중엔 압축 · 다음 세션을 위한 것은 파일로" }
+            ],
+            refs: [
+                { title: "Using the Messages API (the Messages API is stateless)", by: "Anthropic", url: "https://platform.claude.com/docs/en/build-with-claude/working-with-messages", kind: "doc" },
+                { title: "How Claude remembers your project", by: "Anthropic", url: "https://code.claude.com/docs/en/memory", kind: "doc" },
+                { title: "Context length", by: "Ollama", url: "https://docs.ollama.com/context-length", kind: "doc" },
+                { title: "MemGPT: Towards LLMs as Operating Systems", by: "Packer et al.", year: 2023, url: "https://arxiv.org/abs/2310.08560", kind: "paper" }
+            ]
+        },
+        {
             id: "rag",
             title: "RAG 검색 증강 생성",
             level: 2,

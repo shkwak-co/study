@@ -25,7 +25,16 @@ LAB.path({
     desc: "퍼셉트론과 역전파에서 Transformer, LLM, RAG, 엣지 배포까지",
     lessons: [
         "deep-learning/perceptron", "deep-learning/backprop", "deep-learning/optimizer", "deep-learning/regularization",
-        "deep-learning/cnn", "deep-learning/rnn", "deep-learning/transformer", "ai/llm", "ai/tokenizer", "ai/prompting", "ai/rag",
+        "deep-learning/cnn", "deep-learning/rnn", "deep-learning/transformer", "ai/llm", "ai/assistant", "ai/ai-memory", "ai/tokenizer", "ai/prompting", "ai/rag",
         "ai/agents", "ai/finetune", "deep-learning/quantization", "ai/edge-ai", "ai/eval"
+    ]
+});
+LAB.path({
+    id: "rag",
+    name: "RAG 실전",
+    desc: "LLM과 프롬프트에서 시작해 임베딩, BM25, 하이브리드, 저장, 재정렬, 평가, 시스템 설계까지",
+    lessons: [
+        "ai/llm", "ai/assistant", "ai/ai-memory", "ai/prompting", "rag/rag-overview", "rag/embedding", "rag/keyword", "rag/hybrid",
+        "rag/chunking", "rag/vector-store", "rag/rerank", "rag/rag-eval", "rag/rag-failures"
     ]
 });

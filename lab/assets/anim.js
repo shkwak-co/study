@@ -3552,6 +3552,230 @@
         cv.fit();
     };
 
+    /* ---------- RAG track: keyword vs meaning vs hybrid retrieval (pure model tested by check.mjs) ---------- */
+    // Invented IT-helpdesk tickets (fictional example). floor / bldg are metadata used as filters, not searchable text.
+    const HYB_DOCS = [
+        [101, 2, "본관", "와이파이 통신 끊김 오류 E-4012 · 랜 케이블 커넥터 재연결 후 정상"],
+        [102, 3, "본관", "공유 폴더 접근 거부 · 권한 재설정"],
+        [103, 3, "본관", "디스플레이 신호 없음 · 영상 단자 재장착"],
+        [104, 2, "별관", "프린터 용지 걸림 반복 · 급지 롤러 청소"],
+        [105, 3, "본관", "네트워크 연결 안 됨 · 스위치 포트 교체"],
+        [106, 1, "별관", "로그인 실패 반복 · 비밀번호 초기화"],
+        [107, 2, "본관", "무선 마우스 반응 없음 · 수신기 배터리 교체"],
+        [108, 3, "본관", "오류 E-4012 VPN 응답 타임아웃 · 허브 전원 재인가"],
+        [109, 2, "별관", "디스크 용량 부족 경고 · 임시 파일 정리"],
+        [110, 1, "본관", "UPS 배터리 경고 · 배터리 교체"],
+        [111, 2, "별관", "통신 끊김 반복 · 커넥터 재연결"],
+        [112, 1, "본관", "통신 끊김 · 허브 교체"],
+        [113, 1, "별관", "모니터 깜빡임 · 단자 청소"]
+    ].map(([id, floor, bldg, t]) => ({ id, floor, bldg, t }));
+    const HYB_QUERIES = [
+        { q: "모니터 화면이 안 나옴", gold: [103, 113], text: "바꿔 말하기(paraphrase): #103 은 '디스플레이 신호'라고 적혀 있어 단어가 하나도 안 겹침 → 키워드는 #113 만, 의미 검색은 둘 다" },
+        { q: "E-4012 오류", gold: [101, 108], text: "코드 검색: 'e-4012' 는 의미 사전에 없어 의미 벡터가 0 → 키워드만 찾음 · 하이브리드는 키워드 다리로 구제" },
+        { q: "본관 3층 통신 끊김", gold: [105, 108], text: "건물·층은 단어가 아니라 **조건**: 필터를 끄면 다른 층의 '통신 끊김'이 위를 차지 · 필터를 켜면 본관 3층 티켓만 후보" },
+        { q: "프린터 용지가 또 걸림", gold: [104], text: "쉬운 질문: 단어도 겹치고 의미도 같음 → 세 방식 모두 #104" }
+    ];
+    const PARTICLES = ["에서", "으로", "이나", "은", "는", "이", "가", "을", "를", "에", "의", "로", "와", "과", "도", "만"];
+    // lower-case words, codes kept whole ("e-4012"), a trailing particle cut from words longer than 2 that end in Hangul, words < 2 chars dropped
+    const hyTok = (s) => (String(s).toLowerCase().match(/[0-9a-z가-힣]+(?:-[0-9a-z]+)*/g) || []).map((w) => {
+        if (/[가-힣]$/.test(w) && w.length > 2) { const p = PARTICLES.find((x) => w.endsWith(x)); if (p) w = w.slice(0, -p.length); }
+        return w;
+    }).filter((w) => w.length >= 2);
+    // Okapi BM25 (Robertson & Zaragoza 2009), Lucene's idf = ln(1 + (N − n + 0.5) / (n + 0.5))
+    function bm25(docToks, q, k1 = 1.2, b = 0.75) {
+        const N = docToks.length;
+        const avg = docToks.reduce((s, d) => s + d.length, 0) / (N || 1);
+        const df = new Map();
+        docToks.forEach((d) => new Set(d).forEach((w) => df.set(w, (df.get(w) || 0) + 1)));
+        return docToks.map((d) => [...new Set(q)].reduce((s, w) => {
+            const n = df.get(w) || 0;
+            const f = d.filter((x) => x === w).length;
+            if (!n || !f) return s;
+            return s + Math.log(1 + (N - n + 0.5) / (n + 0.5)) * (f * (k1 + 1)) / (f + k1 * (1 - b + (b * d.length) / avg));
+        }, 0));
+    }
+    // toy embedding: each known word points along one concept axis; text = normalised sum. Real models learn thousands of axes.
+    const HYB_AXES = ["통신", "화면", "출력", "전원", "계정", "저장"];
+    const HYB_SYN = {
+        통신: "통신 끊김 끊겨 연결 네트워크 와이파이 랜 이더넷 케이블 커넥터 스위치 포트 허브 타임아웃 응답 vpn",
+        화면: "모니터 화면 디스플레이 영상 깜빡임 해상도",
+        출력: "프린터 용지 걸림 급지 롤러 토너 인쇄",
+        전원: "전원 ups 배터리 정전 충전",
+        계정: "로그인 비밀번호 계정 권한 인증 접근",
+        저장: "디스크 용량 저장 파일 폴더 백업"
+    };
+    const AXIS_OF = new Map(Object.entries(HYB_SYN).flatMap(([a, ws]) => ws.split(" ").map((w) => [w, HYB_AXES.indexOf(a)])));
+    const toyEmbed = (toks) => {
+        const v = HYB_AXES.map(() => 0);
+        toks.forEach((w) => { const a = AXIS_OF.get(w); if (a != null) v[a]++; });
+        const n = Math.hypot(...v);
+        return n ? v.map((x) => x / n) : v;
+    };
+    // Reciprocal Rank Fusion (Cormack et al. 2009): score(d) = Σ over lists of 1 / (k + rank), rank from 1
+    const rrf = (lists, k = 60) => {
+        const s = new Map();
+        lists.forEach((l) => l.forEach((d, r) => s.set(d, (s.get(d) || 0) + 1 / (k + r + 1))));
+        return s;
+    };
+    const recallAt = (ids, gold, K) => (gold.length ? ids.slice(0, K).filter((d) => gold.includes(d)).length / gold.length : null);
+    // both legs see the same candidates; BM25 statistics come from the whole collection
+    function hybridRun(docs, query, opt = {}) {
+        const toks = hyTok(query);
+        const dt = docs.map((d) => hyTok(d.t));
+        const bm = bm25(dt, toks);
+        const qv = toyEmbed(toks);
+        const cos = dt.map((t) => vdot(toyEmbed(t), qv));
+        const m = String(query).match(/(\d+)\s*층/);
+        const f = { floor: m ? +m[1] : null, bldg: (String(query).match(/본관|별관/) || [null])[0] };
+        const use = !!opt.filter && (f.floor != null || !!f.bldg);
+        const cand = docs.map((_, i) => i).filter((i) => !use || ((f.floor == null || docs[i].floor === f.floor) && (!f.bldg || docs[i].bldg === f.bldg)));
+        const order = (sc) => cand.filter((i) => sc[i] > 1e-9).sort((a, b) => sc[b] - sc[a] || a - b);
+        const bm25L = order(bm);
+        const denseL = order(cos);
+        const rs = rrf([bm25L, denseL], opt.k ?? 60);
+        const fused = docs.map((_, i) => rs.get(i) || 0);
+        const rank = { bm25: bm25L, dense: denseL, hybrid: order(fused) };
+        const ids = Object.fromEntries(Object.entries(rank).map(([k2, l]) => [k2, l.map((i) => docs[i].id)]));
+        return { toks, qv, filter: use ? f : null, cand, bm, cos, fused, rank, ids };
+    }
+    Object.assign(LAB.ai, { hyTok, bm25, toyEmbed, rrf, recallAt, hybridRun, HYB_DOCS, HYB_QUERIES, HYB_AXES });
+
+    // hybrid retrieval: preset or typed question → BM25 list, toy-embedding list, RRF fusion, building/floor filter, recall@k
+    SIMS.hybrid = (host, spec) => {
+        const docs = HYB_DOCS;
+        let qi = clamp(spec.preset ?? 0, 0, HYB_QUERIES.length - 1);
+        let query = HYB_QUERIES[qi].q;
+        let mode = ["bm25", "dense", "hybrid"].includes(spec.mode) ? spec.mode : "hybrid";
+        let K = spec.top || 3;
+        let k = spec.k || 60;
+        let filt = !!spec.filter;
+        const st = stage(host);
+        st.classList.add("hyb");
+        st.innerHTML = `<div class="hyb-list"></div><div class="hyb-side"><h4>질문 → 단어</h4><div class="hyb-q"></div><h4>질문의 의미 벡터 (장난감 6축)</h4><div class="hyb-v"></div><h4>조건 필터</h4><div class="hyb-f"></div><div class="hyb-note"></div></div>`;
+        const $ = (s) => st.querySelector(s);
+        const bar = ctlBar(host);
+        const out = readout(host);
+        const NAME = { bm25: "키워드 (BM25)", dense: "의미 (코사인)", hybrid: "하이브리드 (RRF)" };
+        const draw = () => {
+            const R = hybridRun(docs, query, { k, filter: filt });
+            const P = qi >= 0 ? HYB_QUERIES[qi] : null;
+            const gold = P ? P.gold : [];
+            const ranked = R.rank[mode];
+            const rest = docs.map((_, i) => i).filter((i) => !ranked.includes(i));
+            const at = (list, i) => { const r = list.indexOf(i); return r < 0 ? "" : ` <i>${r + 1}</i>`; };
+            $(".hyb-list").innerHTML = `<h4>${NAME[mode]} 순위 · 상위 ${K}개 강조${mode === "hybrid" ? ` · k = ${k}` : ""}</h4>`
+                + (ranked.length ? "" : "<div class='muted'>점수가 0 보다 큰 기록 없음</div>")
+                + [...ranked, ...rest].map((i, n) => {
+                    const d = docs[i];
+                    const cls = [ranked.includes(i) ? (n < K ? "top" : "") : "zero", R.cand.includes(i) ? "" : "out"].join(" ");
+                    return `<div class="hrow ${cls}"><span class="hid">#${d.id}<small>${d.bldg} ${d.floor}층</small></span>`
+                        + `<span>${esc(d.t)}${gold.includes(d.id) ? " <em class='gold'>정답</em>" : ""}</span>`
+                        + `<span class="hs">BM25 ${R.bm[i].toFixed(2)}${at(R.rank.bm25, i)}<br>cos ${R.cos[i].toFixed(2)}${at(R.rank.dense, i)}<br>RRF ${R.fused[i].toFixed(4)}</span></div>`;
+                }).join("");
+            $(".hyb-q").innerHTML = R.toks.map((w) => { const a = AXIS_OF.get(w); return `<b class="${a != null ? "ax" : ""}">${esc(w)}${a != null ? `<small>${HYB_AXES[a]}</small>` : ""}</b>`; }).join("") || "<span class='muted'>단어 없음</span>";
+            $(".hyb-v").innerHTML = HYB_AXES.map((a, j) => `<div class="hv"><span>${a}</span><i style="width:${R.qv[j] * 100}%"></i><em>${R.qv[j].toFixed(2)}</em></div>`).join("")
+                + (R.qv.some((x) => x) ? "" : "<div class='muted'>사전에 아는 단어가 없어 0 벡터 → 의미 검색 결과 없음</div>");
+            $(".hyb-f").innerHTML = R.filter ? `${[R.filter.bldg, R.filter.floor != null && `${R.filter.floor}층`].filter(Boolean).join(" · ")} → 후보 ${R.cand.length} / ${docs.length}건`
+                : filt ? "질문에 건물·층 없음 → 전체 후보" : "꺼짐 · '본관'·'3층'도 그냥 단어 취급 (티켓 본문에 없으니 안 맞음)";
+            $(".hyb-note").innerHTML = fmt(P ? P.text : "직접 입력: 의미 벡터는 사전에 있는 단어만 반영 · 실제 임베딩 모델은 처음 보는 말도 벡터로 만듦");
+            const rc = (m) => { const r = recallAt(R.ids[m], gold, K); return r == null ? "—" : r.toFixed(2); };
+            out([[`recall@${K} 키워드`, rc("bm25")], ["의미", rc("dense")], ["하이브리드", rc("hybrid"), "good"], ["1위", ranked.length ? `#${docs[ranked[0]].id}` : "없음"]]);
+        };
+        let qIn = null;
+        seg(bar, "질문", HYB_QUERIES.map((x, i) => [i, x.q]), qi, (v) => { qi = +v; query = HYB_QUERIES[qi].q; qIn.value = query; draw(); });
+        qIn = textIn(bar, "직접 입력", query, (s) => { if (s) { query = s; qi = HYB_QUERIES.findIndex((x) => x.q === s); draw(); } }, true);
+        seg(bar, "방식", Object.entries(NAME), mode, (v) => { mode = v; draw(); });
+        seg(bar, "건물·층 필터", [["0", "끔"], ["1", "켬"]], filt ? "1" : "0", (v) => { filt = v === "1"; draw(); });
+        slider(bar, "top-k", 1, 6, 1, K, (v) => v, (v) => { K = v; draw(); });
+        slider(bar, "RRF k", 1, 100, 1, k, (v) => v, (v) => { k = v; draw(); });
+        draw();
+    };
+
+    /* ---------- AI basics: what the model actually receives each turn (context window, memory file, compaction) ---------- */
+    // Invented 13-turn chat; tok = rough token count. facts: memo = the app saved it to a memory file, gist = a summary keeps it.
+    const CTX_TURNS = [
+        ["user", "안녕, 나는 민수야. 파이썬으로 날씨 앱 만드는 중이야", 60, ["name", "app"]],
+        ["ai", "반가워요, 민수 님! 날씨 앱 구조부터 정리해 볼까요? …", 250],
+        ["user", "API 를 부르면 401 오류가 나 (로그 붙여 넣음)", 900, ["err"]],
+        ["ai", "401 은 인증 실패예요. 요청 헤더의 API 키를 확인하세요 …", 700],
+        ["user", "고쳤어! 이제 기온 그래프를 그리고 싶어", 50],
+        ["ai", "matplotlib 예제 코드 …", 900],
+        ["user", "축 글씨가 네모로 깨져", 40],
+        ["ai", "한글 글꼴 설정 방법 …", 600],
+        ["user", "앞으로 답은 짧게 해 줘", 20, ["short"]],
+        ["ai", "네.", 20],
+        ["user", "(한 달 치 CSV 붙여 넣음) 이거 분석해 줘", 1500],
+        ["ai", "평균 기온 분석 결과 …", 500],
+        ["user", "근데 내 이름이랑 무슨 앱 만든다고 했지? 처음 오류 코드는?", 50]
+    ].map(([who, t, tok, facts]) => ({ who, t, tok, facts: facts || [] }));
+    const CTX_FACTS = {
+        name: { label: "이름 = 민수", memo: true, gist: true },
+        app: { label: "날씨 앱을 만드는 중", memo: true, gist: true },
+        err: { label: "처음 오류 코드 = 401", memo: false, gist: false },
+        short: { label: "답은 짧게", memo: true, gist: true }
+    };
+    // At turn `at` the model sees: system prompt + (memory file) + (summary of dropped turns) + the newest whole turns that fit the limit.
+    function ctxRun(turns, at, o = {}) {
+        const limit = o.limit ?? 4096, sys = o.system ?? 400, memTok = o.memTok ?? 120, sumTok = o.sumTok ?? 250;
+        const fill = (budget) => {
+            const win = [];
+            let used = 0;
+            for (let i = at; i >= 0 && used + turns[i].tok <= budget; i--) { used += turns[i].tok; win.unshift(i); }
+            return { win, used };
+        };
+        const base = sys + (o.memory ? memTok : 0);
+        let r = fill(limit - base);
+        const first = (x) => (x.win.length ? x.win[0] : at + 1);
+        if (o.compact && first(r) > 0) r = fill(limit - base - sumTok);
+        const dropped = [...Array(first(r)).keys()];
+        const summary = !!o.compact && dropped.length > 0;
+        const facts = Object.entries(CTX_FACTS).map(([key, f]) => {
+            const said = turns.findIndex((t) => t.facts.includes(key));
+            const via = said < 0 || said > at ? null : r.win.includes(said) ? "대화" : o.memory && f.memo ? "메모리 파일" : summary && f.gist ? "요약" : "잊힘";
+            return { key, label: f.label, said, via };
+        });
+        return { win: r.win, dropped, summary, used: base + (summary ? sumTok : 0) + r.used, limit, facts };
+    }
+    Object.assign(LAB.ai, { CTX_TURNS, CTX_FACTS, ctxRun });
+
+    // context window: slide through a chat and see which turns and facts the model still receives
+    SIMS.context = (host, spec) => {
+        const turns = CTX_TURNS;
+        let at = clamp((spec.at ?? turns.length) - 1, 0, turns.length - 1);
+        let limit = spec.limit || 4096;
+        let memory = !!spec.memory;
+        let compact = !!spec.compact;
+        const st = stage(host);
+        st.classList.add("hyb");
+        st.innerHTML = `<div class="hyb-list"></div><div class="hyb-side"><h4>이번 요청에 들어간 토큰</h4><div class="ctx-bar"></div><div class="ctx-leg"></div><h4>모델이 아는 사실</h4><div class="ctx-f"></div><div class="hyb-note"></div></div>`;
+        const $ = (s) => st.querySelector(s);
+        const bar = ctlBar(host);
+        const out = readout(host);
+        const draw = () => {
+            const R = ctxRun(turns, at, { limit, memory, compact });
+            $(".hyb-list").innerHTML = `<h4>대화 기록 · ${at + 1}번째 메시지를 보낼 때</h4>` + turns.map((t, i) => {
+                const st2 = i > at ? "아직" : R.win.includes(i) ? "보냄" : R.summary ? "요약됨" : "잘림";
+                const cls = i > at ? "out" : R.win.includes(i) ? "top" : "zero";
+                return `<div class="hrow ${cls}"><span class="hid">#${i + 1}<small>${t.who === "user" ? "사용자" : "AI"}</small></span><span>${esc(t.t)}</span><span class="hs">${t.tok} tok<br>${st2}</span></div>`;
+            }).join("");
+            const seg = [["시스템", 400, "var(--dim)"], memory && ["메모리", 120, "var(--warn)"], R.summary && ["요약", 250, "var(--c)"], ["대화", R.used - 400 - (memory ? 120 : 0) - (R.summary ? 250 : 0), "var(--ok)"]].filter(Boolean);
+            $(".ctx-bar").innerHTML = seg.map(([n, v, c]) => `<i title="${n} ${v}" style="width:${(v / limit) * 100}%;background:${c}"></i>`).join("");
+            $(".ctx-leg").innerHTML = seg.map(([n, v, c]) => `<span><b style="background:${c}"></b>${n} ${v}</span>`).join("") + `<span>한도 ${limit}</span>`;
+            $(".ctx-f").innerHTML = R.facts.map((f) => `<div class="vrow${f.via && f.via !== "잊힘" ? " top" : ""}"><span>${esc(f.label)}</span><b>${f.via == null ? "아직 안 나옴" : f.via === "잊힘" ? "✗ 잊힘" : `✓ ${f.via}`}</b></div>`).join("");
+            const lost = R.facts.filter((f) => f.via === "잊힘");
+            $(".hyb-note").innerHTML = fmt(lost.length
+                ? `모델은 매번 **이번 요청에 담긴 것만** 봄 · 앞부분 ${R.dropped.length}개 메시지가 한도 밖이라 '${lost.map((f) => f.label).join("', '")}'을(를) 모르는 채 답함 → "모른다" 또는 지어냄`
+                : R.dropped.length ? `앞부분 ${R.dropped.length}개 메시지는 잘렸지만 필요한 사실은 ${memory ? "메모리 파일" : ""}${memory && R.summary ? "·" : ""}${R.summary ? "요약" : ""}로 다시 넣어 줌 · 세부(오류 코드 같은)는 요약에서 빠지기 쉬움`
+                : "대화 전체가 한도 안 · 모델은 처음부터 지금까지를 다시 읽고 답함 (API 는 상태가 없음: 앱이 매번 전체를 다시 보냄)");
+            out([["보낸 토큰", `${R.used} / ${limit}`], ["잘린 메시지", R.dropped.length], ["아는 사실", `${R.facts.filter((f) => f.via && f.via !== "잊힘").length} / ${R.facts.filter((f) => f.via).length}`, "good"]]);
+        };
+        slider(bar, "보낼 메시지", 1, turns.length, 1, at + 1, (v) => `#${v}`, (v) => { at = v - 1; draw(); });
+        seg(bar, "컨텍스트 한도", [[2048, "2k"], [4096, "4k"], [8192, "8k"], [32768, "32k"]], limit, (v) => { limit = +v; draw(); });
+        seg(bar, "메모리 파일", [["0", "끔"], ["1", "켬"]], memory ? "1" : "0", (v) => { memory = v === "1"; draw(); });
+        seg(bar, "요약(compaction)", [["0", "끔"], ["1", "켬"]], compact ? "1" : "0", (v) => { compact = v === "1"; draw(); });
+        draw();
+    };
+
     /* ---------- round-5 labs: pure models (tested by check.mjs) ---------- */
     const hex2 = (v) => `0x${(v & 0xff).toString(16).toUpperCase().padStart(2, "0")}`;
 
@@ -4224,6 +4448,8 @@
         can: ["CAN 중재", "ID 비트별 중재 · 우성/열성 · 비트 스터핑", "통신"],
         bpe: ["BPE 토크나이저", "자주 붙는 쌍 병합 한 단계씩 · 새 단어 토큰화", "AI"],
         vector: ["벡터 검색", "질의 드래그 · 코사인 vs 내적 vs L2 · top-k", "AI"],
+        hybrid: ["하이브리드 검색", "BM25 vs 의미 검색 vs RRF · 건물·층 필터 · recall@k", "AI"],
+        context: ["컨텍스트 창", "대화가 길어지면 무엇을 잊나 · 한도 · 메모리 파일 · 요약", "AI"],
         i2c: ["I2C 트랜잭션", "주소+R/W · ACK/NACK · 반복 시작 · 클럭 스트레칭", "통신"],
         spi: ["SPI 모드", "CPOL·CPHA 4모드 · 샘플 엣지 · 모드 불일치 경합", "통신"],
         nvic: ["NVIC 우선순위", "선점 · tail-chaining · late arrival · 그룹/서브 우선순위", "시스템"],

@@ -368,6 +368,21 @@ Object.entries(LAB.SIM_INFO || {}).forEach(([n, info]) => { if (!LAB.SIM_TAGS.in
     assert.equal(A.vrank(docs, [0.8, 0.3], "dot", false)[0].i, 1, "dot product favours the long vector");
     assert.equal(A.vrank(docs, [0.8, 0.3], "cosine", false)[0].i, 2, "cosine ignores length");
     assert.equal(["cosine", "dot", "l2"].map((m) => A.vrank(docs, [0.8, 0.3], m, true).map((r) => r.i).join("")).join(" "), "210 210 210", "unit vectors: all metrics agree");
+    // hybrid lab (rag track): each preset shows what its caption claims
+    assert.deepEqual([...A.hyTok("모니터가 E-4012 3층에서 안 됨")], ["모니터", "e-4012", "3층"], "tokens: particle cut, code whole, 1-char words dropped");
+    assert.ok(Math.abs(A.rrf([[0, 1], [1, 2]], 60).get(1) - (1 / 62 + 1 / 61)) < 1e-12, "rrf: 1 / (k + rank)");
+    const hy = (i, filter) => { const P = A.HYB_QUERIES[i]; const R = A.hybridRun(A.HYB_DOCS, P.q, { filter }); return ["bm25", "dense", "hybrid"].map((m) => A.recallAt(R.ids[m], P.gold, 3)).join(" "); };
+    assert.equal(hy(0), "0.5 1 1", "hybrid: paraphrase — keyword misses, meaning finds");
+    assert.equal(hy(1), "1 0 1", "hybrid: code — meaning vector empty, keyword finds");
+    assert.equal(hy(2), "0 0.5 0", "hybrid: floor ignored — other floors fill the top 3");
+    assert.equal(hy(2, true), "0 1 1", "hybrid: building/floor filter");
+    assert.equal(hy(3), "1 1 1", "hybrid: easy question");
+    // context lab (ai track): what the model receives at the last turn
+    const cx = (o) => { const R = A.ctxRun(A.CTX_TURNS, 12, o); return `${R.dropped.length} ${R.used} ${R.facts.map((f) => f.via).join(",")}`; };
+    assert.equal(cx({ limit: 4096 }), "4 4080 잊힘,잊힘,잊힘,대화", "context: 4k drops the first turns, name forgotten");
+    assert.equal(cx({ limit: 4096, memory: true }), "6 3250 메모리 파일,메모리 파일,잊힘,대화", "context: memory file brings saved facts back, costs tokens");
+    assert.equal(cx({ limit: 4096, compact: true }), "6 3380 요약,요약,잊힘,대화", "context: summary keeps the gist, loses the error code");
+    assert.equal(cx({ limit: 8192 }), "0 5990 대화,대화,대화,대화", "context: 8k holds the whole chat");
 }
 
 // quiz grading: numbers (hex, tolerance), text answers, order

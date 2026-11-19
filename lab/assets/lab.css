@@ -133,8 +133,7 @@ kbd {
 }
 ::selection { background: color-mix(in srgb, var(--c) 35%, transparent); }
 
-.wrap { width: min(1180px, 100%); margin: 0 auto; padding: 0 24px; }
-.narrow { width: min(980px, 100%); }
+.wrap { width: min(1440px, 100%); margin: 0 auto; padding: 0 24px; }
 
 /* ---------- header ---------- */
 .top {

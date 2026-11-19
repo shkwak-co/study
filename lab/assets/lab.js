@@ -1146,7 +1146,7 @@ ${(t.trends || []).length ? `<section class="sec wrap">
         const has = (id) => secs.some((s) => s[0] === id);
         app.innerHTML = `
 <div class="stepbar"><div class="wrap">${secs.map((s) => `<a href="#${s[0]}">${s[1]}</a>`).join("")}</div><i class="fill"></i></div>
-<div class="wrap narrow">
+<div class="wrap">
   <header class="l-head">
     <div class="crumb"><a href="index.html">홈</a><span>›</span><a href="${trackHref(t.id)}">${t.icon} ${esc(t.name)}</a><span>›</span><span>${idx + 1} / ${t.lessons.length}</span></div>
     <h1>${esc(l.title)}</h1>
@@ -1270,7 +1270,7 @@ ${(t.trends || []).length ? `<section class="sec wrap">
         if (!l) { app.innerHTML = `<section class="sec wrap"><div class="empty">강의를 찾을 수 없습니다 · <a href="index.html">홈으로</a></div></section>`; return; }
         const a = articleOf(t, l);
         const crumb = `<div class="crumb"><a href="index.html">홈</a><span>›</span><a href="${trackHref(t.id)}">${t.icon} ${esc(t.name)}</a><span>›</span><a href="${lessonHref(t.id, l.id)}">${esc(l.title)}</a><span>›</span><span>상세 설명</span></div>`;
-        if (!a) { app.innerHTML = `<div class="wrap narrow"><header class="l-head">${crumb}<h1>${esc(l.title)}</h1></header><div class="empty">아직 상세 설명이 없습니다 · <a href="${lessonHref(t.id, l.id)}">강의로</a></div></div>`; return; }
+        if (!a) { app.innerHTML = `<div class="wrap"><header class="l-head">${crumb}<h1>${esc(l.title)}</h1></header><div class="empty">아직 상세 설명이 없습니다 · <a href="${lessonHref(t.id, l.id)}">강의로</a></div></div>`; return; }
         document.title = `${l.title} 상세 · ${t.name} · Study Lab`;
         const idx = t.lessons.indexOf(l);
         const near = (d) => { for (let i = idx + d; i >= 0 && i < t.lessons.length; i += d) if (articleOf(t, t.lessons[i])) return t.lessons[i]; return null; };
@@ -1295,7 +1295,7 @@ ${(t.trends || []).length ? `<section class="sec wrap">
         };
         app.innerHTML = `
 <div class="stepbar"><div class="wrap"><a href="${lessonHref(t.id, l.id)}">← 강의</a>${a.sections.map((s, i) => `<a href="#d${i + 1}">${pad(i + 1)} ${esc(plain(s.h))}</a>`).join("")}${extra.map(([id, h]) => `<a href="#${id}">${h}</a>`).join("")}</div><i class="fill"></i></div>
-<div class="wrap narrow article">
+<div class="wrap article">
   <header class="l-head">${crumb}
     <h1>${esc(l.title)}</h1>
     <div class="meta">${lvl(l.level || 1)}<span class="chip">읽기 약 ${readMins(a)}분</span><span class="chip">${a.sections.length}개 절</span>

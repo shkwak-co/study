@@ -1257,7 +1257,7 @@ while queue:
             concepts: [
                 { term: "구문", en: "Syntax", def: "어떤 문자열이 프로그램으로 '모양이 맞는지'를 정하는 규칙 · 문법(grammar)으로 적음" },
                 { term: "의미론", en: "Semantics", def: "모양이 맞는 프로그램이 '무엇을 하는지'를 정하는 규칙 · 같은 `*`도 타입마다 의미가 다름" },
-                { term: "추상 구문 트리", en: "Abstract Syntax Tree (AST)", def: "괄호·공백을 버리고 연산 구조만 남긴 나무 · 우선순위가 모양에 들어감" },
+                { term: "추상 구문 트리", en: "Abstract Syntax Tree (AST)", def: "괄호·공백을 버리고 연산 구조만 남긴 트리 · 우선순위가 모양에 들어감" },
                 { term: "타입 건전성", en: "Type soundness", def: "타입 검사를 통과한 프로그램은 실행 중 타입 오류로 '잘못되지' 않는다는 성질" },
                 { term: "평가 전략", en: "Evaluation strategy", def: "식을 언제 계산하나 · 엄격(값 먼저) vs 지연(필요할 때)" }
             ],
@@ -1285,8 +1285,8 @@ while queue:
                 steps: [
                     { on: ["llm", "llm>src"], text: "LLM은 다음 토큰을 확률로 고를 뿐 · 결과는 아직 '그럴듯한 텍스트'이고 문법도 보장 안 됨" },
                     { on: ["src", "src>lex", "lex"], text: "**어휘 분석기(lexer)**: 문자 → 토큰 `x` `=` `1` `+` `2` `*` `y` · 공백·주석은 사라짐" },
-                    { on: ["lex>parse", "parse"], text: "**구문 분석기(parser)**: 토큰 줄을 문법 규칙에 맞춰 나무로 · 괄호 짝이 틀리면 여기서 SyntaxError" },
-                    { on: ["parse>ast", "ast"], text: "AST: `1 + 2 * y` → `BinOp(1, +, BinOp(2, *, y))` · 곱셈이 먼저라는 규칙이 나무 모양에 박힘" },
+                    { on: ["lex>parse", "parse"], text: "**구문 분석기(parser)**: 토큰 줄을 문법 규칙에 맞춰 트리로 · 괄호 짝이 틀리면 여기서 SyntaxError" },
+                    { on: ["parse>ast", "ast"], text: "AST: `1 + 2 * y` → `BinOp(1, +, BinOp(2, *, y))` · 곱셈이 먼저라는 규칙이 트리 모양에 박힘" },
                     { on: ["ast>tc", "tc"], text: "정적 언어는 실행 전에 여기서 타입을 거름 · Python은 이 검사가 실행 중(동적)에 일어남" },
                     { on: ["tc>ir", "ir"], text: "중간 표현(IR)으로 낮춤 · CPython은 바이트코드, Clang은 LLVM IR" },
                     { on: ["ir>run", "run"], text: "실행: 의미 규칙대로 값이 나와야 함 · LLM이 쓴 코드도 결국 이 줄을 모두 통과해야 '동작'" }
@@ -1305,7 +1305,7 @@ toks = [t.string for t in tokenize.generate_tokens(io.StringIO(src).readline)
         if t.type not in (tokenize.NEWLINE, tokenize.ENDMARKER)]
 print(toks)        # ['x', '=', '1', '+', '2', '*', 'y']
 
-# 2) 구문 분석: 토큰 → 나무 (우선순위가 모양으로)
+# 2) 구문 분석: 토큰 → 트리 (우선순위가 모양으로)
 print(ast.dump(ast.parse(src).body[0].value))
 # BinOp(left=Constant(value=1), op=Add(),
 #       right=BinOp(left=Constant(value=2), op=Mult(), right=Name(id='y', ctx=Load())))

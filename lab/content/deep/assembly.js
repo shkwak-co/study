@@ -5,7 +5,7 @@ LAB.article("assembly", {
             {
                 h: "ISA와 Thumb-2: 무엇이 약속되어 있나",
                 p: [
-                    "ISA(Instruction Set Architecture)는 명령의 종류와 의미, 레지스터 개수와 역할, 명령을 비트로 적는 인코딩, 예외가 났을 때의 동작을 정한 규격이다. Cortex-M3는 Armv7-M, DSP 확장이 붙은 M4/M7은 Armv7E-M, Cortex-M0/M0+ 는 Armv6-M, M33은 Armv8-M Mainline, M55/M85는 Armv8.1-M을 구현한다. 같은 ISA를 구현한 코어끼리는 파이프라인 길이나 속도가 달라도 같은 기계어를 실행한다.",
+                    "ISA(Instruction Set Architecture)는 명령의 종류와 의미, 레지스터 개수와 역할, 명령을 비트로 적는 인코딩, 예외가 났을 때의 동작을 정한 규격이다. Cortex-M3는 Armv7-M, DSP 확장이 붙은 M4/M7은 Armv7E-M, Cortex-M0/M0+는 Armv6-M, M33은 Armv8-M Mainline, M55/M85는 Armv8.1-M을 구현한다. 같은 ISA를 구현한 코어끼리는 파이프라인 길이나 속도가 달라도 같은 기계어를 실행한다.",
                     "Cortex-M은 **Thumb-2** 명령만 실행한다. Thumb-2는 16bit 명령과 32bit 명령을 섞어 쓰는 인코딩으로, 첫 하프워드의 위쪽 5비트가 `0b11101`, `0b11110`, `0b11111`이면 32bit 명령의 앞부분이고 그 밖이면 16bit 명령 하나다. 자주 쓰는 형태는 2바이트로 적고, 큰 즉시값(immediate value)이나 `r8` 이상의 레지스터가 필요하면 4바이트로 적는다.",
                     "주소의 bit0은 명령 상태 표시로 쓰인다. `bl`이 `lr`에 넣는 돌아올 주소, 벡터 테이블(vector table)의 핸들러 주소, C에서 얻은 함수 포인터 값은 모두 bit0 = 1이다. `bx`로 bit0 = 0인 주소에 가면 EPSR의 T 비트가 0이 되고, 다음 명령에서 UsageFault(INVSTATE)가 난다. Cortex-M에는 Arm(A32) 상태가 없기 때문이다."
                 ]
@@ -1409,7 +1409,7 @@ cas:
                 h: "인터럽트 차단과 고르는 기준",
                 p: [
                     "`cpsid i`는 PRIMASK를 1로 만들어 우선순위를 설정할 수 있는 모든 예외를 막는다. NMI와 HardFault는 막지 못한다. 원래 상태를 `mrs`로 저장했다가 `msr primask`로 되돌리면 이미 차단된 곳에서 불려도 안전하다. BASEPRI는 정한 값과 같거나 낮은 우선순위만 막아 급한 인터럽트를 살려 둔다.",
-                    "차단은 여러 변수를 함께 바꾸거나 64bit 값을 다루는 경우에 맞다. Armv7-M에는 `ldrexd`/`strexd`가 없어 64bit를 한 번에 배타적으로 다룰 수 없기 때문이다. 대신 차단 구간 동안 모든 인터럽트가 기다린다. 변수 하나의 갱신이라면 `ldrex`/`strex`는 지연을 만들지 않고, 끼어든 경우에만 한 바퀴 더 돈다. Cortex-M0/M0+ 처럼 배타적 접근이 없는 코어에서는 차단이 기본 수단이다."
+                    "차단은 여러 변수를 함께 바꾸거나 64bit 값을 다루는 경우에 맞다. Armv7-M에는 `ldrexd`/`strexd`가 없어 64bit를 한 번에 배타적으로 다룰 수 없기 때문이다. 대신 차단 구간 동안 모든 인터럽트가 기다린다. 변수 하나의 갱신이라면 `ldrex`/`strex`는 지연을 만들지 않고, 끼어든 경우에만 한 바퀴 더 돈다. Cortex-M0/M0+처럼 배타적 접근이 없는 코어에서는 차단이 기본 수단이다."
                 ],
                 code: {
                     lang: "asm",

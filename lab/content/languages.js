@@ -10,7 +10,7 @@ LAB.track({
             when: "2025–2026",
             points: [
                 "3.13 실험 → 3.14 (2025-10) **공식 지원** (PEP 779) · 여전히 선택형(opt-in) 별도 빌드",
-                "3.15 (2026-10-09): free-threaded 용 안정 ABI(stable ABI) `abi3t` (PEP 803) · macOS 설치본에 기본 포함",
+                "3.15 (2026-10-09): free-threaded용 안정 ABI(stable ABI) `abi3t` (PEP 803) · macOS 설치본에 기본 포함",
                 "기본 빌드 전환(Phase III)은 미정 · 단일 스레드 오버헤드 평균 약 1–8% (공식 문서)"
             ],
             refs: [
@@ -68,7 +68,7 @@ LAB.track({
             when: "2025–2026",
             points: [
                 "NSA·CISA 2025-06 공동 지침: 메모리 안전 언어(MSL) 채택 권고",
-                "CISA: 기존 C/C++ 제품은 2025 년 말까지 메모리 안전 로드맵 공개 권고",
+                "CISA: 기존 C/C++ 제품은 2025년 말까지 메모리 안전 로드맵 공개 권고",
                 "C++29 (2026-03 일정 채택): 메모리 안전이 주 목표 · 안전 프로파일(safety profile) 작업",
                 "현실적 경로: 새 코드는 MSL, 기존 코드는 hardening·sanitizer로 점진 전환"
             ],
@@ -348,7 +348,7 @@ public:
     }
     std::size_t size() const { return n_; }
 };`,
-                    note: "move가 `noexcept` 여야 `std::vector` 재할당(reallocation) 때 복사 대신 move를 고름 (복사 가능한 타입일 때)"
+                    note: "move가 `noexcept`여야 `std::vector` 재할당(reallocation) 때 복사 대신 move를 고름 (복사 가능한 타입일 때)"
                 }
             ],
             optimize: [
@@ -474,7 +474,7 @@ fn main() {
     }
     // println!("{r}");             // ✗ E0597: s2 가 충분히 오래 살지 않음
 }`,
-                    note: "C++ 의 vector 반복자 무효화(iterator invalidation) 버그를 컴파일 단계에서 차단"
+                    note: "C++의 vector 반복자 무효화(iterator invalidation) 버그를 컴파일 단계에서 차단"
                 },
                 {
                     lang: "rust",
@@ -688,7 +688,7 @@ with ProcessPoolExecutor() as ex:
                 { type: "text", q: "출력은?", code: { lang: "python", src: "t = (1, [2])\ntry:\n    t[1] += [3]\nexcept TypeError:\n    pass\nprint(t)" }, answer: ["(1, [2, 3])"], why: "`list.__iadd__`로 제자리 확장이 먼저 성공 → 튜플 항목 대입에서 TypeError · 예외가 나도 리스트는 바뀜" },
                 { type: "text", q: "출력은?", code: { lang: "python", src: "def add(item, bucket=[]):\n    bucket.append(item)\n    return bucket\n\nprint(add(1), add(2))" }, answer: ["[1, 2] [1, 2]"], why: "기본값 리스트는 `def` 때 한 번만 생성 · 두 호출이 같은 객체를 반환해 둘 다 최종 상태로 출력" },
                 { type: "order", q: "`g = countdown(3); next(g); next(g); g.close()`에서 일어나는 순서대로 (`countdown`은 `try`/`finally` 안에서 `yield`)", items: ["`countdown(3)` 호출: 본문 실행 없이 제너레이터 반환", "첫 `next()`: 본문 시작 → `yield 3`에서 멈춤", "두 번째 `next()`: 멈춘 지점부터 재개 → `yield 2`", "`close()`: 멈춘 `yield`에 `GeneratorExit`", "`finally` 정리 코드 실행"], why: "제너레이터 함수 호출은 프레임만 만듦 · `close()` 덕분에 버려진 제너레이터의 정리 코드도 실행" },
-                { type: "num", q: "아래 뒤 리스트 객체를 가리키는 참조는 몇 개? (`getrefcount` 인자 임시 참조 제외)", code: { lang: "python", src: "x = [1, 2]\ny = x\nz = [x, x]\ndel y" }, answer: 3, why: "이름 x + z 안의 원소 2개 = 3 · `del y`는 이름 하나를 지울 뿐 · 3.14의 `sys.getrefcount(x) - 1`도 3" }
+                { type: "num", q: "아래 코드 실행 뒤 리스트 객체를 가리키는 참조는 몇 개? (`getrefcount` 인자 임시 참조 제외)", code: { lang: "python", src: "x = [1, 2]\ny = x\nz = [x, x]\ndel y" }, answer: 3, why: "이름 x + z 안의 원소 2개 = 3 · `del y`는 이름 하나를 지울 뿐 · 3.14의 `sys.getrefcount(x) - 1`도 3" }
             ],
             refs: [
                 { title: "dis — Disassembler for Python bytecode", by: "Python Software Foundation", url: "https://docs.python.org/3/library/dis.html", kind: "doc" },
@@ -706,7 +706,7 @@ with ProcessPoolExecutor() as ex:
             checked: "2026-11-17",
             key: [
                 "`count++` = 읽기 → 더하기 → 쓰기 · 사이에 끼어들면 **lost update**",
-                "C/C++ 에서 비원자(non-atomic) 변수의 데이터 경쟁(data race)은 **UB** · Rust는 컴파일 거부",
+                "C/C++에서 비원자(non-atomic) 변수의 데이터 경쟁(data race)은 **UB** · Rust는 컴파일 거부",
                 "스레드: 코어 병렬(parallelism) · async: 한 스레드에서 I/O 대기를 겹침",
                 "락은 짧게 · 여러 락은 **항상 같은 순서**로 → 교착(deadlock) 방지"
             ],
@@ -801,14 +801,14 @@ total += local;                          // 스레드당 1번` },
             ],
             glossary: [
                 { term: "경쟁 조건", en: "Race condition", def: "실행 타이밍에 따라 결과가 달라지는 버그" },
-                { term: "데이터 경쟁", en: "Data race", def: "동기화 없는 동시 접근 중 하나 이상이 쓰기 · C/C++ 에선 UB" },
+                { term: "데이터 경쟁", en: "Data race", def: "동기화 없는 동시 접근 중 하나 이상이 쓰기 · C/C++에선 UB" },
                 { term: "원자 연산", en: "Atomic operation", def: "중간 상태가 보이지 않는 분할 불가 연산 (`fetch_add`, CAS)" },
                 { term: "교착 상태", en: "Deadlock", def: "서로 상대가 가진 락을 기다리며 영원히 멈춤" },
                 { term: "코루틴", en: "Coroutine", def: "중단·재개할 수 있는 함수 · `async def`, `co_await`" },
                 { term: "이벤트 루프", en: "Event loop", def: "준비된 I/O 이벤트를 골라 해당 코루틴을 재개하는 스케줄러" }
             ],
             quiz: [
-                { q: "두 스레드가 동기화 없이 `int`에 `++`를 10만 번씩. C++ 에서 맞는 말은?", options: ["항상 200000 (`int` 쓰기는 원자적)", "항상 100000", "UB · 실제론 흔히 200000 미만", "컴파일 에러 (동기화 누락)"], a: 2, why: "비원자 변수의 동시 쓰기는 데이터 경쟁 = UB · 정렬된 `int` 저장이 하드웨어에서 원자적이어도 `++`는 읽기·쓰기 두 번" },
+                { q: "두 스레드가 동기화 없이 `int`에 `++`를 10만 번씩. C++에서 맞는 말은?", options: ["항상 200000 (`int` 쓰기는 원자적)", "항상 100000", "UB · 실제론 흔히 200000 미만", "컴파일 에러 (동기화 누락)"], a: 2, why: "비원자 변수의 동시 쓰기는 데이터 경쟁 = UB · 정렬된 `int` 저장이 하드웨어에서 원자적이어도 `++`는 읽기·쓰기 두 번" },
                 { q: "`std::atomic<int>::fetch_add`가 보장하는 것은?", options: ["읽기·더하기·쓰기를 한 번에", "다른 스레드를 모두 일시정지", "매번 OS 시스템콜로 락", "오버플로 대신 최댓값에서 포화"], a: 0, why: "하드웨어 원자 명령(예: `lock xadd`)으로 RMW를 분할 불가하게 · 다른 스레드를 멈추거나 커널에 들어가지 않음" },
                 { q: "asyncio 코루틴 안에서 `time.sleep(1)`을 호출하면?", options: ["그 코루틴만 1초 멈춤", "이벤트 루프 전체가 멈춤", "자동으로 `await`처럼 동작", "`RuntimeWarning` 후 무시"], a: 1, why: "`await`가 없으면 루프로 제어가 돌아가지 않음 · 코루틴만 멈추려면 `await asyncio.sleep(1)`" },
                 { q: "교착 상태를 막는 대표 규칙은?", options: ["락 대신 sleep으로 타이밍 조절", "락을 잡은 채 오래 일하기", "스레드 수를 코어 수에 맞추기", "모두 같은 순서로 락 획득"], a: 3, why: "순환 대기 조건이 생기지 않음 · sleep은 타이밍만 바꿀 뿐 교착을 없애지 못함" },
@@ -839,7 +839,7 @@ total += local;                          // 스레드당 1번` },
             ],
             concepts: [
                 { term: "심볼", en: "Symbol", def: "함수·전역 변수의 이름 · 오브젝트마다 정의(defined) / 미정의(U) 목록" },
-                { term: "ODR", en: "One Definition Rule", def: "정의는 프로그램 전체에 하나 · 헤더엔 선언만 (C++ 은 inline 예외)" },
+                { term: "ODR", en: "One Definition Rule", def: "정의는 프로그램 전체에 하나 · 헤더엔 선언만 (C++은 inline 예외)" },
                 { term: "내부 / 외부 링크", en: "Internal / External linkage", def: "`static`은 파일 안에서만 보임 · 기본 전역은 다른 파일에서도 보임" },
                 { term: "동적 로더", en: "Dynamic loader", def: "`ld.so`가 실행 시 `.so`를 메모리에 매핑하고 주소를 해결" }
             ],
@@ -949,7 +949,7 @@ gcc -O2 -flto a.o b.o -o app    # 링크 때 전체를 보고 인라인·죽은 
             ],
             quiz: [
                 { q: "`undefined reference to 'add'`는 어느 단계의 에러?", options: ["전처리", "컴파일", "링크", "실행"], a: 2, why: "선언은 있어 컴파일은 통과 · 정의를 못 찾은 것은 링커 · 실행 시 .so를 못 찾는 에러는 메시지가 다름" },
-                { q: "헤더에 `int counter = 0;`을 두고 두 `.c`에서 include 하면?", options: ["문제 없음 (자동 공유)", "링크 때 다중 정의 에러", "include guard가 막아 줌", "실행 시 크래시"], a: 1, why: "번역 단위마다 정의가 생김 · include guard는 한 번역 단위 안의 중복만 막음 · 헤더엔 `extern` 선언만" },
+                { q: "헤더에 `int counter = 0;`을 두고 두 `.c`에서 include 하면?", options: ["문제없음 (자동 공유)", "링크 때 다중 정의 에러", "include guard가 막아 줌", "실행 시 크래시"], a: 1, why: "번역 단위마다 정의가 생김 · include guard는 한 번역 단위 안의 중복만 막음 · 헤더엔 `extern` 선언만" },
                 { q: "`nm main.o`의 `U printf`의 의미는?", options: ["이 파일이 printf를 정의함", "인라인되어 호출이 사라짐", "선언만 있고 안 쓰임", "미정의 · 링크/로드 때 해결"], a: 3, why: "U = undefined · 이 파일이 쓰지만 정의는 없음 → libc에서 해결" },
                 { q: "`static int helper(void)`의 `static` 효과는?", options: ["내부 링크 (이 파일 전용)", "함수 코드가 정적 메모리에 배치", "호출될 때마다 인라인을 강제", "프로그램에서 한 번만 실행"], a: 0, why: "다른 번역 단위에서 안 보여 같은 이름과 충돌하지 않음 · 저장 위치나 실행 횟수와는 무관" },
                 { q: "동적 링크의 장점이 **아닌** 것은?", options: ["여러 프로세스가 라이브러리 코드 페이지 공유", "라이브러리만 교체해 보안 패치", "대상에 `.so`가 없어도 실행됨", "실행 파일 크기가 작아짐"], a: 2, why: "없으면 로더가 `cannot open shared object file`로 실패 · 그 경우엔 정적 링크" },
@@ -1199,7 +1199,7 @@ print(bisect.bisect_left(a, 7))   # 3 · 표준 라이브러리
             return True
         seen.add(x)
     return False` },
-                    gain: "n=10⁵ 에서 비교 ~5×10⁹ → ~10⁵"
+                    gain: "n=10⁵에서 비교 ~5×10⁹ → ~10⁵"
                 },
                 {
                     title: "큐: `list.pop(0)` → `deque`",
@@ -1230,9 +1230,9 @@ while queue:
                 { q: "Python `list.pop(0)`의 복잡도는?", options: ["O(1)", "O(n)", "O(log n)", "O(n log n)"], a: 1, why: "뒤 원소들을 한 칸씩 당겨야 함 · 양끝 O(1)이 필요하면 `deque.popleft()`" },
                 { q: "같은 O(n) 순회인데 배열이 연결 리스트보다 빠른 주된 이유는?", options: ["캐시 지역성", "배열의 Big-O가 더 낮아서", "포인터가 원소보다 작아서", "리스트는 분기 예측이 안 돼서"], a: 0, why: "연속 메모리라 한 캐시 라인에 원소 여럿 + 프리페치 · Big-O는 둘 다 O(n)" },
                 { type: "num", q: "용량 1에서 시작해 꽉 차면 **2배**로 늘리는 동적 배열에 `append` 16번. 재할당 때 복사되는 원소는 총 몇 개?", answer: 15, why: "1 + 2 + 4 + 8 = 15 < n · 원소당 상수 → 분할상환 O(1)" },
-                { type: "num", q: "같은 조건에서 꽉 차면 용량을 **+1** 씩 늘리면 복사되는 원소는 총 몇 개?", answer: 120, why: "1 + 2 + … + 15 = 120 ≈ n²/2 · append 하나가 평균 O(n)" },
+                { type: "num", q: "같은 조건에서 꽉 차면 용량을 **+1**씩 늘리면 복사되는 원소는 총 몇 개?", answer: 120, why: "1 + 2 + … + 15 = 120 ≈ n²/2 · append 하나가 평균 O(n)" },
                 { type: "text", q: "출력은?", code: { lang: "python", src: "import bisect\na = [10, 20, 20, 30]\nprint(bisect.bisect_left(a, 20), bisect.bisect_right(a, 20))" }, answer: ["1 3"], why: "left는 같은 값 중 가장 왼쪽 위치, right는 마지막 20의 다음 위치 · 차이 2 = 20의 개수" },
-                { type: "order", q: "n = 10⁶ 일 때 연산 수가 작은 것부터", items: ["O(1)", "O(log n)", "O(n)", "O(n log n)", "O(n²)"], why: "1 · ≈ 20 · 10⁶ · ≈ 2×10⁷ · 10¹²" }
+                { type: "order", q: "n = 10⁶일 때 연산 수가 작은 것부터", items: ["O(1)", "O(log n)", "O(n)", "O(n log n)", "O(n²)"], why: "1 · ≈ 20 · 10⁶ · ≈ 2×10⁷ · 10¹²" }
             ],
             refs: [
                 { title: "The Art of Computer Programming, Vol. 3: Sorting and Searching (2nd ed.)", by: "Knuth", year: 1998, url: "https://www-cs-faculty.stanford.edu/~knuth/taocp.html", kind: "book" },
@@ -1517,7 +1517,7 @@ y = f(x)                     # 융합 커널 1개: 4 MB 읽고 4 MB 씀 = 8 MB` 
                 { term: "배열 API 표준", en: "Python array API standard", def: "NumPy·PyTorch·CuPy·JAX 등이 맞추는 공통 배열 함수 규격 · 최신판 2025.12" }
             ],
             quiz: [
-                { q: "Bezanson et al. 이 말한 '두 언어 문제'는?", options: ["시제품과 배포용을 다른 언어로 다시 씀", "Python 2와 3을 함께 유지해야 함", "타입 있는 언어와 없는 언어를 섞어 씀", "CPU 코드와 GPU 코드를 따로 빌드함"], a: 0, why: "'프로토타입은 한 언어, 속도·배포는 다른 언어로 재작성' · Julia는 이 관행을 없애려 함" },
+                { q: "Bezanson et al.이 말한 '두 언어 문제'는?", options: ["시제품과 배포용을 다른 언어로 다시 씀", "Python 2와 3을 함께 유지해야 함", "타입 있는 언어와 없는 언어를 섞어 씀", "CPU 코드와 GPU 코드를 따로 빌드함"], a: 0, why: "'프로토타입은 한 언어, 속도·배포는 다른 언어로 재작성' · Julia는 이 관행을 없애려 함" },
                 { q: "GPU에서 작은 텐서 연산 1만 개가 느린 주된 이유는?", options: ["GPU 산술 유닛이 작은 텐서에서 느려서", "연산마다 Python·디스패치·실행 비용이 붙어서", "GIL이 GPU 커널 실행을 직렬화해서", "PyTorch 기본 dtype이 float64라서"], a: 1, why: "계산은 금방 끝나도 호출 비용이 연산 수만큼 쌓임 · PyTorch 기본 dtype은 float32" },
                 { q: "`torch.compile`에서 TorchDynamo가 하는 일은?", options: ["Python 바이트코드를 분석해 그래프 추출", "CUDA C++ 커널을 사람 대신 손으로 작성", "모델 가중치를 INT8로 자동 양자화해 저장", "Python 소스를 C로 번역해 배포"], a: 0, why: "CPython 프레임 평가 API에 끼어들어 실행 직전 바이트코드에서 연산을 FX 그래프로 뽑음 (Ansel et al. 2024)" },
                 { q: "`jax.jit` 함수 안의 `print(x)`는?", options: ["매 호출마다 실제 값을 출력", "추적할 때 한 번, 추적값을 출력", "컴파일 오류로 실행되지 않음", "GPU 쪽 로그에만 출력"], a: 1, why: "print는 Python 부수효과라 추적 중에만 실행되고 그래프에 안 남음 · 실행 중 값은 `jax.debug.print`" },

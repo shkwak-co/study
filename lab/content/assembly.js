@@ -42,7 +42,7 @@ LAB.track({
                 "Armv8.1-M의 M-Profile Vector Extension · Cortex-M55가 첫 구현 (GCC 기준 M52·M85도 `mve`)",
                 "128bit 벡터를 레인(lane)으로 나눠 SIMD: 8bit × 16, 16bit × 8, 32bit × 4",
                 "꼬리 예측(tail predication) `dlstp`/`letp`: 남는 원소를 스칼라 꼬리 루프 없이",
-                "2026-11 Cortex-M42: M4·M33 급 AHB 설계를 Helium으로 올리는 길 · M33 대비 벡터 연산 최대 3배 (Arm 발표)"
+                "2026-11 Cortex-M42: M4·M33급 AHB 설계를 Helium으로 올리는 길 · M33 대비 벡터 연산 최대 3배 (Arm 발표)"
             ],
             refs: [
                 { title: "Introduction to Helium guide (102102, Version 1.3)", by: "Arm", year: 2024, url: "https://documentation-service.arm.com/static/65969ed3159ca73387227541", kind: "doc" },
@@ -317,13 +317,13 @@ in_range_u:
                 { term: "APSR", en: "Application Program Status Register", def: "xPSR 중 N Z C V Q (와 DSP의 GE) 플래그 부분 · `mrs r0, apsr`로 읽음" }
             ],
             quiz: [
-                { q: "`cmp r0, r1`이 실제로 하는 일은?", options: ["r0 ← r0 − r1, 플래그 갱신", "r0 − r1의 플래그만 남김", "r1 − r0의 플래그만 남김", "같으면 Z=1, 나머지 그대로"], a: 1, why: "결과 레지스터 없는 `subs r0, r1` · NZCV 네 개 모두 갱신 · r0는 그대로" },
+                { q: "`cmp r0, r1`이 실제로 하는 일은?", options: ["r0 ← r0 − r1, 플래그 갱신", "r0 − r1의 플래그만 남김", "r1 − r0의 플래그만 남김", "같으면 Z=1, 나머지 그대로"], a: 1, why: "결과 레지스터 없는 `subs r0, r1` · NZCV 네 개 모두 갱신 · r0은 그대로" },
                 { q: "r0 = 0xFFFFFFFF, r1 = 1에서 `cmp r0, r1` 후 참인 조건은?", options: ["`hi`와 `lt`", "`lo`와 `gt`", "`hi`와 `gt`", "`eq`"], a: 0, why: "부호 없음 4294967295 > 1 → hi · 부호 있음 −1 < 1 → lt · 같은 비트, 다른 해석" },
-                { q: "`adds r0, r0, r2` 다음 `adc r1, r1, r3`이 추가로 더하는 값은?", options: ["V (부호 있는 넘침)", "C (하위 자리올림)", "N (하위 결과 부호)", "Z (하위가 0 인지)"], a: 1, why: "하위 워드에서 넘친 1을 상위로 · V는 부호 있는 해석용이라 사슬에 안 씀" },
+                { q: "`adds r0, r0, r2` 다음 `adc r1, r1, r3`이 추가로 더하는 값은?", options: ["V (부호 있는 넘침)", "C (하위 자리올림)", "N (하위 결과 부호)", "Z (하위가 0인지)"], a: 1, why: "하위 워드에서 넘친 1을 상위로 · V는 부호 있는 해석용이라 사슬에 안 씀" },
                 { q: "Arm에서 `cmp`로 3 − 5를 계산한 뒤 C 플래그는?", options: ["1", "0", "변하지 않음", "V와 같음"], a: 1, why: "Arm의 뺄셈 C = 빌림 없음 · 빌림이 생겼으니 0 · x86 CF였다면 1" },
                 { q: "`mov r0, r1` (s 없음) 이후 플래그는?", options: ["모두 0", "N, Z 갱신", "변하지 않음", "C만 갱신"], a: 2, why: "`s` 접미사가 없으면 플래그 그대로 · N·Z를 바꾸는 건 `movs`" },
                 { type: "text", q: "실행 후 NZCV는? (예: 0110)", code: { lang: "asm", src: "ldr  r0, =0x7FFFFFFF\nadds r0, r0, #1" }, answer: ["1001", "N=1 Z=0 C=0 V=1", "N1Z0C0V1"], why: "결과 0x80000000: N=1 · 부호 없는 자리올림 없음 C=0 · 양수 + 양수 = 음수 V=1" },
-                { type: "text", q: "실행 후 `r1`은?", code: { lang: "asm", src: "    mov  r0, #-1\n    cmp  r0, #5\n    bhs  big        @ 부호 없는 ≥\n    movs r1, #1\n    b    done\nbig:\n    movs r1, #2\ndone:" }, answer: ["2"], why: "−1 = 0xFFFFFFFF은 부호 없이 5보다 큼 → C=1 → `bhs` 분기 · `bge`였다면 1" },
+                { type: "text", q: "실행 후 `r1`은?", code: { lang: "asm", src: "    mov  r0, #-1\n    cmp  r0, #5\n    bhs  big        @ 부호 없는 ≥\n    movs r1, #1\n    b    done\nbig:\n    movs r1, #2\ndone:" }, answer: ["2"], why: "−1 = 0xFFFFFFFF는 부호 없이 5보다 큼 → C=1 → `bhs` 분기 · `bge`였다면 1" },
                 { type: "num", q: "a = 0x7FFFFFF0일 때 `adds r0, a, b`가 V=1이 되는 가장 작은 양수 b는?", answer: 16, why: "0x7FFFFFF0 + 16 = 0x80000000 · INT_MAX(0x7FFFFFFF)를 넘는 순간 부호가 뒤집힘" },
                 { type: "order", q: "128bit 덧셈 a + b를 32bit 워드로 할 때 명령 순서", items: ["`adds` 워드 0 (최하위)", "`adcs` 워드 1", "`adcs` 워드 2", "`adc` 워드 3 (최상위)"], why: "자리올림은 아래에서 위로 · 중간은 C를 넘겨야 해서 `adcs`, 마지막만 `s` 없이" }
             ],
@@ -461,7 +461,7 @@ led_on:
             glossary: [
                 { term: "Pre-index", en: "Pre-indexed addressing", def: "`[rn, #4]!` · 오프셋을 먼저 더한 주소로 접근하고 그 주소를 `rn`에 되씀" },
                 { term: "Post-index", en: "Post-indexed addressing", def: "`[rn], #4` · `rn` 주소로 접근한 뒤 `rn += 4` · 배열 순회에 적합" },
-                { term: "0 확장", en: "Zero extension", def: "`ldrb`/`ldrh`가 위쪽 비트를 0으로 채움 · 부호 없는 `uint8_t` 용" },
+                { term: "0 확장", en: "Zero extension", def: "`ldrb`/`ldrh`가 위쪽 비트를 0으로 채움 · 부호 없는 `uint8_t`용" },
                 { term: "하프워드", en: "Halfword", def: "Arm에서 16bit · word 32bit, byte 8bit · x86의 WORD(16bit)와 이름이 어긋남" },
                 { term: "비정렬 접근", en: "Unaligned access", def: "크기의 배수가 아닌 주소 · 버스 접근이 쪼개져 느림 · `CCR.UNALIGN_TRP`로 폴트로 바꿀 수 있음" },
                 { term: "PC 상대 주소", en: "PC-relative addressing", def: "현재 명령 위치 기준 오프셋 · 리터럴 풀·`adr`·분기가 사용 → 위치 독립 코드" }
@@ -500,7 +500,7 @@ led_on:
             concepts: [
                 { term: "조건 분기", en: "Conditional branch", def: "`beq`, `blt`… 조건이 참일 때만 `pc` 변경 · Cortex-M4 범위 ±1 MB, `b`/`bl`은 ±16 MB" },
                 { term: "루프 회전", en: "Loop rotation (loop inversion)", def: "검사를 루프 아래로 옮기고 앞에 가드 한 번 · 반복마다 분기 1개" },
-                { term: "CBZ / CBNZ", en: "Compare and Branch on Zero / Non-Zero", def: "레지스터가 0 인지 보고 **앞쪽**으로만 분기 · `r0`–`r7`, 4–130바이트 · 플래그 안 바꿈 · IT 안에서 금지" },
+                { term: "CBZ / CBNZ", en: "Compare and Branch on Zero / Non-Zero", def: "레지스터가 0인지 보고 **앞쪽**으로만 분기 · `r0`–`r7`, 4–130바이트 · 플래그 안 바꿈 · IT 안에서 금지" },
                 { term: "IT 블록", en: "If-Then block", def: "`it`/`ite`/`itte`… 뒤 최대 4개 명령을 조건부로 실행 · 분기 없이 if/else" }
             ],
             demo: {
@@ -756,7 +756,7 @@ wrap:
                 { q: "`int f(int a, int b, int c, int d, int e)`에서 `e`는 어디로?", options: ["`r4`", "진입 시 `[sp]`", "`r12` (ip)", "진입 시 `[sp, #4]`"], a: 1, why: "정수 인자 레지스터는 r0–r3뿐 · 다섯째는 호출 직전 sp가 가리키는 첫 칸" },
                 { q: "다른 함수를 부르는 함수가 시작에서 `push {…, lr}` 하는 이유?", options: ["`lr`이 callee-saved라서", "안쪽 `bl`이 `lr`을 덮어써서", "8바이트 정렬을 맞추려고", "예외가 `lr`을 바꿀 수 있어서"], a: 1, why: "저장 안 하면 자기 복귀 주소를 잃음 · 예외는 `lr`을 쌓았다가 복원하므로 무관" },
                 { q: "함수가 마음대로 써도 되는 (호출자가 보존을 기대하지 않는) 레지스터는?", options: ["r4–r7, r12", "r0–r3, r12", "r0–r3, r4", "r8–r11, lr"], a: 1, why: "caller-saved = r0–r3, r12 · r4–r11은 쓰려면 저장·복원" },
-                { q: "GCC가 `push {r3, r4, r5, lr}`처럼 r3를 같이 넣는 이유?", options: ["r3의 인자 값을 보존하려고", "sp를 8의 배수로 맞추려고", "push는 짝수 개만 가능해서", "r3를 지역 변수로 쓰려고"], a: 1, why: "4개 = 16바이트 · r3는 caller-saved라 보존 의무 없는 빈자리 · push 개수 제한은 없음" },
+                { q: "GCC가 `push {r3, r4, r5, lr}`처럼 r3을 같이 넣는 이유?", options: ["r3의 인자 값을 보존하려고", "sp를 8의 배수로 맞추려고", "push는 짝수 개만 가능해서", "r3을 지역 변수로 쓰려고"], a: 1, why: "4개 = 16바이트 · r3은 caller-saved라 보존 의무 없는 빈자리 · push 개수 제한은 없음" },
                 { q: "`pop {r4, pc}`가 하는 일은?", options: ["r4 복원 + 복귀", "r4를 pc로 복사", "스택만 정리", "인터럽트 복귀 전용"], a: 0, why: "저장해 둔 lr 값이 pc로 들어가며 복귀 · `bx lr`과 같은 효과" },
                 { type: "num", q: "`push {r4, r5, r6, lr}` 다음 `sub sp, sp, #8`이면 스택 프레임은 몇 바이트?", answer: 24, unit: "B", why: "레지스터 4개 × 4 = 16 + 지역 8 = 24 · 8의 배수라 정렬도 맞음" },
                 { type: "text", q: "시작 sp = 0x20001000. 실행 후 `r0`은?", code: { lang: "asm", src: "    push {r4, r5, lr}\n    sub  sp, sp, #4\n    mov  r0, sp\n    add  sp, sp, #4\n    pop  {r4, r5, pc}" }, answer: ["0x20000FF0", "536874992"], why: "12 + 4 = 16 바이트 아래 · 홀수 개 push를 `sub #4`로 8의 배수로 맞춤" },
@@ -864,7 +864,7 @@ static inline uint32_t bswap(uint32_t x) {
 }
 // 같은 결과, 컴파일러가 이해하는 쪽: __builtin_bswap32(x), CMSIS __REV(x)
 // Cortex-M4 -O2 에선 셋 다  rev r0, r0`,
-                    note: "**인라인 어셈블리**(inline assembly)는 컴파일러에게 블랙박스 · 같은 일을 하는 **인트린식**(intrinsic)이 있으면 최적화에 유리 · `=r`는 **피연산자 제약**(operand constraint)"
+                    note: "**인라인 어셈블리**(inline assembly)는 컴파일러에게 블랙박스 · 같은 일을 하는 **인트린식**(intrinsic)이 있으면 최적화에 유리 · `=r`은 **피연산자 제약**(operand constraint)"
                 }
             ],
             optimize: [
@@ -911,7 +911,7 @@ div10:
         bx      lr
 .L4:    .word   0xCCCCCCCD` },
                     gain: "`udiv` → `umull` + `lsrs`",
-                    note: "나누는 수가 컴파일 때 알려지면 GCC가 곱셈으로 바꿈 · Cortex-M0는 `udiv`·`umull`이 없어 둘 다 `__aeabi_uidiv` 호출 · 2ⁿ 이면 `lsrs` 하나"
+                    note: "나누는 수가 컴파일 때 알려지면 GCC가 곱셈으로 바꿈 · Cortex-M0는 `udiv`·`umull`이 없어 둘 다 `__aeabi_uidiv` 호출 · 2ⁿ이면 `lsrs` 하나"
                 }
             ],
             glossary: [
@@ -927,7 +927,7 @@ div10:
                 { q: "`volatile` 없는 `while (!(SR & 1));`의 -O2 결과는?", options: ["매 반복 `ldr` 하는 루프", "한 번 읽고 0이면 무한 루프", "루프 전체가 사라짐", "`wfi`로 바꿔 대기"], a: 1, why: "컴파일러는 SR이 바뀔 이유를 모름 → 읽기를 루프 밖 한 번으로 · 매번 읽는 건 `volatile` 판" },
                 { q: "`x / 10` (unsigned)이 Cortex-M4 -O2에서 된 것은?", options: ["`udiv` 한 명령", "`umull` + `lsrs`", "`bl __aeabi_uidiv`", "`mul` + `asrs`"], a: 1, why: "상수 제수 → 역수 곱셈 + 시프트 · `udiv`는 변수 제수, `__aeabi_uidiv`는 나눗셈 없는 M0" },
                 { q: "`objdump`의 `ldr.w`에서 `.w`는?", options: ["워드(4바이트) 로드", "32bit 인코딩 (wide)", "writeback이 있음", "약한(weak) 심볼"], a: 1, why: "`.n` = 16bit narrow, `.w` = 32bit wide · 워드 로드는 `ldr` 자체의 뜻" },
-                { q: "인라인 asm clobber에 `\"memory\"`를 넣는 이유?", options: ["asm이 메모리를 바꾼다고 알림", "asm 용 스택 공간을 확보", "asm 앞뒤에 `dmb`를 넣으라고", "asm을 지우지 말라고 표시"], a: 0, why: "레지스터에 둔 메모리 값을 asm 앞뒤로 다시 읽고 씀 · 하드웨어 장벽 `dmb`는 안 만들고, 삭제 방지는 `volatile` 몫" },
+                { q: "인라인 asm clobber에 `\"memory\"`를 넣는 이유?", options: ["asm이 메모리를 바꾼다고 알림", "asm용 스택 공간을 확보", "asm 앞뒤에 `dmb`를 넣으라고", "asm을 지우지 말라고 표시"], a: 0, why: "레지스터에 둔 메모리 값을 asm 앞뒤로 다시 읽고 씀 · 하드웨어 장벽 `dmb`는 안 만들고, 삭제 방지는 `volatile` 몫" },
                 { type: "num", q: "`sum`의 `-O0` 루프는 반복당 메모리 접근이 몇 번인가? (`ldr` 7 + `str` 2)", answer: 9, why: "i·a·a[i]·s 읽기, s 쓰기, i 읽기·쓰기, 검사의 i·n 읽기 · `-O2`는 `ldr` 1번" },
                 { type: "num", q: "objdump에서 `sum`의 마지막 명령이 오프셋 `0x1a`의 16bit `bx lr`이면 함수는 몇 바이트?", answer: 28, unit: "B", why: "0x1a + 2 = 0x1c = 28" },
                 { type: "text", q: "GCC의 `x / 2` (int) 출력. 실행 후 `r0`은?", code: { lang: "asm", src: "    mov  r0, #-7\n    add  r0, r0, r0, lsr #31\n    asrs r0, r0, #1" }, answer: ["-3", "0xFFFFFFFD", "4294967293"], why: "음수면 1을 더해 0 쪽으로 버림: (−7 + 1) >> 1 = −3 · `asrs`만 쓰면 −4" },
@@ -954,7 +954,7 @@ div10:
                 "RTOS 전환: PendSV에서 나머지 `r4`–`r11`을 저장하고 `psp`를 바꿈"
             ],
             concepts: [
-                { term: "예외 스택 프레임", en: "Exception stack frame", def: "낮은 주소부터 r0 r1 r2 r3 r12 lr 복귀주소 xPSR · 32바이트 · FPU 문맥이면 S0–S15·FPSCR까지 26워드" },
+                { term: "예외 스택 프레임", en: "Exception stack frame", def: "낮은 주소부터 r0 r1 r2 r3 r12 lr 복귀 주소 xPSR · 32바이트 · FPU 문맥이면 S0–S15·FPSCR까지 26워드" },
                 { term: "EXC_RETURN", en: "Exception return value", def: "`0xFFFFFFF1` Handler·MSP · `0xFFFFFFF9` Thread·MSP · `0xFFFFFFFD` Thread·PSP (FPU 프레임이면 `…E1/E9/ED`)" },
                 { term: "MSP / PSP", en: "Main Stack Pointer / Process Stack Pointer", def: "핸들러는 항상 MSP · Thread는 CONTROL.SPSEL로 선택 · RTOS 태스크는 PSP" },
                 { term: "PendSV", en: "Pendable request for system service", def: "소프트웨어로 대기시키는 예외 · 가장 낮은 우선순위로 두면 모든 ISR 뒤에 실행 → 컨텍스트 스위치 자리" }
@@ -1301,7 +1301,7 @@ sum:
 .L4:
         li      a0,0
         ret`,
-                    note: "`ble` `mv` `li` `ret`는 **의사 명령**(pseudo-instruction) · `ble a1,zero`는 `bge zero,a1`이고 `zero`는 **제로 레지스터**(zero register) `x0`"
+                    note: "`ble` `mv` `li` `ret`은 **의사 명령**(pseudo-instruction) · `ble a1,zero`는 `bge zero,a1`이고 `zero`는 **제로 레지스터**(zero register) `x0`"
                 },
                 {
                     lang: "x86",
@@ -1347,7 +1347,7 @@ sum:
 8082        ret
 # … sum 전체 12 명령 = 28 B (Thumb-2 와 같음)` },
                     gain: "48 → 28 B (−42%)",
-                    note: "C 확장은 Thumb처럼 16bit 형을 섞는 방식 · MCU 용 RISC-V 코어는 보통 C를 포함 (예: RV32IMAC)"
+                    note: "C 확장은 Thumb처럼 16bit 형을 섞는 방식 · MCU용 RISC-V 코어는 보통 C를 포함 (예: RV32IMAC)"
                 },
                 {
                     title: "64bit ISA: 배열 인덱스 `int` → `size_t`",
@@ -1370,12 +1370,12 @@ pick_sz:
                 { term: "압축 명령", en: "Compressed instructions (RISC-V C extension)", def: "자주 쓰는 명령의 16bit 형 · 32bit 명령과 섞어 씀 · 코드 크기 감소" },
                 { term: "메모리 피연산자", en: "Memory operand", def: "x86 ALU 명령이 `[rdi]` 같은 메모리를 직접 읽고 씀 · `add DWORD PTR [rdi], esi` 한 명령" },
                 { term: "RFLAGS", en: "x86-64 flags register", def: "CF ZF SF OF … · Arm NZCV와 같은 역할 · `cmp`/`test`가 세팅, `jcc`/`cmovcc`가 읽음" },
-                { term: "psABI", en: "Processor-specific Application Binary Interface", def: "ISA 별 ABI 문서 · 호출 규약, ELF 재배치, 자료형 크기·정렬" }
+                { term: "psABI", en: "Processor-specific Application Binary Interface", def: "ISA별 ABI 문서 · 호출 규약, ELF 재배치, 자료형 크기·정렬" }
             ],
             quiz: [
                 { q: "RISC-V에서 `if (a < b) goto L;`에 필요한 명령은 보통?", options: ["`cmp` + `blt` 2개", "`blt` 1개", "`slt`만, 분기 없음", "`slt` + `bnez` 2개"], a: 1, why: "`blt a, b, L`이 비교와 분기를 한 번에 · `slt`는 0/1 값이 필요할 때" },
                 { q: "x86-64 System V에서 세 번째 정수 인자 레지스터는?", options: ["rcx", "rdx", "r8", "rsi"], a: 1, why: "rdi, rsi, rdx, rcx, r8, r9 순서 · rcx가 첫째인 건 Windows x64" },
-                { q: "RV32는 64bit 덧셈의 자리올림을 어떻게 구하나?", options: ["CSR의 carry 비트를 읽음", "`sltu`로 합 < 피연산자 비교", "`addc` 명령으로 더함", "상위 비트를 `srli`로 꺼냄"], a: 1, why: "넘쳤으면 32bit 합이 피연산자보다 작아짐 → 1 · 플래그도 `adc` 류 명령도 없음" },
+                { q: "RV32는 64bit 덧셈의 자리올림을 어떻게 구하나?", options: ["CSR의 carry 비트를 읽음", "`sltu`로 합 < 피연산자 비교", "`addc` 명령으로 더함", "상위 비트를 `srli`로 꺼냄"], a: 1, why: "넘쳤으면 32bit 합이 피연산자보다 작아짐 → 1 · 플래그도 `adc`류 명령도 없음" },
                 { q: "x86 `add eax, DWORD PTR [rdi]`를 Thumb-2로 옮기면?", options: ["`add r0, r0, [r1]`", "`ldr r2, [r1]` + `add r0, r2`", "`add r0, r0, r1`", "`ldr r0, [r1, r0]`"], a: 1, why: "로드/스토어 구조라 메모리 피연산자가 없음 → 먼저 `ldr` · `add r0, r0, r1`은 주소를 더해 버림" },
                 { q: "호출 명령(`call`/`bl`/`jal`)이 복귀 주소를 두는 곳은?", options: ["셋 다 링크 레지스터", "x86만 스택, 둘은 레지스터", "셋 다 스택에 push", "RISC-V만 스택, 둘은 레지스터"], a: 1, why: "x86 `call`이 push, `ret`이 pop · Arm `lr`, RISC-V `ra` (non-leaf는 그 뒤 직접 스택에 저장)" },
                 { type: "num", q: "RV32I로 12 명령(48 B)인 함수를 C 확장으로 컴파일하니 10개가 2바이트가 됐다. 크기는?", answer: 28, unit: "B", why: "10 × 2 + 2 × 4 = 28 · `sum`에선 두 분기(`blez`, `bne`)만 4바이트로 남음" },

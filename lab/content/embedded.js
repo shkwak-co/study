@@ -23,7 +23,7 @@ LAB.track({
             when: "2024–2026",
             points: [
                 "Arm `Ethos-U85`, NXP `eIQ Neutron`, TI `TinyEngine` 등 MCU 내장 NPU",
-                "TI `MSPM0G5187` (2026): 80 MHz Cortex-M0+ 에 2.56 GOPS NPU · 저가 MCU까지 내려옴",
+                "TI `MSPM0G5187` (2026): 80 MHz Cortex-M0+에 2.56 GOPS NPU · 저가 MCU까지 내려옴",
                 "INT8 양자화(quantization) 모델을 센서 옆에서 실행 → 전송 데이터와 지연(latency) 감소"
             ],
             refs: [
@@ -206,7 +206,7 @@ void fir_filter(int16_t *x, int n) {
                 "`BSRR` 같은 원자적(atomic) set/reset 레지스터를 우선"
             ],
             concepts: [
-                { term: "MODER", en: "GPIO port Mode Register", def: "핀 모드: 입력 / 출력 / 대체기능 / 아날로그 (핀당 2bit)" },
+                { term: "MODER", en: "GPIO port Mode Register", def: "핀 모드: 입력 / 출력 / 대체 기능 / 아날로그 (핀당 2bit)" },
                 { term: "ODR / IDR", en: "Output Data Register / Input Data Register", def: "출력 데이터 / 입력 데이터 레지스터" },
                 { term: "Push-pull / Open-drain", def: "High·Low 모두 구동 / Low만 구동 (풀업 필요, I2C)" },
                 { term: "`volatile`", def: "컴파일러가 레지스터 읽기/쓰기를 생략·재배치하지 못하게" }
@@ -273,7 +273,7 @@ if (hist == 0x7F) toggle();    // 0→1 후 7ms 안정` },
             quiz: [
                 { q: "PA5만 끄는 코드는?", options: ["`ODR &= (1u << 5);`", "`ODR &= ~(1u << 5);`", "`ODR |= ~(1u << 5);`", "`ODR ^= (1u << 5);`"], a: 1, why: "`~(1u << 5)`는 5번만 0 → AND로 그 비트만 끔 · `^=`는 끄기가 아니라 뒤집기, `&= (1u << 5)`는 다른 핀을 다 끔" },
                 { q: "레지스터 포인터에 `volatile`이 필요한 이유는?", options: ["읽기·쓰기를 원자적으로 하려고", "접근을 빼거나 합치지 못하게", "레지스터를 캐시에서 빼려고", "인터럽트를 잠깐 막으려고"], a: 1, why: "volatile은 접근을 그대로 남길 뿐 · 원자성·캐시 제외·인터럽트 차단은 주지 않음" },
-                { q: "I2C 버스 핀 설정으로 맞는 것은?", options: ["Push-pull + 풀업", "Open-drain + 풀업", "Open-drain, 풀업 없음", "Push-pull + 풀다운"], a: 1, why: "여러 장치가 Low만 당기는 wired-AND · High는 풀업이 만듦 · push-pull 끼리 반대로 구동하면 단락" },
+                { q: "I2C 버스 핀 설정으로 맞는 것은?", options: ["Push-pull + 풀업", "Open-drain + 풀업", "Open-drain, 풀업 없음", "Push-pull + 풀다운"], a: 1, why: "여러 장치가 Low만 당기는 wired-AND · High는 풀업이 만듦 · push-pull끼리 반대로 구동하면 단락" },
                 { q: "MODER에서 핀 하나에 할당된 비트 수는?", options: ["1", "2", "4", "8"], a: 1, why: "00 입력 · 01 출력 · 10 대체 기능 · 11 아날로그 · 핀당 4bit는 AFR" },
                 { type: "text", q: "실행 후 `moder` 값은? (16진)", code: { lang: "c", src: "uint32_t moder = 0xA8000000;\nmoder &= ~(0x3u << (5 * 2));\nmoder |=  (0x1u << (5 * 2));" }, answer: ["0xA8000400", "2818573312"], why: "PA5 필드는 bit 11:10 · 비운 뒤 01 → `0x400`만 더해짐 · 다른 핀 비트는 그대로" },
                 { type: "text", q: "ODR이 `0x0020`일 때 아래를 실행하면 ODR은? (16진)", code: { lang: "c", src: "GPIOA->BSRR = (1u << 3) | (1u << (5 + 16));" }, answer: ["0x0008", "0x8", "8"], why: "하위 bit 3 → PA3 set · 상위 bit 21 → PA5 reset · 0인 비트는 아무것도 안 바꿈" },
@@ -379,7 +379,7 @@ while (x) { x &= x - 1; n++; }  /* 1 비트 수만큼만 */
                 { q: "부호 있는 8bit 100 + 100에서 켜지는 플래그는?", options: ["C와 V", "V와 N", "C와 N", "N만"], a: 1, why: "결과 `0xC8` = −56 · 양수 + 양수 → 음수라 V, 최상위 비트 1이라 N · 200 < 256이라 C는 0" },
                 { q: "`x & (x - 1)`이 하는 일은?", options: ["가장 높은 1 비트 끄기", "가장 낮은 1 비트 끄기", "모든 비트 반전", "x를 절반으로"], a: 1, why: "x − 1은 가장 낮은 1과 그 아래를 뒤집음 → AND로 그 1만 사라짐" },
                 { q: "`int8_t x = -8;`일 때 GCC에서 `x >> 1`은?", options: ["-4", "124", "4", "컴파일 오류"], a: 0, why: "GCC는 부호 있는 `>>`를 산술 시프트(부호 확장)로 정의 · 124는 8bit 논리 시프트 결과 · 표준상으론 구현 정의" },
-                { type: "text", q: "출력은? (`int` 32bit)", code: { lang: "c", src: "uint8_t x = 0x0F;\nprintf(\"%d\", ~x == 0xF0);" }, answer: ["0"], why: "`x`가 `int`로 승격 → `~x` = `0xFFFFFFF0`(−16) ≠ 240 · `(uint8_t)~x == 0xF0` 이어야 1" },
+                { type: "text", q: "출력은? (`int` 32bit)", code: { lang: "c", src: "uint8_t x = 0x0F;\nprintf(\"%d\", ~x == 0xF0);" }, answer: ["0"], why: "`x`가 `int`로 승격 → `~x` = `0xFFFFFFF0`(−16) ≠ 240 · `(uint8_t)~x == 0xF0`이어야 1" },
                 { type: "text", q: "GCC에서 출력은?", code: { lang: "c", src: "int a = -7;\nprintf(\"%d %d\", a >> 1, a / 2);" }, answer: ["-4 -3", "-4,-3"], why: "산술 시프트는 음의 무한대 쪽으로 내림(−4) · C 나눗셈은 0 쪽으로 자름(−3)" },
                 { type: "num", q: "위 매크로로 `FIELD_GET(0x0000A400, 2, 10)`의 값은?", answer: 1, why: "`0xA400 >> 10` = `0x29` → 하위 2bit `01` = 1" },
                 { type: "text", q: "실행 후 `reg`는? (16진)", code: { lang: "c", src: "uint32_t reg = 0xFFFFFFFF;\nFIELD_SET(reg, 2, 10, 0x2);" }, answer: ["0xFFFFFBFF", "4294966271"], why: "bit 11:10을 비우면 `…F3FF` · `10b`를 넣어 bit 11만 다시 1 → `0xFFFFFBFF`" }
@@ -511,7 +511,7 @@ do { hi = ms_hi; lo = ms_lo; } while (hi != ms_hi); // 재확인 루프` },
                 { term: "PSC", en: "Prescaler", def: "프리스케일러 · 입력 클럭을 (PSC+1)로 나눔" },
                 { term: "ARR", en: "Auto-Reload Register", def: "자동 리로드 값 · 카운터가 여기까지 세고 0으로" },
                 { term: "CCR", en: "Capture/Compare Register", def: "비교 값 · 카운터 < CCR 동안 출력 High (PWM 모드 1)" },
-                { term: "Preload", def: "새 ARR/CCR를 주기 끝에 반영 → 글리치 방지" }
+                { term: "Preload", def: "새 ARR/CCR을 주기 끝에 반영 → 글리치 방지" }
             ],
             demo: { type: "sim", name: "pwm", fclk: 72000000 },
             code: [

@@ -24,7 +24,7 @@ LAB.track({
             when: "2026",
             points: [
                 "2026-06-21 출시 · Python 3.12–3.14 · `numpy.distutils` 제거, 2.0 시절 지원 중단(deprecation) 항목 대거 만료",
-                "free-threaded Python 용 안정 ABI(PEP 803) 지원 · 멀티스레드 ufunc 확장성 개선",
+                "free-threaded Python용 안정 ABI(PEP 803) 지원 · 멀티스레드 ufunc 확장성 개선",
                 "`linalg.eig`는 항상 복소수 반환 · 배열의 `shape`·`dtype` 속성에 대입하기는 지원 중단 예고 → `reshape`·`view`로"
             ],
             refs: [
@@ -38,7 +38,7 @@ LAB.track({
             points: [
                 "2.13: 컴파일러 Inductor에 CuTeDSL 백엔드 (행렬곱·RMSNorm) — Triton과 나란히",
                 "2.14 (2026-09): NVGEMM — CuTeDSL로 만든 CUTLASS 커널을 Triton·ATen과 함께 자동 튜닝",
-                "2.15: AMD 용 FlyDSL 추가 — 'CuTeDSL, Triton, Helion과 함께 PyTorch가 쓰는 커널 DSL'",
+                "2.15: AMD용 FlyDSL 추가 — 'CuTeDSL, Triton, Helion과 함께 PyTorch가 쓰는 커널 DSL'",
                 "모델 코드는 그대로 Python · 바뀌는 건 그 아래 커널 언어 (languages 트랙 'AI 스택의 언어')"
             ],
             refs: [
@@ -124,20 +124,20 @@ rows = [row.sum() for row in bc[:2000]]   # 행 하나가 연속 → 캐시 친�
                 { term: "기본 인덱싱", en: "Basic indexing", def: "정수·슬라이스·`...`·`None`만 쓰는 인덱싱 · 항상 뷰" },
                 { term: "고급 인덱싱", en: "Advanced (fancy) indexing", def: "정수 배열·불리언 배열로 고르기 · 항상 복사" },
                 { term: "F 순서", en: "Column-major order (Fortran order)", def: "첫 축이 가장 빨리 변하는 배치 · C 배열의 `.T`가 이 모양" },
-                { term: "정수 랩어라운드", en: "Integer wraparound", def: "고정 폭 정수가 범위를 넘으면 2ⁿ 으로 나눈 나머지가 됨" },
+                { term: "정수 랩어라운드", en: "Integer wraparound", def: "고정 폭 정수가 범위를 넘으면 2ⁿ으로 나눈 나머지가 됨" },
                 { term: "itemsize", en: "Item size in bytes", def: "원소 하나의 바이트 수 · int32 → 4, float64 → 8" }
             ],
             quiz: [
                 { q: "`a = np.arange(12, dtype=np.int32).reshape(3, 4)`의 `a.strides`는?", options: ["(4, 16)", "(4, 1)", "(16, 4)", "(12, 4)"], a: 2, why: "행 하나 = 4원소 × 4 B = 16 B, 열 하나 = 4 B · (4, 1)은 바이트가 아니라 원소 단위로 센 값" },
                 { q: "다음 중 원본과 메모리를 **공유하지 않는** 것은? (`a`는 3×4)", options: ["`a.T`", "`a[1:, ::2]`", "`a[[0, 2]]`", "`a.reshape(4, 3)`"], a: 2, why: "정수 리스트 인덱싱은 고급 인덱싱 → 항상 복사 · 나머지 셋은 strides·offset만 바꾼 뷰" },
-                { type: "num", q: "위 `a` (3×4, int32)에서 `a[::-1].strides[0]`는 몇 바이트?", answer: -16, tol: 0, unit: "B", why: "행 순서를 뒤집으면 첫 축 stride가 음수 · offset은 마지막 행(32 B)에서 시작" },
+                { type: "num", q: "위 `a` (3×4, int32)에서 `a[::-1].strides[0]`은 몇 바이트?", answer: -16, tol: 0, unit: "B", why: "행 순서를 뒤집으면 첫 축 stride가 음수 · offset은 마지막 행(32 B)에서 시작" },
                 { type: "text", q: "출력은?", code: { lang: "python", src: "a = np.arange(6).reshape(2, 3)\nb = a[:, 1:]\nb[0, 0] = 100\nprint(a[0].tolist())" }, answer: ["[0, 100, 2]"], why: "슬라이스는 뷰 · b[0, 0]은 a[0, 1]과 같은 칸" },
                 { type: "num", q: "`np.zeros((1000, 1000))`의 `nbytes`는? (기본 dtype)", answer: 8000000, tol: 0, unit: "B", why: "기본 dtype float64 = 8 B × 10⁶ 원소" },
                 { type: "text", q: "출력은?", code: { lang: "python", src: "print(np.array([250], dtype=np.uint8) + np.uint8(10))" }, answer: ["[4]"], why: "260은 uint8 범위(0–255)를 넘어 260 − 256 = 4 · 배열 연산은 경고 없이 돌아감" },
                 { q: "C 순서 3×4 배열 `a`의 `a.T`에 대해 맞는 것은?", options: ["C 연속, 새 버퍼", "F 연속, 같은 버퍼", "C 연속, 같은 버퍼", "F 연속, 새 버퍼"], a: 1, why: "전치는 strides만 (16, 4) → (4, 16)으로 바꾼 뷰 · 첫 축이 가장 빨리 변하니 F 연속" },
                 { type: "order", q: "`b = a.T` (a는 3×4 int32, C 순서)일 때 메모리 주소가 작은 것부터", items: ["b[1, 0]", "b[2, 0]", "b[0, 1]", "b[0, 2]"], why: "b[i, j] = a[j, i] → 주소 4·(4j + i): b[1,0]=4, b[2,0]=8, b[0,1]=16, b[0,2]=32" },
                 { q: "같은 백만 개 float의 합을 리스트로 구하면 ndarray보다 훨씬 느린 주된 이유는?", options: ["리스트 원소는 매번 디스크에서 다시 읽어서", "리스트는 정수만 담을 수 있어서", "원소마다 객체를 따라가 타입 확인", "리스트는 GIL을 원소마다 두 번 잡아서"], a: 2, why: "리스트는 포인터 배열 · 원소마다 float 객체(24 B)를 찾아 `__mul__`을 부름 · ndarray는 같은 타입 숫자를 C 루프가 바로 읽음" },
-                { type: "num", q: "shape (3, 4, 5), float32, C 순서 배열의 `strides[0]`는?", answer: 80, tol: 0, unit: "B", why: "첫 축 한 칸 = 4 × 5 원소 × 4 B = 80 B · 전체 strides (80, 20, 4)" }
+                { type: "num", q: "shape (3, 4, 5), float32, C 순서 배열의 `strides[0]`은?", answer: 80, tol: 0, unit: "B", why: "첫 축 한 칸 = 4 × 5 원소 × 4 B = 80 B · 전체 strides (80, 20, 4)" }
             ],
             refs: [
                 { title: "Array programming with NumPy", by: "Harris et al.", year: 2020, url: "https://arxiv.org/abs/2006.10256", kind: "paper" },
@@ -225,9 +225,9 @@ D = np.sqrt(np.maximum(sq, 0))     # |a−b|² = |a|² + |b|² − 2a·b` },
                 { type: "num", q: "`(8, 1, 6, 1)` + `(7, 1, 5)` 결과의 원소 수는?", answer: 1680, tol: 0, why: "결과 shape (8, 7, 6, 5) → 8·7·6·5 = 1680 (NumPy 문서 예)" },
                 { type: "text", q: "출력은?", code: { lang: "python", src: "x = np.array([[1, 2], [3, 4]])\nprint(x.sum(axis=0).tolist())" }, answer: ["[4, 6]"], why: "axis=0을 접음 = 열마다 합: 1+3, 2+4 · axis=1이면 [3, 7]" },
                 { type: "num", q: "이미지 배치 `(32, 3, 224, 224)` float32에서 채널 평균 `(3, 1, 1)`을 빼면 결과 배열은 몇 MiB?", answer: 18.375, tol: 0.01, unit: "MiB", why: "32·3·224·224 = 4,816,896 원소 × 4 B = 18.375 MiB · 평균 쪽은 늘어나도 메모리 0" },
-                { type: "num", q: "`np.broadcast_to(np.arange(3.0), (1000, 3)).strides[0]`는?", answer: 0, tol: 0, unit: "B", why: "늘린 축은 stride 0 — 1000 행이 모두 같은 24 B를 가리킴 · 그래서 쓰기 금지(read-only)" },
+                { type: "num", q: "`np.broadcast_to(np.arange(3.0), (1000, 3)).strides[0]`은?", answer: 0, tol: 0, unit: "B", why: "늘린 축은 stride 0 — 1000 행이 모두 같은 24 B를 가리킴 · 그래서 쓰기 금지(read-only)" },
                 { q: "`P / P.sum(axis=1, keepdims=True)`에서 `keepdims=True`가 하는 일은?", options: ["합을 float64로 바꿔 정밀도를 올림", "합을 (1, 2)로 남겨 열마다 나눔", "합을 (2, 1)로 남겨 행마다 나눔", "원본 P를 제자리에서 바꿈"], a: 2, why: "줄인 축을 1로 남기면 오른쪽 정렬 시 (2, 2)와 (2, 1) → 행 방향 · 빼먹으면 (2,)가 열 방향으로 붙음" },
-                { type: "order", q: "두 shape의 브로드캐스팅 판정 순서", items: ["두 shape를 오른쪽 끝에 맞춘다", "짧은 쪽 앞을 1로 채운다", "축마다 같거나 1 인지 본다", "1인 축을 상대 크기로 늘린다", "결과 shape를 확정한다"], why: "정렬 → 패딩 → 축별 검사 → 늘리기 · 하나라도 실패하면 ValueError" },
+                { type: "order", q: "두 shape의 브로드캐스팅 판정 순서", items: ["두 shape를 오른쪽 끝에 맞춘다", "짧은 쪽 앞을 1로 채운다", "축마다 같거나 1인지 본다", "1인 축을 상대 크기로 늘린다", "결과 shape를 확정한다"], why: "정렬 → 패딩 → 축별 검사 → 늘리기 · 하나라도 실패하면 ValueError" },
                 { q: "softmax를 `np.exp(x) / np.exp(x).sum()` 대신 `x - x.max()`부터 하는 이유는?", options: ["계산이 두 배 빨라져서", "정수 배열도 받을 수 있게 하려고", "exp 오버플로(inf) 방지", "결과 합이 1이 안 돼서"], a: 2, why: "x = [1000, 1001]이면 exp가 inf → nan · 같은 값을 빼도 softmax 결과는 그대로" }
             ],
             refs: [
@@ -293,7 +293,7 @@ print(top3, scores[top3])              # [5 1 7] [85 77 69]`,
                 },
                 {
                     lang: "python",
-                    title: "einsum과 @ 는 같은 계산",
+                    title: "einsum과 @는 같은 계산",
                     src: `B, T, D = 2, 4, 8
 Q = rng.standard_normal((B, T, D))
 K = rng.standard_normal((B, T, D))
@@ -333,7 +333,7 @@ idx = idx[np.argsort(v[idx])]        # 필요하면 10개만 정렬` },
                 { type: "text", q: "출력은?", code: { lang: "python", src: "print(np.einsum(\"ij->j\", np.arange(6).reshape(2, 3)).tolist())" }, answer: ["[3, 5, 7]"], why: "출력에 i가 없으니 i 축으로 합 = 열 합 [0+3, 1+4, 2+5]" },
                 { q: "`x = np.array([3, -1, 4]); y = x[x > 0]; y[0] = 100` 뒤 `x`는?", options: ["[100, -1, 4]", "오류", "[3, -1, 4] 그대로", "[100, 4]로 줄어듦"], a: 2, why: "마스크 인덱싱 읽기는 복사 · y를 바꿔도 x는 그대로" },
                 { q: "`x[x < 0] = 0`은?", options: ["복사본만 바꾸고 x는 그대로", "x를 새 배열로 바꿔 끼움", "읽기 전용이라 오류", "x를 제자리에서 바꿈"], a: 3, why: "왼쪽에 쓴 마스크 인덱싱은 `__setitem__` → 원본에 씀 · 읽기(복사)와 반대" },
-                { q: "함수 여러 곳에서 재현 가능한 난수를 쓰는 권장 방식은?", options: ["모듈 첫 줄에서 `np.random.seed(0)`를 딱 한 번 호출", "`random.seed(0)`으로 표준 라이브러리 고정", "`rng = np.random.default_rng(0)`을 넘겨 쓰기", "매 호출 전에 `time.time()`으로 시드"], a: 2, why: "생성기 객체가 상태를 들고 다녀 다른 라이브러리 호출과 섞이지 않음 · 전역 시드는 어디서든 상태가 바뀜" },
+                { q: "함수 여러 곳에서 재현 가능한 난수를 쓰는 권장 방식은?", options: ["모듈 첫 줄에서 `np.random.seed(0)`을 딱 한 번 호출", "`random.seed(0)`으로 표준 라이브러리 고정", "`rng = np.random.default_rng(0)`을 넘겨 쓰기", "매 호출 전에 `time.time()`으로 시드"], a: 2, why: "생성기 객체가 상태를 들고 다녀 다른 라이브러리 호출과 섞이지 않음 · 전역 시드는 어디서든 상태가 바뀜" },
                 { type: "order", q: "어텐션 한 번의 계산 순서", items: ["Q·K 점수 (einsum)", "√D로 나누기", "마스크 위치를 −inf로", "마지막 축 softmax", "가중치 @ V"], why: "점수 → 스케일 → 마스크 → 확률 → 값의 가중합 · 마스크는 softmax 전에" },
                 { q: "100만 개 중 가장 큰 10개의 **위치**를 빨리 얻으려면?", options: ["`np.argsort(x)[-10:]`", "`np.argpartition(x, -10)[-10:]`", "`np.sort(x)[-10:]`", "`sorted(range(len(x)), key=x.__getitem__)[-10:]`"], a: 1, why: "부분 정렬 O(n) · `np.sort`는 위치가 아니라 값, argsort는 전체 정렬" },
                 { type: "num", q: "B=2, T=S=4, D=8에서 `einsum('btd,bsd->bts')`의 곱셈 횟수는?", answer: 256, tol: 0, why: "출력 B·T·S = 32칸 × 칸마다 D = 8번 곱 → 256" }
@@ -555,7 +555,7 @@ for i, (xb, yb) in enumerate(loader_64):
                 { type: "order", q: "학습 한 step의 순서", items: ["optimizer.zero_grad()", "pred = model(x) (forward, 그래프 기록)", "loss = loss_fn(pred, y)", "loss.backward()", "optimizer.step()"], why: "기울기 비우기 → 기록하며 계산 → 손실 → 거꾸로 기울기 → 갱신 · zero_grad는 backward 전 어디든 되지만 맨 앞이 관례" },
                 { q: "ReLU 앞의 z가 음수인 샘플에서 w의 기울기는?", options: ["z의 절댓값만큼", "1 — ReLU는 항상 통과", "0 — ReLU 미분이 0", "음수면 부호만 바뀜"], a: 2, why: "z ≤ 0이면 ReLU 출력이 상수 0 → 지역 미분 0이 뒤로 곱해짐 · 실습에서 ReLU로 바꿔 확인" },
                 { type: "num", q: "`x = torch.tensor(2., requires_grad=True); (x**3).backward()` 뒤 `x.grad`는?", answer: 12, tol: 0, why: "d(x³)/dx = 3x² = 12" },
-                { q: "`y = x.sigmoid(); y.mul_(2); y.sum().backward()`는?", options: ["정상 동작, 기울기가 2배로 커짐", "경고만 나고 기울기는 0으로 채워짐", "RuntimeError — 저장값 수정됨", "정상 동작, 기울기는 그대로"], a: 2, why: "sigmoid의 역방향은 출력 y를 저장해 씀 · mul_ 로 버전 카운터가 올라가 오류" }
+                { q: "`y = x.sigmoid(); y.mul_(2); y.sum().backward()`는?", options: ["정상 동작, 기울기가 2배로 커짐", "경고만 나고 기울기는 0으로 채워짐", "RuntimeError — 저장값 수정됨", "정상 동작, 기울기는 그대로"], a: 2, why: "sigmoid의 역방향은 출력 y를 저장해 씀 · mul_로 버전 카운터가 올라가 오류" }
             ],
             refs: [
                 { title: "Autograd mechanics", by: "PyTorch Foundation", url: "https://docs.pytorch.org/docs/stable/notes/autograd.html", kind: "doc" },
@@ -805,7 +805,7 @@ y = gelu_bias(x, b)                    # 첫 호출: 컴파일 (수 초), 이후
                 { q: "GPU 연산 시간을 잴 때 `torch.cuda.synchronize()`가 필요한 이유는?", options: ["GPU 클럭을 최대로 올리려고", "캐시 메모리를 비우려고", "커널이 비동기로 큐에만 들어가서", "Python GIL을 풀어 스레드 경합을 없애려고"], a: 2, why: "호출은 큐에 넣고 바로 돌아옴 → 동기화 없이 재면 '넣는 시간'만 측정" },
                 { q: "fp16 학습에서 `GradScaler`를 쓰는 이유는?", options: ["가중치를 fp16으로 영구 변환", "학습률을 자동으로 키우려고", "GPU 메모리를 절반 아래로 줄이려고", "작은 기울기가 0이 되는 것 방지"], a: 3, why: "fp16 최소 정규수 6.1×10⁻⁵ · 1e-8 같은 기울기는 0이 됨 → 손실을 키워 backward 후 다시 나눔" },
                 { type: "text", q: "출력은? (CPU)", code: { lang: "python", src: "a, b = torch.randn(64, 64), torch.randn(64, 64)\nwith torch.autocast(\"cpu\", dtype=torch.bfloat16):\n    z = a @ b\nprint(z.dtype)" }, answer: ["torch.bfloat16"], why: "autocast는 matmul을 지정한 저정밀 dtype으로 · 입력 a, b는 float32 그대로" },
-                { type: "text", q: "출력은?", code: { lang: "python", src: "print(torch.tensor(1e-8, dtype=torch.float16))" }, answer: ["tensor(0., dtype=torch.float16)"], why: "fp16의 가장 작은 비정규수 ≈ 6×10⁻⁸ 의 절반보다 작아 0으로 · bf16은 1.0012e-08로 남음" },
+                { type: "text", q: "출력은?", code: { lang: "python", src: "print(torch.tensor(1e-8, dtype=torch.float16))" }, answer: ["tensor(0., dtype=torch.float16)"], why: "fp16의 가장 작은 비정규수 ≈ 6×10⁻⁸의 절반보다 작아 0으로 · bf16은 1.0012e-08로 남음" },
                 { type: "order", q: "`torch.compile(model)`이 처음 호출될 때의 흐름", items: ["TorchDynamo가 Python 바이트코드에서 그래프 추출", "AOTAutograd가 forward·backward 그래프 생성", "Inductor가 연산을 묶어 커널 코드 생성", "Triton/C++ 커널 컴파일", "이후 호출은 가드 확인 후 캐시된 커널 실행"], why: "Ansel et al. (2024): Dynamo(바이트코드 캡처) → AOTAutograd → Inductor(코드 생성) · 첫 호출이 느린 이유" },
                 { type: "num", q: "배치 64, 길이 2048, 어휘 128256의 fp32 logit 텐서는 몇 GiB?", answer: 62.625, tol: 0.01, unit: "GiB", why: "64·2048·128256·4 B = 67,243,081,728 B ÷ 2³⁰ · 2.13의 `nn.LinearCrossEntropyLoss`가 이걸 조각내 안 만드는 이유" },
                 { q: "학습이 끝난 뒤에도 nvidia-smi의 사용 메모리가 안 줄어드는 주된 이유는?", options: ["GPU 드라이버의 메모리 누수", "캐싱 할당자가 메모리를 쥐고 재사용", "텐서가 학습 뒤 자동으로 디스크에 저장돼서", "CUDA가 해제를 지원하지 않아서"], a: 1, why: "PyTorch 할당자는 해제 블록을 캐시해 다음 할당에 씀 · 실제 텐서 사용량은 `torch.cuda.memory_allocated()`" }

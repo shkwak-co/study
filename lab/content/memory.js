@@ -79,7 +79,7 @@ LAB.track({
             concepts: [
                 { term: "VMA / LMA", en: "Virtual Memory Address / Load Memory Address", def: "실행 중 쓰는 주소 / 이미지에 저장된 주소 · `.data`는 VMA = SRAM, LMA = Flash" },
                 { term: "`.rodata`", en: "Read-only data", def: "`const` 전역·문자열 리터럴 · Flash에 그대로, 복사 없음" },
-                { term: "`.bss`", en: "Block Started by Symbol (BSS)", def: "0 이거나 초기값 없는 전역·`static` · 파일엔 크기만, 부팅 때 0 채움" },
+                { term: "`.bss`", en: "Block Started by Symbol (BSS)", def: "0이거나 초기값 없는 전역·`static` · 파일엔 크기만, 부팅 때 0 채움" },
                 { term: "맵 파일", en: "Linker map file", def: "섹션·심볼이 어느 주소에 몇 바이트로 놓였는지 링커가 쓴 보고서 · `-Wl,-Map=app.map`" },
                 { term: "힙·스택 경계", en: "Heap / stack boundary", def: "힙은 `.bss` 끝에서 위로, 스택은 RAM 끝에서 아래로 · 만나면 조용히 덮어씀" }
             ],
@@ -163,7 +163,7 @@ uint8_t lut[4096] = { 1 };      // Flash 4 KB + 부팅 때 4 KB 복사` },
                     after: { lang: "c", src: `uint8_t lut[4096];              // .bss: Flash 0 B, 0 채움만
 void lut_init(void) { lut[0] = 1; }` },
                     gain: "Flash −4 KB · 부팅 복사 −4 KB",
-                    note: "전부 0 이거나 초기값이 없으면 `.bss` · 0 아닌 값이 하나라도 있으면 배열 전체가 `.data`"
+                    note: "전부 0이거나 초기값이 없으면 `.bss` · 0 아닌 값이 하나라도 있으면 배열 전체가 `.data`"
                 },
                 {
                     title: "안 쓰는 함수·변수 버리기: 섹션 분리 + `--gc-sections`",
@@ -211,13 +211,13 @@ arm-none-eabi-gcc *.o -Wl,--gc-sections -o app.elf   # 참조 없는 섹션 제�
             key: [
                 "**정렬(alignment)**: N바이트 타입은 N의 배수 주소에 · 구조체는 가장 큰 멤버를 따름",
                 "멤버 사이·끝에 **패딩(padding)** · 정렬 큰 멤버부터 나열하면 `sizeof`가 줄어듦",
-                "`packed`는 패딩 0 · 대가는 **비정렬 접근(unaligned access)**: 느리거나 Cortex-M0+ 면 HardFault",
+                "`packed`는 패딩 0 · 대가는 **비정렬 접근(unaligned access)**: 느리거나 Cortex-M0+면 HardFault",
                 "**리틀 엔디안(little-endian)**: 낮은 바이트가 낮은 주소 · 네트워크 헤더는 빅 엔디안"
             ],
             concepts: [
                 { term: "자연 정렬", en: "Natural alignment", def: "크기 1·2·4·8 바이트 기본 타입을 그 크기의 배수 주소에 · 32bit Arm의 `double`도 8" },
                 { term: "패딩", en: "Struct padding", def: "다음 멤버·다음 배열 원소의 정렬을 맞추려 컴파일러가 넣는 빈 바이트 · 내용은 미정" },
-                { term: "비정렬 접근", en: "Unaligned access", def: "정렬 안 맞는 주소에 2/4바이트 load/store · M0/M0+ 는 HardFault, M3/M4/M7은 `LDR`/`STR`/`LDRH`/`STRH` 계열만 허용" },
+                { term: "비정렬 접근", en: "Unaligned access", def: "정렬 안 맞는 주소에 2/4바이트 load/store · M0/M0+는 HardFault, M3/M4/M7은 `LDR`/`STR`/`LDRH`/`STRH` 계열만 허용" },
                 { term: "엔디안", en: "Endianness (byte order)", def: "여러 바이트 값을 메모리에 놓는 순서 · 대부분의 Cortex-M·x86은 리틀, TCP/IP 헤더는 빅" },
                 { term: "`_Alignof` / `_Alignas`", en: "C11 alignment operator / specifier", def: "타입의 정렬 조회 / 변수 정렬 강제 · DMA·캐시 라인 정렬에 사용" }
             ],
@@ -258,7 +258,7 @@ uint32_t read_u32_host(const uint8_t *p) {
 
 uint32_t len = read_be32(rx + 1);
 /* ✗ uint32_t len = *(uint32_t *)(rx + 1);  비정렬 + strict aliasing 위반 */`,
-                    note: "주석의 캐스트는 M0+ 에서 HardFault, 다른 코어에선 UB · 엔디안 변환이 필요하면 **바이트 스왑(byte swap)** `__builtin_bswap32` (Arm `REV`)"
+                    note: "주석의 캐스트는 M0+에서 HardFault, 다른 코어에선 UB · 엔디안 변환이 필요하면 **바이트 스왑(byte swap)** `__builtin_bswap32` (Arm `REV`)"
                 }
             ],
             optimize: [
@@ -302,7 +302,7 @@ void parse(const struct hdr_wire *w, struct hdr *h) {
                 { q: "32bit Arm에서 `struct { char a; int b; char c; }`의 sizeof는?", options: ["6", "8", "12", "16"], a: 2, why: "a 0, b 4, c 8 → 9를 정렬 4로 올려 12 · 6은 패딩을 잊은 값" },
                 { q: "같은 멤버로 sizeof를 가장 작게 만드는 순서는?", options: ["정렬 작은 것부터", "정렬 큰 것부터", "선언 순서 그대로", "이름 알파벳순"], a: 1, why: "큰 정렬을 앞에 두면 작은 멤버가 빈틈에 붙음 · 작은 것부터면 큰 멤버 앞에 구멍이 생김" },
                 { q: "`0x12345678`을 리틀 엔디안으로 저장할 때 가장 낮은 주소의 바이트는?", options: ["`0x12`", "`0x34`", "`0x56`", "`0x78`"], a: 3, why: "가장 낮은 자리 바이트가 가장 낮은 주소 · `0x12`가 먼저면 빅 엔디안" },
-                { q: "Cortex-M0+ 에서 주소 `0x20000001`의 word를 `LDR`로 읽으면?", options: ["두 번 읽어 정상 동작", "HardFault", "하위 2bit를 무시하고 읽음", "UsageFault"], a: 1, why: "Armv6-M은 비정렬 미지원 → HardFault · UsageFault는 M3 이상에만 있음" },
+                { q: "Cortex-M0+에서 주소 `0x20000001`의 word를 `LDR`로 읽으면?", options: ["두 번 읽어 정상 동작", "HardFault", "하위 2bit를 무시하고 읽음", "UsageFault"], a: 1, why: "Armv6-M은 비정렬 미지원 → HardFault · UsageFault는 M3 이상에만 있음" },
                 { q: "Cortex-M7에서 비정렬 주소로 실행해도 fault가 안 나는 명령은?", options: ["`LDRD`", "`LDM`", "`LDR`", "`STRD`"], a: 2, why: "`LDR/STR/LDRH/STRH` 계열만 허용 · `LDRD`도 word를 읽지만 비정렬이면 항상 UsageFault" },
                 { type: "num", q: "LP64에서 `struct { char tag; void *p; char flag; }`의 sizeof는?", answer: 24, unit: "B", why: "tag 0, p 8, flag 16 → 17을 정렬 8로 올려 24 · 32bit Arm이면 12" },
                 { type: "text", q: "32bit Arm에서 `offsetof(struct msg, flag)`는?", code: { lang: "c", src: "struct msg { uint8_t id; uint16_t len; uint32_t crc; uint8_t flag; };" }, answer: ["8"], why: "id 0, len 2 (정렬 2), crc 4, flag 8 · sizeof는 끝 패딩까지 12" },
@@ -866,7 +866,7 @@ int main(void) {
                     { line: 7, stack: [{ fn: "main", vars: [["a", "→0x1008"], ["b", "→0x1028"], ["c", "→0x1048"], ["g", "→0x1068"]] }], heap: [["0x1008", "a · 24 B"], ["0x1028", "b · 24 B"], ["0x1048", "c · 24 B"], ["0x1068", "g · 24 B"]], text: "블록 4개가 빈틈없이 · 힙 끝은 `0x1080`" },
                     { line: 8, stack: [{ fn: "main", vars: [["a", "→0x1008"], ["b", "→0x1028"], ["c", "→0x1048"], ["g", "→0x1068"]] }], heap: [["0x1008", "freed"], ["0x1028", "b · 24 B"], ["0x1048", "c · 24 B"], ["0x1068", "g · 24 B"]], text: "`free(a)`: 블록을 가용 리스트에 연결 · 내용은 그대로, 헤더에 '빈' 표시" },
                     { line: 9, stack: [{ fn: "main", vars: [["a", "→0x1008"], ["b", "→0x1028"], ["c", "→0x1048"], ["g", "→0x1068"]] }], heap: [["0x1008", "freed"], ["0x1028", "b · 24 B"], ["0x1048", "freed"], ["0x1068", "g · 24 B"]], text: "빈 블록 2개(각 32 B)가 b를 사이에 두고 떨어짐" },
-                    { line: 10, stack: [{ fn: "main", vars: [["a", "→0x1008"], ["b", "→0x1028"], ["c", "→0x1048"], ["g", "→0x1068"], ["d", "→0x1088"]] }], heap: [["0x1008", "freed"], ["0x1028", "b · 24 B"], ["0x1048", "freed"], ["0x1068", "g · 24 B"], ["0x1088", "d · 48 B"]], text: "56 B 블록이 필요한데 빈 칸은 32 B 씩 → 못 씀 · 힙 끝을 늘려 `0x1088` · 이게 외부 단편화" },
+                    { line: 10, stack: [{ fn: "main", vars: [["a", "→0x1008"], ["b", "→0x1028"], ["c", "→0x1048"], ["g", "→0x1068"], ["d", "→0x1088"]] }], heap: [["0x1008", "freed"], ["0x1028", "b · 24 B"], ["0x1048", "freed"], ["0x1068", "g · 24 B"], ["0x1088", "d · 48 B"]], text: "56 B 블록이 필요한데 빈 칸은 32 B씩 → 못 씀 · 힙 끝을 늘려 `0x1088` · 이게 외부 단편화" },
                     { line: 11, stack: [{ fn: "main", vars: [["a", "→0x1008"], ["b", "→0x1028"], ["c", "→0x1048"], ["g", "→0x1068"], ["d", "→0x1088"]] }], heap: [["0x1008", "빈 96 B (a+b+c)"], ["0x1068", "g · 24 B"], ["0x1088", "d · 48 B"]], text: "`free(b)`: 양옆이 빈 블록 → **병합(coalescing)**으로 96 B 한 덩어리" },
                     { line: 12, stack: [{ fn: "main", vars: [["a", "→0x1008"], ["b", "→0x1028"], ["c", "→0x1048"], ["g", "→0x1068"], ["d", "→0x1088"], ["e", "→0x1008"]] }], heap: [["0x1008", "e · 48 B"], ["0x1040", "빈 블록 40 B"], ["0x1068", "g · 24 B"], ["0x1088", "d · 48 B"]], text: "96 B에서 56 B를 떼어 줌(분할) · 남은 40 B는 다시 가용 리스트로 · a·b·c는 이제 dangling" },
                     { line: 13, stack: [{ fn: "main", vars: [["d", "→0x1088"], ["e", "→0x1008"], ["g", "→0x1068"]] }], heap: [["0x1008", "e · 48 B"], ["0x1040", "빈 블록 40 B"], ["0x1068", "g · 24 B"], ["0x1088", "d · 48 B"]], text: "같은 총량이라도 할당·해제 순서에 따라 힙이 조각남 · 오래 도는 펌웨어일수록 위험" }

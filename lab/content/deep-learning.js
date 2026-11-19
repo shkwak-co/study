@@ -163,13 +163,13 @@ out = np.stack(out)` },
             ],
             quiz: [
                 { q: "단일 퍼셉트론이 XOR을 못 푸는 이유는?", options: ["가중치가 너무 작아서", "학습률이 너무 커서", "경계가 직선 하나라서", "편향 항이 없어서"], a: 2, why: "XOR의 두 클래스는 직선 하나로 못 나눔 · 가중치·학습률·편향을 바꿔도 경계는 여전히 직선" },
-                { q: "활성함수 없이 `Linear` 3개를 쌓으면?", options: ["선형 변환 하나와 같다", "3차 다항식 함수가 된다", "XOR도 풀 수 있다", "기울기 소실이 생긴다"], a: 0, why: "W₃W₂W₁ 이 행렬 하나로 접힘 · 곱셈만 있고 비선형이 없으니 다항식도 아님" },
+                { q: "활성함수 없이 `Linear` 3개를 쌓으면?", options: ["선형 변환 하나와 같다", "3차 다항식 함수가 된다", "XOR도 풀 수 있다", "기울기 소실이 생긴다"], a: 0, why: "W₃W₂W₁이 행렬 하나로 접힘 · 곱셈만 있고 비선형이 없으니 다항식도 아님" },
                 { q: "`sigmoid(0)`의 값은?", options: ["0", "1", "0.25", "0.5"], a: 3, why: "1 / (1 + e⁰) = 1/2 · 0.25는 이 점의 미분값 σ(1 − σ)" },
                 { q: "ReLU에서 z = −2일 때 기울기는?", options: ["1", "0", "−2", "0.5"], a: 1, why: "음수 영역은 출력 0, 기울기 0 · 양수 영역에서만 1" },
                 { q: "이진 분류 출력층으로 권장되는 조합은?", options: ["ReLU + `MSELoss`", "softmax + `L1Loss`", "로짓 + `BCEWithLogitsLoss`", "sigmoid + `BCEWithLogitsLoss`"], a: 2, why: "sigmoid와 log를 한 번에 계산해 안정 · 앞에 sigmoid를 또 두면 이중 sigmoid로 확률이 0.5~0.73에 갇힘" },
                 { type: "num", q: "`x = (1, 2)`, `w = (0.8, −0.2)`, `b = 0.1`인 뉴런의 sigmoid 출력은? (소수 셋째 자리)", answer: 0.622, tol: 0.001, why: "z = 0.8 − 0.4 + 0.1 = 0.5 → 1 / (1 + e^−0.5) ≈ 0.622" },
                 { type: "num", q: "`nn.Linear(784, 128)`의 파라미터 수 (bias 포함)는?", answer: 100480, why: "784·128 = 100,352 가중치 + bias 128" },
-                { type: "text", q: "출력되는 shape은?", code: { lang: "python", src: "import numpy as np\nX = np.zeros((32, 784))     # 배치 32\nW = np.zeros((784, 128))\nprint((X @ W).shape)" }, answer: ["(32, 128)", "32, 128"], why: "(N, in) @ (in, out) = (N, out) · 배치 전체가 행렬곱 한 번" },
+                { type: "text", q: "출력되는 shape는?", code: { lang: "python", src: "import numpy as np\nX = np.zeros((32, 784))     # 배치 32\nW = np.zeros((784, 128))\nprint((X @ W).shape)" }, answer: ["(32, 128)", "32, 128"], why: "(N, in) @ (in, out) = (N, out) · 배치 전체가 행렬곱 한 번" },
                 { type: "order", q: "퍼셉트론 학습 규칙으로 샘플 하나를 처리하는 순서", items: ["가중합 z = w·x + b", "계단 함수로 예측", "오차 t − pred 계산", "w, b에 lr × 오차 반영"], why: "맞히면 오차 0이라 갱신 없음 · 틀렸을 때만 경계가 움직임" }
             ],
             refs: [
@@ -325,7 +325,7 @@ def forward(self, x):
                 { type: "num", q: "데모 그래프(x = 2, w = 3, b = 1, y = 10, `L = (w·x + b − y)²`)에서 ∂L/∂w는?", answer: -12, why: "∂L/∂u = 2(7 − 10) = −6 → 곱셈 노드에서 × x = −12" },
                 { type: "num", q: "같은 그래프에서 학습률 0.01로 w와 b를 **둘 다** 한 번 갱신하면 새 손실 L은?", answer: 7.29, tol: 0.01, why: "w = 3.12, b = 1.06 → u = 7.30 → (7.30 − 10)² = 7.29 · w만 갱신하면 7.62" },
                 { type: "num", q: "배치 32, 길이 2048, 폭 4096인 bf16 활성값 텐서 하나는 몇 MiB?", answer: 512, unit: "MiB", why: "32·2048·4096·2 byte = 2²⁹ byte · 층마다 이런 텐서를 여러 개 저장" },
-                { type: "text", q: "가중치 기울기 `dW`의 shape은?", code: { lang: "python", src: "import numpy as np\nX  = np.zeros((64, 3))     # 층 입력 (N, in)\ndY = np.zeros((64, 8))     # 상류 기울기 (N, out)\nprint((X.T @ dY).shape)" }, answer: ["(3, 8)", "3, 8"], why: "dW = Xᵀ @ dY는 W와 같은 (in, out) · 배치 축 N은 합쳐져 사라짐" },
+                { type: "text", q: "가중치 기울기 `dW`의 shape는?", code: { lang: "python", src: "import numpy as np\nX  = np.zeros((64, 3))     # 층 입력 (N, in)\ndY = np.zeros((64, 8))     # 상류 기울기 (N, out)\nprint((X.T @ dY).shape)" }, answer: ["(3, 8)", "3, 8"], why: "dW = Xᵀ @ dY는 W와 같은 (in, out) · 배치 축 N은 합쳐져 사라짐" },
                 { type: "order", q: "학습 한 스텝의 순서 (`zero_grad` 제외)", items: ["순전파로 예측", "손실 계산", "`loss.backward()`", "`opt.step()`"], why: "backward가 순전파 때 저장한 값을 써서 .grad를 채우고, step이 그 기울기로 갱신" }
             ],
             refs: [
@@ -444,7 +444,7 @@ for i, (x, y) in enumerate(loader):
                 { q: "Adam에 편향 보정이 필요한 이유는?", options: ["m, v가 0에서 출발해 작게 치우쳐서", "warmup이 없으면 초반 학습률이 너무 커서", "기울기가 음수면 √v가 정의되지 않아서", "미니배치가 작아 기울기 노이즈가 커서"], a: 0, why: "t가 작을 때 `1 − βᵗ`로 나눠 보정 · v는 제곱 평균이라 항상 ≥ 0" },
                 { q: "Adam 계열 학습 초반에 warmup을 쓰는 주된 이유로 꼽히는 것은?", options: ["GPU 메모리 사용량을 줄이려고", "과적합 시점을 뒤로 늦추려고", "초반 v 추정이 불안정해서", "배치 정규화 통계를 먼저 모으려고"], a: 2, why: "표본이 적은 초반엔 적응형 학습률의 분산이 큼 (Liu et al. 2019) · 메모리·과적합과는 무관" },
                 { q: "`clip_grad_norm_`은 언제 호출해야 하나?", options: ["loss 계산 직후, backward() 전", "backward()와 step() 사이", "opt.step() 후, 다음 배치 전", "zero_grad() 직후, 순전파 전"], a: 1, why: "backward가 채운 .grad를 갱신 직전에 줄여야 함 · backward 전엔 아직 기울기가 없음" },
-                { type: "num", q: "협곡 손실 `f = 0.1x² + 2y²`에서 SGD가 발산하지 않는 학습률 η 의 상한은?", answer: 0.5, tol: 0.001, why: "가장 가파른 y 축 곡률 a = 4 → |1 − ηa| < 1 → η < 2/4 · 데모에서 0.5 넘겨 보기" },
+                { type: "num", q: "협곡 손실 `f = 0.1x² + 2y²`에서 SGD가 발산하지 않는 학습률 η의 상한은?", answer: 0.5, tol: 0.001, why: "가장 가파른 y 축 곡률 a = 4 → |1 − ηa| < 1 → η < 2/4 · 데모에서 0.5 넘겨 보기" },
                 { type: "num", q: "Adam 첫 스텝(β1 = 0.9, β2 = 0.999)에서 편향 보정을 **빼면** `|m/√v|`는? (소수 둘째 자리)", answer: 3.16, tol: 0.01, why: "m = 0.1g, v = 0.001g² → 0.1/√0.001 ≈ 3.16 · 보정하면 정확히 1" },
                 { type: "num", q: "Adam 혼합정밀 학습은 파라미터당 16 byte(가중치·기울기 2+2, FP32 사본·m·v 4+4+4)다. 7B 모델이면 몇 GB?", answer: 112, tol: 0.5, unit: "GB", why: "7e9 × 16 byte · 활성값은 별도 (ZeRO 논문의 16Ψ)" },
                 { type: "order", q: "PyTorch 학습 루프 한 스텝의 순서 (`zero_grad` 제외)", items: ["`loss = loss_fn(model(x), y)`", "`loss.backward()`", "`clip_grad_norm_(...)`", "`opt.step()`", "`sched.step()`"], why: "기울기 계산 → 줄이기 → 갱신 → 학습률 갱신 · 스케줄러를 먼저 부르면 첫 학습률 값을 건너뜀 (PyTorch 문서)" }
@@ -576,7 +576,7 @@ for x, y in loader:
                 { q: "stride 1에서 3×3 conv가 입력 크기를 유지하려면 padding은?", options: ["0", "2", "1", "3"], a: 2, why: "P = (K − 1)/2 = 1 · 양쪽에 붙으므로 2가 아님" },
                 { type: "num", q: "입력 224×224, K=7, S=2, P=3 합성곱의 출력 한 변은?", answer: 112, why: "⌊(224 + 6 − 7)/2⌋ + 1 = 111 + 1 · ResNet 첫 층" },
                 { type: "num", q: "`nn.Conv2d(64, 128, 3, padding=1)`의 파라미터 수 (bias 포함)는?", answer: 73856, why: "3·3·64·128 = 73,728 + bias 128 · padding은 개수와 무관" },
-                { type: "num", q: "56×56 입력, 64 → 64 채널 3×3 합성곱(P=1, S=1)의 곱셈-누산은 약 몇 백만(M) 번?", answer: 115.6, tol: 0.5, unit: "M", why: "56·56·9·64·64 ≈ 1.16억 · 파라미터는 3.7만이지만 위치마다 재사용" },
+                { type: "num", q: "56×56 입력, 64 → 64 채널 3×3 합성곱(P=1, S=1)의 곱셈-누산은 약 몇백만(M) 번?", answer: 115.6, tol: 0.5, unit: "M", why: "56·56·9·64·64 ≈ 1.16억 · 파라미터는 3.7만이지만 위치마다 재사용" },
                 { type: "text", q: "출력은? (`win` = 3×3 창을 모두 꺼내는 함수)", code: { lang: "python", src: "import numpy as np\nfrom numpy.lib.stride_tricks import sliding_window_view as win\nx = np.arange(25).reshape(5, 5)\nk = np.array([[-1, 0, 1]] * 3)\nout = (win(x, (3, 3)) * k).sum(axis=(-2, -1))\nprint(out.shape, out[0, 0])" }, answer: ["(3, 3) 6"], why: "5 − 3 + 1 = 3 · 첫 창의 행마다 오른쪽 − 왼쪽 = 2, 세 행 합 6" }
             ],
             refs: [
@@ -725,12 +725,12 @@ out, (h, c) = lstm(x)       # cuDNN 이 시퀀스 전체를 융합 처리` },
             quiz: [
                 { q: "LSTM 셀 상태의 갱신식은?", options: ["c = o⊙tanh(h)", "c = f⊙c + i⊙g", "c = σ(W·x)", "c = c + h"], a: 1, why: "forget으로 지우고 input × 후보로 더함 · o⊙tanh(·)는 h를 만드는 식" },
                 { q: "forget 게이트 출력이 0에 가까우면?", options: ["이전 셀 상태를 그대로 유지", "출력 h가 0이 됨", "입력 x를 무시함", "이전 셀 상태를 거의 지움"], a: 3, why: "c(t−1)에 0을 곱함 · '유지'는 f ≈ 1일 때" },
-                { q: "`nn.LSTM(8, 16, batch_first=True)`에 (4, 10, 8) 입력 시 `out` shape은?", options: ["(4, 10, 16)", "(10, 4, 16)", "(4, 16)", "(4, 10, 8)"], a: 0, why: "(batch, time, hidden) · 모든 시점의 h · (10, 4, 16)은 batch_first=False일 때" },
+                { q: "`nn.LSTM(8, 16, batch_first=True)`에 (4, 10, 8) 입력 시 `out` shape는?", options: ["(4, 10, 16)", "(10, 4, 16)", "(4, 16)", "(4, 10, 8)"], a: 0, why: "(batch, time, hidden) · 모든 시점의 h · (10, 4, 16)은 batch_first=False일 때" },
                 { q: "RNN이 Transformer보다 학습 병렬화가 어려운 이유는?", options: ["시점마다 가중치가 달라서", "배치를 나눠 계산할 수 없어서", "h_t가 h_(t−1)에 의존해서", "tanh는 GPU가 병렬화 못 해서"], a: 2, why: "시간축으로 한 스텝씩만 진행 · 가중치는 오히려 모든 시점이 공유" },
                 { q: "RNN 학습에서 기울기 폭주의 흔한 대책은?", options: ["기울기 클리핑", "학습률 증가", "은닉 크기 증가", "드롭아웃 제거"], a: 0, why: "노름이 임계값을 넘으면 비율대로 축소 · 소실은 클리핑으로 못 고침" },
                 { type: "num", q: "`nn.LSTM(input_size=8, hidden_size=16)` 한 층의 파라미터 수는?", answer: 1664, why: "4H(D + H) + 8H = 64·24 + 128 · 편향이 `b_ih`, `b_hh` 두 벌" },
                 { type: "num", q: "c(t−1) = 2.0, f = 0.9, i = 0.5, g = 0.8, o = 0.6이면 h(t)는? (소수 셋째 자리)", answer: 0.585, tol: 0.001, why: "c = 1.8 + 0.4 = 2.2 → h = 0.6 · tanh(2.2) ≈ 0.585" },
-                { type: "text", q: "입력 → 게이트 투영 결과의 shape은?", code: { lang: "python", src: "import numpy as np\nB, T, D, H = 4, 10, 8, 16\nx = np.zeros((B, T, D))\nW_ih = np.zeros((4 * H, D))     # 게이트 i, f, g, o\nprint((x @ W_ih.T).shape)" }, answer: ["(4, 10, 64)", "4, 10, 64"], why: "모든 시점의 입력 투영은 한 번에 · 순차인 건 h 쪽 `U·h(t−1)`뿐" },
+                { type: "text", q: "입력 → 게이트 투영 결과의 shape는?", code: { lang: "python", src: "import numpy as np\nB, T, D, H = 4, 10, 8, 16\nx = np.zeros((B, T, D))\nW_ih = np.zeros((4 * H, D))     # 게이트 i, f, g, o\nprint((x @ W_ih.T).shape)" }, answer: ["(4, 10, 64)", "4, 10, 64"], why: "모든 시점의 입력 투영은 한 번에 · 순차인 건 h 쪽 `U·h(t−1)`뿐" },
                 { type: "order", q: "LSTM 한 시점의 계산 순서", items: ["h(t−1)과 x(t) 이어 붙이기", "게이트 i, f, g, o 계산", "c(t) = f⊙c(t−1) + i⊙g", "h(t) = o⊙tanh(c(t))"], why: "게이트가 먼저, 셀 상태가 다음, h는 새 셀 상태로 만듦" }
             ],
             refs: [
@@ -756,7 +756,7 @@ out, (h, c) = lstm(x)       # cuDNN 이 시퀀스 전체를 융합 처리` },
             concepts: [
                 { term: "Q · K · V", en: "Query · Key · Value", def: "입력에 `W_Q`, `W_K`, `W_V`를 곱한 질의·키·값 투영" },
                 { term: "√d_k 스케일", en: "√d_k scaling", def: "내적의 분산이 d_k에 비례 → 나누지 않으면 softmax 포화" },
-                { term: "인과 마스크", en: "Causal mask", def: "미래 위치 점수를 −∞ 로 → softmax 후 0 · 자기회귀 생성" },
+                { term: "인과 마스크", en: "Causal mask", def: "미래 위치 점수를 −∞로 → softmax 후 0 · 자기회귀 생성" },
                 { term: "위치 정보", en: "Positional information", def: "어텐션은 순서를 모름 → sinusoidal, RoPE 등으로 주입" },
                 { term: "블록 구조", en: "Transformer block", def: "`x + Attn(LN(x))` → `x + FFN(LN(x))` (Pre-LN, 잔차)" }
             ],
@@ -846,14 +846,14 @@ for _ in range(n_new - 1):
                 { term: "KV 캐시", en: "KV cache", def: "생성 중 이전 토큰의 Key·Value를 저장해 재계산을 피함" }
             ],
             quiz: [
-                { q: "QKᵀ 를 √d_k로 나누는 이유는?", options: ["점수 행렬 메모리를 줄이려고", "음수 점수를 0으로 만들려고", "softmax 포화를 막으려고", "위치 정보를 점수에 더하려고"], a: 2, why: "내적의 분산이 d_k에 비례 → 나누지 않으면 한 토큰에 몰려 기울기가 거의 0 · 음수는 softmax가 알아서 처리" },
+                { q: "QKᵀ를 √d_k로 나누는 이유는?", options: ["점수 행렬 메모리를 줄이려고", "음수 점수를 0으로 만들려고", "softmax 포화를 막으려고", "위치 정보를 점수에 더하려고"], a: 2, why: "내적의 분산이 d_k에 비례 → 나누지 않으면 한 토큰에 몰려 기울기가 거의 0 · 음수는 softmax가 알아서 처리" },
                 { q: "시퀀스 길이 T일 때 헤드당 어텐션 점수 행렬 크기는?", options: ["T × T", "T × d", "d × d", "T"], a: 0, why: "모든 Query × 모든 Key 쌍 · T × d는 Q, K, V의 크기" },
                 { q: "인과(causal) 마스크가 막는 것은?", options: ["패딩 토큰 참조", "자기 자신 참조", "과거 토큰 참조", "미래 토큰 참조"], a: 3, why: "생성 시점엔 아직 없는 미래를 보면 안 됨 · 패딩은 별도의 패딩 마스크로 막음" },
                 { q: "데모에서 softmax 온도 T를 낮추면 어텐션 분포는?", options: ["더 평평해짐", "더 뾰족해짐", "변화 없음", "합이 1보다 커짐"], a: 1, why: "점수/T의 차이가 커져 최댓값에 몰림 · 합은 항상 1" },
                 { q: "위치 정보가 따로 필요한 이유는?", options: ["softmax 출력을 안정시키려고", "파라미터 수를 줄이려고", "어텐션은 순서를 구분 못 해서", "KV 캐시를 쓰려고"], a: 2, why: "토큰을 섞으면 출력도 똑같이 섞일 뿐 (순열 등변) · RoPE 등으로 주입" },
                 { type: "num", q: "`d_k = 4`, 한 Query와 세 Key의 내적이 [4, 2, 0]이면 첫 Key의 어텐션 가중치는? (소수 셋째 자리)", answer: 0.665, tol: 0.001, why: "√4로 나눠 [2, 1, 0] → e² / (e² + e + 1) ≈ 0.665 · 나누지 않으면 0.867" },
                 { type: "num", q: "d = 4096, 32층, fp16이면 KV 캐시는 토큰당 몇 KiB? (GQA 없음)", answer: 512, unit: "KiB", why: "2(K, V) × 32 × 4096 × 2 byte = 524,288 byte · 4096 토큰이면 2 GiB" },
-                { type: "text", q: "출력은?", code: { lang: "python", src: "import numpy as np\nT = 4\nfuture = np.triu(np.ones((T, T), bool), k=1)   # 막을 위치\nprint(future.sum())" }, answer: ["6"], why: "대각선 위 원소 T(T − 1)/2 = 6개가 −∞ 로 가려짐" },
+                { type: "text", q: "출력은?", code: { lang: "python", src: "import numpy as np\nT = 4\nfuture = np.triu(np.ones((T, T), bool), k=1)   # 막을 위치\nprint(future.sum())" }, answer: ["6"], why: "대각선 위 원소 T(T − 1)/2 = 6개가 −∞로 가려짐" },
                 { type: "order", q: "Pre-LN Transformer 블록의 계산 순서", items: ["LN₁(x)", "셀프 어텐션", "x ← x + 어텐션 출력", "LN₂(x)", "FFN", "x ← x + FFN 출력"], why: "정규화 → 서브층 → 잔차 덧셈을 두 번 · 원 논문(Post-LN)은 덧셈 뒤에 LN" }
             ],
             refs: [
@@ -913,7 +913,7 @@ for _ in range(n_new - 1):
                     { on: ["val>gap", "gap"], text: "train ≪ val 격차 = 과적합 · 일반 규칙 대신 훈련 샘플을 외우는 중" },
                     { on: ["aug", "aug>train"], text: "데이터 증강(data augmentation): 라벨(label)은 같고 픽셀은 다른 샘플로 다양성↑" },
                     { on: ["drop", "drop>train"], text: "Dropout: 매 스텝 무작위 뉴런을 꺼서 특정 뉴런 의존을 막음" },
-                    { on: ["wd", "wd>train"], text: "가중치 감쇠(weight decay): 매 스텝 θ 를 조금씩 0 쪽으로 · 매끄러운 함수 선호" },
+                    { on: ["wd", "wd>train"], text: "가중치 감쇠(weight decay): 매 스텝 θ를 조금씩 0 쪽으로 · 매끄러운 함수 선호" },
                     { on: ["gap>es", "es"], text: "조기 종료(early stopping): val이 patience 동안 개선 없으면 멈추고 최저점 가중치 복원" },
                     { on: ["es>test", "test"], text: "최종 성능은 손대지 않은 test로 한 번만 측정" }
                 ]
@@ -998,11 +998,11 @@ opt = torch.optim.AdamW([
                 { term: "검증 세트", en: "Validation set", def: "하이퍼파라미터·체크포인트 선택용 데이터 · 학습에는 쓰지 않음" }
             ],
             quiz: [
-                { q: "train 손실 ↓, val 손실 ↑ 인 상황은?", options: ["과소적합", "정상 수렴", "학습률이 너무 작음", "과적합"], a: 3, why: "훈련 데이터에만 점점 더 맞추는 중 · 과소적합이면 train 손실도 높음" },
+                { q: "train 손실 ↓, val 손실 ↑인 상황은?", options: ["과소적합", "정상 수렴", "학습률이 너무 작음", "과적합"], a: 3, why: "훈련 데이터에만 점점 더 맞추는 중 · 과소적합이면 train 손실도 높음" },
                 { q: "`Dropout(p=0.2)` 학습 중 남은 값에 곱해지는 배율은?", options: ["0.8", "1.25", "1 (그대로)", "0.2"], a: 1, why: "1 / (1 − 0.2) = 1.25 (inverted dropout) · 0.8은 원 논문식으로 테스트 때 곱하던 값" },
                 { q: "평가 전에 `model.eval()`을 빼먹으면?", options: ["Dropout·BN이 학습 모드로 동작", "모델 가중치가 저장되지 않음", "autograd가 기울기 기록을 계속함", "아무 영향 없음"], a: 0, why: "eval()은 층의 동작 모드만 바꿈 · 기울기 기록을 끄는 건 `torch.no_grad()`" },
                 { q: "하이퍼파라미터를 test 세트로 고르면 안 되는 이유는?", options: ["test 셋이 보통 너무 작아서", "test 점수가 낙관적으로 부풀어서", "학습이 test 분포에 과소적합해서", "규칙상 금지일 뿐 결과는 같아서"], a: 1, why: "test에 맞춰 고른 순간 더 이상 '처음 보는' 데이터가 아님 · 크기와는 무관" },
-                { q: "AdamW가 Adam + L2와 다른 점은?", options: ["momentum 항을 쓰지 않음", "감쇠를 적응형 스텝 밖에서 적용", "warmup 스케줄이 내장되어 있음", "수식이 완전히 같고 이름만 다름"], a: 1, why: "L2 기울기가 √v̂ 로 나뉘는 왜곡을 없앰 · 모멘트 m, v는 그대로" },
+                { q: "AdamW가 Adam + L2와 다른 점은?", options: ["momentum 항을 쓰지 않음", "감쇠를 적응형 스텝 밖에서 적용", "warmup 스케줄이 내장되어 있음", "수식이 완전히 같고 이름만 다름"], a: 1, why: "L2 기울기가 √v̂로 나뉘는 왜곡을 없앰 · 모멘트 m, v는 그대로" },
                 { type: "num", q: "η = 1e−3, λ = 0.1의 weight decay만 1만 스텝 걸면(기울기 0) 가중치는 처음의 몇 배? (소수 셋째 자리)", answer: 0.368, tol: 0.001, why: "(1 − ηλ)^10000 = 0.9999^10000 ≈ e^−1" },
                 { type: "num", q: "클래스 10개, `CrossEntropyLoss(label_smoothing=0.1)`이면 정답 클래스의 목표 확률은?", answer: 0.91, tol: 0.001, why: "원-핫과 균등분포를 섞음: 0.9 × 1 + 0.1/10 · 나머지 클래스는 각 0.01" },
                 { type: "text", q: "출력은? (p = 0.5 inverted dropout, 마스크 고정)", code: { lang: "python", src: "import numpy as np\nx = np.array([1., 2., 3., 4.])\nmask = np.array([1, 0, 1, 0])\nprint(x * mask / (1 - 0.5))" }, answer: ["[2. 0. 6. 0.]", "[2 0 6 0]"], why: "남은 값은 1/(1 − p) = 2배 · 기댓값이 x와 같아져 추론 땐 그대로 통과" },

@@ -919,7 +919,7 @@ ${LAB.paths.length ? `<section class="sec wrap">
     ${up ? `<a class="card tilt continue-card reveal" style="--c:${up.t.color}" href="${lessonHref(up.t.id, up.l.id)}">
       <div class="big-ico">${up.t.icon}</div>
       <div><p class="eyebrow">${S.last ? "이어서" : "시작"}</p><h3>${esc(up.l.title)}</h3><span class="muted">${esc(up.t.name)} · ${up.l.mins || 10}분</span></div>
-      <span class="arrow" style="margin-left:auto;color:var(--c)">→</span></a>` : "<div></div>"}
+      <span class="arrow" style="margin-left:auto;color:var(--ink)">→</span></a>` : "<div></div>"}
     <div class="card reveal" style="--i:1"><p class="eyebrow">Activity</p><h3 style="margin:4px 0 12px">연속 ${streak()}일</h3>${heatmap()}
       ${due || dueCards ? `<div class="btns" style="margin-top:12px">${due ? `<a class="btn small primary" href="me.html#review">복습 ${due}문제 →</a>` : ""}${dueCards ? `<a class="btn small" href="glossary.html?review=1">카드 복습 ${dueCards}장 →</a>` : ""}</div>` : ""}</div>
   </div>
@@ -1092,7 +1092,7 @@ ${terms.length ? (() => {
       <span class="num">${ok ? "✓" : i + 1}</span>
       <div><h3>${esc(l.title)}${mark ? " <span style=\"color:var(--warn)\">★</span>" : ""}</h3>
       <div class="meta">${lvl(l.level || 1)}<span class="chip">${l.mins || 10}분</span>${articleOf(t, l) ? `<span class="chip">≡ 상세</span>` : ""}${l.checked ? `<span class="chip ok">✓ 검증</span>` : ""}${l.demo && l.demo.type === "sim" ? `<span class="chip">⚗ 실험</span>` : ""}${qz && qz.best != null ? `<span class="chip c">퀴즈 최고 ${qz.best}%</span>` : ""}${qz && qz.wrong && qz.wrong.length ? `<span class="chip" style="color:var(--bad)">오답 ${qz.wrong.length}</span>` : ""}</div></div>
-      <span class="arrow" style="color:var(--c)">→</span></a>`;
+      <span class="arrow" style="color:var(--ink)">→</span></a>`;
         }).join("")}</div>
 </section>
 ${(t.trends || []).length ? `<section class="sec wrap">

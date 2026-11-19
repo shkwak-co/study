@@ -266,7 +266,7 @@ hi2c1.Init.DutyCycle  = I2C_DUTYCYCLE_2;
                 }
             ],
             glossary: [
-                { term: "I2C", en: "Inter-Integrated Circuit", def: "2선 동기 직렬 버스 · 주소로 장치 선택 · 보드 내 센서/EEPROM 용" },
+                { term: "I2C", en: "Inter-Integrated Circuit", def: "2선 동기 직렬 버스 · 주소로 장치 선택 · 보드 내 센서/EEPROM용" },
                 { term: "ACK / NACK", en: "Acknowledge / Not acknowledge", def: "9번째 비트 · Low = 받았음, High = 없음/거부/읽기 끝" },
                 { term: "Wired-AND", en: "Wired-AND", def: "누구든 Low를 당기면 선 전체가 Low · ACK·중재·스트레칭의 기반" },
                 { term: "클럭 스트레칭", en: "Clock stretching", def: "슬레이브가 SCL을 Low로 유지해 처리 시간을 버는 것" },
@@ -385,9 +385,9 @@ HAL_SPI_Transmit_DMA(&hspi1, buf, n);  // 클럭 연속 · CPU 는 다른 일
                 { type: "num", q: "APB 84 MHz, SPI 분주 8이면 SCLK는 몇 MHz?", answer: 10.5, tol: 0.01, unit: "MHz", why: "84 / 8 · 레슨 예의 분주 4면 21 MHz" },
                 { type: "num", q: "SCLK 20 MHz로 Read Data(명령 + 주소 4 B) 뒤 4096 B를 읽는 순수 전송 시간은 몇 µs? (바이트 간 공백 0)", answer: 1640, tol: 1, unit: "µs", why: "(4 + 4096) × 8 비트 / 20 MHz · 바이트마다 호출하면 공백이 더해짐" },
                 { type: "text", q: "`flash_read_id()`가 이 4 바이트를 받으면 반환값은? (16진)", code: { lang: "c", src: "uint8_t rx[4] = { 0xFF, 0xEF, 0x40, 0x17 };\nreturn ((uint32_t)rx[1] << 16) | ((uint32_t)rx[2] << 8) | rx[3];" }, answer: ["0xEF4017", "EF4017", "15679511"], why: "rx[0]은 명령을 보내는 동안 들어온 값이라 버림 · EF = Winbond, 4017 = W25Q64" },
-                { type: "order", q: "SPI NOR 플래시 한 페이지 쓰기 순서", items: ["CS↓ · 0x06 Write Enable · CS↑", "CS↓ · 0x02 + 주소 3 B + 데이터", "CS↑ → 내부 프로그램 시작", "0x05로 상태 읽기 반복", "BUSY = 0 → 완료"], why: "WEL 래치가 먼저 · 명령은 CS↑ 에서 확정 · BUSY 폴링으로 끝을 확인" },
-                { type: "num", q: "mode 0 마스터와 CPOL은 다르지만 **같은 상승 엣지**에서 샘플하는 슬레이브 모드 번호는?", answer: 3, why: "mode 0은 CPOL 0의 첫(상승) 엣지, mode 3은 CPOL 1의 둘째(상승) 엣지에서 샘플 · 그래서 많은 장치가 0과 3을 함께 지원 · 1과 2는 하강 엣지" },
-                { type: "text", q: "마스터 mode 1, 슬레이브 mode 0, MSB 먼저 `0xA5`. 슬레이브가 데이터가 바뀌기 **직전** 값을 읽는다면 받는 8비트는? (모르는 비트는 ?)", answer: ["?1010010"], why: "mode 1 마스터는 상승 엣지에서 MOSI를 바꾸는데 mode 0 슬레이브도 상승 엣지에서 샘플 → 매번 경합 · 직전 값이면 한 비트씩 늦어 첫 비트는 알 수 없음, 직후 값이면 우연히 맞음" }
+                { type: "order", q: "SPI NOR 플래시 한 페이지 쓰기 순서", items: ["CS↓ · 0x06 Write Enable · CS↑", "CS↓ · 0x02 + 주소 3 B + 데이터", "CS↑ → 내부 프로그램 시작", "0x05로 상태 읽기 반복", "BUSY = 0 → 완료"], why: "WEL 래치가 먼저 · 명령은 CS↑에서 확정 · BUSY 폴링으로 끝을 확인" },
+                { type: "num", q: "mode 0 마스터와 CPOL은 다르지만 **같은 상승 에지**에서 샘플하는 슬레이브 모드 번호는?", answer: 3, why: "mode 0은 CPOL 0의 첫(상승) 에지, mode 3은 CPOL 1의 둘째(상승) 에지에서 샘플 · 그래서 많은 장치가 0과 3을 함께 지원 · 1과 2는 하강 에지" },
+                { type: "text", q: "마스터 mode 1, 슬레이브 mode 0, MSB 먼저 `0xA5`. 슬레이브가 데이터가 바뀌기 **직전** 값을 읽는다면 받는 8비트는? (모르는 비트는 ?)", answer: ["?1010010"], why: "mode 1 마스터는 상승 에지에서 MOSI를 바꾸는데 mode 0 슬레이브도 상승 에지에서 샘플 → 매번 경합 · 직전 값이면 한 비트씩 늦어 첫 비트는 알 수 없음, 직후 값이면 우연히 맞음" }
             ],
             refs: [
                 { title: "Understanding the SPI Bus", by: "Y. Pan", year: 2025, url: "https://www.ti.com/lit/pdf/sboa621", kind: "doc" },
@@ -608,7 +608,7 @@ can_tx(0x101, d, 8);       // 47 + 64 = 111 bit` },
                 { q: "ID `0x100`과 `0x0FF`가 동시에 송신하면 승자는?", options: ["0x100", "충돌 후 둘 다 재전송", "0x0FF", "먼저 SOF 보낸 쪽"], a: 2, why: "ID8: 0x0FF는 0(우성), 0x100은 1(열성) → 작은 ID 승 · SOF는 동시에 나가 '먼저'가 없음" },
                 { q: "중재에서 진 노드는?", options: ["에러 프레임을 송신", "수신으로 바꾸고 재시도", "Bus-off로 즉시 이탈", "승자 프레임을 덮어씀"], a: 1, why: "비파괴 중재 · 진 쪽 프레임만 미뤄짐 · 중재 패배는 에러가 아니라 TEC도 그대로" },
                 { q: "클래식 CAN / CAN FD의 최대 데이터 길이는?", options: ["8 / 64 B", "8 / 32 B", "16 / 64 B", "64 / 2048 B"], a: 0, why: "DLC 9–15가 12–64 B를 뜻함 · 2048 B는 CAN XL" },
-                { q: "전원 끈 정상 버스에서 CAN_H–CAN_L 저항을 재면?", options: ["약 120 Ω", "약 240 Ω", "약 60 Ω", "수 kΩ 이상"], a: 2, why: "양 끝 120 Ω 병렬 = 60 Ω · 120 Ω 이면 종단 하나 누락" },
+                { q: "전원 끈 정상 버스에서 CAN_H–CAN_L 저항을 재면?", options: ["약 120 Ω", "약 240 Ω", "약 60 Ω", "수 kΩ 이상"], a: 2, why: "양 끝 120 Ω 병렬 = 60 Ω · 120 Ω이면 종단 하나 누락" },
                 { q: "같은 비트가 5개 연속되면 송신기는?", options: ["에러 플래그를 송신", "반대 비트 삽입", "그 프레임을 종료", "패리티 비트를 추가"], a: 1, why: "비트 스터핑 · 재동기용 에지 보장 · 같은 비트 6개는 오히려 에러 신호" },
                 { type: "num", q: "500 kbit/s에서 8 B 표준 데이터 프레임(IFS 포함 111 bit, 스터핑 없음)은 몇 µs?", answer: 222, tol: 0.5, unit: "µs", why: "111 × 2 µs · 최악 스터핑 24 bit를 더하면 135 bit = 270 µs" },
                 { type: "num", q: "CAN 클럭 40 MHz, 분주 5, 비트당 16 TQ (Sync 1 + TSEG1 13 + TSEG2 2)의 샘플 포인트는 몇 %?", answer: 87.5, tol: 0.1, unit: "%", why: "(1 + 13) / 16 · TQ = 125 ns → 비트 2 µs = 500 kbit/s" },
@@ -736,7 +736,7 @@ crc = (crc >> 8) ^ T[(crc ^ *p++) & 0xFF];   // 바이트당 조회 1번` },
                 { term: "홀딩 레지스터", en: "Holding register", def: "읽기/쓰기 16bit 레지스터 · FC 03/06/16" },
                 { term: "기능 코드", en: "Function code", def: "요청 종류를 나타내는 1 바이트 · 예외 시 최상위 비트 set" },
                 { term: "CRC-16/MODBUS", en: "CRC-16/MODBUS", def: "다항식 0x8005(반사 0xA001) · 초기값 0xFFFF · Low 바이트 먼저 전송" },
-                { term: "MBAP", en: "Modbus Application Protocol header", def: "TCP 용 7 B 헤더: 트랜잭션 ID · 프로토콜 ID · 길이 · Unit ID" },
+                { term: "MBAP", en: "Modbus Application Protocol header", def: "TCP용 7 B 헤더: 트랜잭션 ID · 프로토콜 ID · 길이 · Unit ID" },
                 { term: "예외 응답", en: "Exception response", def: "FC | 0x80 + 예외코드 · 01 기능, 02 주소, 03 값 오류" }
             ],
             quiz: [
@@ -746,7 +746,7 @@ crc = (crc >> 8) ^ T[(crc ^ *p++) & 0xFF];   // 바이트당 조회 1번` },
                 { q: "슬레이브가 CRC가 틀린 프레임을 받으면?", options: ["예외 코드 03 응답", "NACK 프레임 송신", "재전송 요청", "응답 안 함"], a: 3, why: "손상 프레임엔 무응답 → 마스터 타임아웃 · 예외 응답은 정상 수신했지만 처리 못 할 때" },
                 { q: "Modbus TCP에 RTU의 CRC가 없는 이유는?", options: ["MBAP 안에 CRC 포함", "TCP/이더넷이 검사", "Unit ID가 대신함", "속도 때문에 생략"], a: 1, why: "이더넷 FCS(CRC-32)·TCP 체크섬이 이미 검사 · MBAP에는 CRC 필드가 없음" },
                 { type: "num", q: "9600 bps, 8E1(문자 11 bit)에서 t3.5는 몇 ms?", answer: 4.01, tol: 0.02, unit: "ms", why: "3.5 × 11 / 9600 · 19200 bps 초과는 1.75 ms 고정값 권장" },
-                { type: "text", q: "이 응답의 **두 번째** 레지스터 값은? (16진)", code: { lang: "txt", src: "11 03 06 AE 41 56 52 43 40 49 AD" }, answer: ["0x5652", "5652", "22098"], why: "바이트 수 06 뒤 2 B 씩 빅엔디언: AE41 · 5652 · 4340 · 끝 `49 AD`는 CRC" },
+                { type: "text", q: "이 응답의 **두 번째** 레지스터 값은? (16진)", code: { lang: "txt", src: "11 03 06 AE 41 56 52 43 40 49 AD" }, answer: ["0x5652", "5652", "22098"], why: "바이트 수 06 뒤 2 B씩 빅엔디언: AE41 · 5652 · 4340 · 끝 `49 AD`는 CRC" },
                 { type: "text", q: "이 요청 뒤에 붙는 CRC 두 바이트를 **전송 순서대로** 쓰면?", code: { lang: "py", src: "crc16_modbus(bytes.fromhex(\"01 03 00 00 00 01\"))   # → 0x0A84" }, answer: ["84 0A", "840A", "0x84 0x0A"], why: "Low 바이트 먼저 → `84 0A` · `0A 84`로 붙이면 슬레이브는 무응답" },
                 { type: "num", q: "매뉴얼의 `40108`은 FC 03 PDU 주소로 얼마? (10진 또는 0x)", answer: 107, why: "4xxxx = 홀딩 레지스터 표 · 40001 → 0이므로 40108 → 107 = 0x6B" },
                 { type: "order", q: "Modbus TCP → RTU 게이트웨이 한 번의 왕복", items: ["클라이언트: MBAP + PDU → TCP 502", "게이트웨이: MBAP 떼고 주소 + CRC 붙임", "RS-485로 RTU 요청 송신", "슬레이브: CRC 확인 후 응답", "게이트웨이: CRC 떼고 MBAP 붙여 회신"], why: "PDU는 그대로 · 껍데기만 MBAP ↔ 주소 + CRC로 교체 · Transaction ID로 요청과 짝 맞춤" }

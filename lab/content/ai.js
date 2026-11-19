@@ -113,7 +113,7 @@ def sample(logits, T=1.0, top_k=0, top_p=1.0):
 tokens = ["메모리", "타이밍", "설정", "캐시", "날씨"]
 logits = [2.9, 2.5, 2.2, 1.8, -1.0]
 print(tokens[sample(logits, T=0.7, top_p=0.9)])`,
-                    note: "T→0이면 그리디(항상 1등), T↑ 이면 분포가 평평해져 엉뚱한 토큰도 나옴"
+                    note: "T→0이면 그리디(항상 1등), T↑이면 분포가 평평해져 엉뚱한 토큰도 나옴"
                 },
                 {
                     lang: "python",
@@ -279,7 +279,7 @@ for _ in range(n_merges):
     for w in where.pop(best):           # 바뀌는 단어만
         update_counts(pairs, where, w, best)   # 옛 쌍 빼고 새 쌍 더함` },
                     gain: "병합당 비용: 말뭉치 전체 → 해당 쌍이 든 단어만",
-                    note: "Sennrich et al. 도 쌍 색인과 증분 갱신(incremental update)으로 속도를 냄"
+                    note: "Sennrich et al.도 쌍 색인과 증분 갱신(incremental update)으로 속도를 냄"
                 },
                 {
                     title: "적용: 같은 단어 반복 분할 → 단어별 캐시",
@@ -310,9 +310,9 @@ tokens = [t for w in text.split() for t in bpe_word(w)]` },
                 { q: "바이트 수준 BPE의 장점은?", options: ["모든 문자열을 `<unk>` 없이 표현", "어느 언어든 토큰 수가 항상 최소가 됨", "병합 규칙 없이 바로 쓸 수 있게 됨", "한글 한 글자가 늘 토큰 하나가 됨"], a: 0, why: "256 바이트로 무엇이든 쓸 수 있음 · 드문 글자는 오히려 여러 바이트 토큰이 됨" },
                 { q: "모델을 바꾸니 같은 문장의 토큰 수가 달라졌다. 이유는?", options: ["어휘·병합 규칙이 달라서", "샘플링 온도가 달라서", "출력 상한이 달라서", "프롬프트 캐시 상태가 달라서"], a: 0, why: "토큰 수는 토크나이저가 정함 · 온도·캐시는 입력 분할과 무관" },
                 { q: "학습한 병합을 새 단어에 적용하는 방법은?", options: ["배운 순서대로 병합 적용", "새 단어로 쌍 빈도를 다시 셈", "가장 긴 어휘부터 찾아 자름", "글자 단위로만 나눔"], a: 0, why: "병합 순서가 곧 규칙 · 새로 세면 학습 때와 분할이 달라져 모델이 모르는 토큰이 생김" },
-                { type: "text", q: "레슨 말뭉치로 배운 병합 10개다. `lowest`의 토큰은? (`|`로 구분, 단어 끝은 `_`)", code: { lang: "txt", src: "1 e+s  2 es+t  3 est+_  4 l+o  5 lo+w\n6 n+e  7 ne+w  8 new+est_  9 low+_  10 w+i" }, answer: ["low|est_", "low|est</w>"], why: "e+s → es+t → est+_ 로 `est_`, l+o → lo+w로 `low` · 말뭉치에 없던 단어도 아는 조각 2개" },
+                { type: "text", q: "레슨 말뭉치로 배운 병합 10개다. `lowest`의 토큰은? (`|`로 구분, 단어 끝은 `_`)", code: { lang: "txt", src: "1 e+s  2 es+t  3 est+_  4 l+o  5 lo+w\n6 n+e  7 ne+w  8 new+est_  9 low+_  10 w+i" }, answer: ["low|est_", "low|est</w>"], why: "e+s → es+t → est+_로 `est_`, l+o → lo+w로 `low` · 말뭉치에 없던 단어도 아는 조각 2개" },
                 { type: "num", q: "같은 말뭉치의 병합 15개를 모두 적용하면 `newer`는 몇 토큰?", answer: 4, why: "`new e r _` · `e+r`은 lower에서 2번뿐이고 같은 빈도의 low+e가 먼저 병합돼 er이 생기지 않음" },
-                { type: "num", q: "말뭉치 low×5, lower×2, newest×6, widest×3에서 첫 병합 `e+s`의 빈도는?", answer: 9, why: "newest 6 + widest 3 · s+t, t+_ 도 9로 동률 → 먼저 센 쌍이 이김" },
+                { type: "num", q: "말뭉치 low×5, lower×2, newest×6, widest×3에서 첫 병합 `e+s`의 빈도는?", answer: 9, why: "newest 6 + widest 3 · s+t, t+_도 9로 동률 → 먼저 센 쌍이 이김" },
                 { type: "num", q: "기본 바이트 256개 + 병합 50,000번 + 특수 토큰 1개면 어휘 크기는?", answer: 50257, why: "GPT-2의 바이트 수준 BPE 어휘 · 어휘 = 기본 기호 + 병합 수 (+ 특수 토큰)" },
                 { type: "order", q: "BPE 학습 순서", items: ["단어를 글자 + 끝 기호로 쪼갬", "단어 빈도로 인접 쌍을 셈", "최다 쌍을 새 기호로 병합", "병합 규칙 목록에 추가", "목표 병합 수까지 반복"], why: "끝 기호로 경계를 남기고, 세고 → 합치고 → 기록 · 병합 수가 유일한 하이퍼파라미터" }
             ],
@@ -463,7 +463,7 @@ resp = client.messages.create(model="claude-opus-5-5", max_tokens=16000,
                 { q: "앱에서 응답을 안정적으로 파싱하려면?", options: ["'JSON으로 줘' 한 줄", "온도를 최대로 올림", "스키마 강제 + 코드 검증", "max_tokens를 최소로"], a: 2, why: "형식은 스키마로 강제, 값의 의미는 코드로 확인 · 지시 한 줄은 가끔 설명이 붙음" },
                 { q: "프롬프트 인젝션 피해를 줄이는 가장 근본적인 방법은?", options: ["권한 최소화 + 위험 작업 승인", "시스템에 '지시 무시 금지' 반복", "프롬프트를 더 길고 자세히", "온도를 0으로 고정하기"], a: 0, why: "완벽히 막는 문구는 없음 · 뚫려도 피해가 작게 실행 경로를 설계" },
                 { type: "text", q: "`wrap_doc(\"<b>hi</b>\")` 결과의 가운데 줄은?", code: { lang: "python", src: "def wrap_doc(text):\n    safe = text.replace(\"<\", \"&lt;\").replace(\">\", \"&gt;\")\n    return f\"<document>\n{safe}\n</document>\"" }, answer: ["&lt;b&gt;hi&lt;/b&gt;"], why: "꺾쇠를 이스케이프해 자료 속 `</document>` 흉내로 경계를 깨지 못하게 함 · 완화책일 뿐" },
-                { type: "num", q: "예시 1개 150 토큰 × 5개를 매 요청에 넣고 하루 10,000 요청이면, 예시에만 드는 입력은 하루 몇 백만 토큰?", answer: 7.5, tol: 0.01, unit: "M", why: "150 × 5 × 10,000 = 7,500,000 · 고정 예시는 접두부 캐싱, 후보가 많으면 동적 예시 선택" },
+                { type: "num", q: "예시 1개 150 토큰 × 5개를 매 요청에 넣고 하루 10,000 요청이면, 예시에만 드는 입력은 하루 몇백만 토큰?", answer: 7.5, tol: 0.01, unit: "M", why: "150 × 5 × 10,000 = 7,500,000 · 고정 예시는 접두부 캐싱, 후보가 많으면 동적 예시 선택" },
                 { type: "num", q: "상세 설명의 `classify(llm, prompt, retries=2)`가 계속 형식을 어기면 LLM은 최대 몇 번 호출되나?", answer: 3, why: "`range(retries + 1)` → 3번 · 그래도 실패면 안전한 기본값 반환" },
                 { type: "order", q: "긴 자료가 있는 프롬프트의 권장 배치 (앞 → 뒤)", items: ["system: 역할·맥락", "긴 자료 (<manual>)", "예시 (<examples>)", "규칙·출력 형식 (<rules>)", "이번 입력 (<ticket>)"], why: "고정되고 긴 부분은 앞(캐시·품질), 매번 바뀌는 입력은 맨 끝" }
             ],
@@ -607,9 +607,9 @@ if not p.is_relative_to(ROOT):
                 { q: "Ollama로 Qwen을 띄우고 '이 폴더 파일 읽어 줘'라고 하면 대답만 하는 이유는?", options: ["모델 파라미터 수가 너무 작아서", "도구를 실행할 하네스가 없어서", "한국어 지원이 약해서", "인터넷에 연결이 안 돼서"], a: 1, why: "Ollama는 추론 서버 · 도구 요청(tool_calls)을 돌려줄 뿐 실행하는 프로그램이 없으면 아무 일도 안 일어남" },
                 { q: "도구 호출에서 실제로 파일을 여는 것은?", options: ["가중치 속 파일 읽기 회로", "GPU 드라이버의 파일 API", "토크나이저의 입력 단계", "모델을 부른 앱 프로그램"], a: 3, why: "모델은 '읽고 싶다'를 글로 쓸 뿐 · 열기·실행·권한 확인은 하네스(앱)" },
                 { q: "Claude Code·Codex가 위험한 명령 전에 사용자에게 묻는 것은 무엇의 역할?", options: ["모델이 자신 없을 때의 습관", "하네스의 권한·승인 정책", "API 요금을 아끼는 장치", "컨텍스트 한도를 지키는 장치"], a: 1, why: "실행 권한은 하네스가 쥠 · Codex `--ask-for-approval`, `--sandbox` 같은 설정" },
-                { q: "Qwen을 Codex CLI (`--oss`)로 Ollama에 연결하면?", options: ["대답만 하는 것은 전혀 그대로", "하네스가 도구를 실행해 줌", "가중치가 Codex 용으로 재학습됨", "인터넷 연결 없이는 시작 불가"], a: 1, why: "`--oss` = 로컬 오픈 모델 제공자(Ollama·LM Studio) 사용 · 모델은 그대로, 실행 칸이 채워짐 (작은 모델은 도구 호출 품질이 낮을 수 있음)" },
+                { q: "Qwen을 Codex CLI (`--oss`)로 Ollama에 연결하면?", options: ["대답만 하는 것은 여전히 그대로", "하네스가 도구를 실행해 줌", "가중치가 Codex용으로 재학습됨", "인터넷 연결 없이는 시작 불가"], a: 1, why: "`--oss` = 로컬 오픈 모델 제공자(Ollama·LM Studio) 사용 · 모델은 그대로, 실행 칸이 채워짐 (작은 모델은 도구 호출 품질이 낮을 수 있음)" },
                 { q: "모델이 도구 요청을 냈는데 프로그램이 실행하지 않으면?", options: ["실행된 것처럼 파일이 바뀜", "아무 일도 안 일어나고 요청만 남음", "모델이 스스로 다시 실행함", "Ollama 서버가 알아서 대신 실행해 줌"], a: 1, why: "요청은 그냥 출력 데이터 · 실행할 코드가 없으면 끝" },
-                { q: "MCP는 무엇인가?", options: ["모델을 새로 학습시키는 공개 방법", "하네스에 도구를 꽂는 공개 표준", "GPU 사이 통신 방식", "토크나이저 파일 형식"], a: 1, why: "Model Context Protocol · AI 앱과 외부 시스템을 잇는 표준 ('AI 용 USB-C')" },
+                { q: "MCP는 무엇인가?", options: ["모델을 새로 학습시키는 공개 방법", "하네스에 도구를 꽂는 공개 표준", "GPU 사이 통신 방식", "토크나이저 파일 형식"], a: 1, why: "Model Context Protocol · AI 앱과 외부 시스템을 잇는 표준 ('AI용 USB-C')" },
                 { type: "num", q: "파일 3개를 한 번에 하나씩 읽고 요약한다. 모델 호출은 최소 몇 번?", answer: 4, tol: 0, unit: "번", why: "읽기 요청 3번(결과를 받아야 다음 요청) + 최종 답 1번 · 세 개를 한 응답에서 병렬로 요청하면 2번" },
                 { type: "num", q: "시스템 프롬프트 + 도구 설명이 2,000 토큰이고 모델을 4번 부르면, 이 부분만의 입력 토큰 합은?", answer: 8000, tol: 0, unit: "토큰", why: "API는 상태가 없어 매 호출에 다시 보냄 · 프롬프트 캐싱이 이 비용을 줄이는 장치" },
                 { type: "text", q: "출력은?", code: { lang: "python", src: "call = {\"function\": {\"name\": \"read_file\", \"arguments\": {\"path\": \"notes.txt\"}}}\nprint(call[\"function\"][\"name\"], call[\"function\"][\"arguments\"][\"path\"])" }, answer: ["read_file notes.txt"], why: "Ollama 응답의 `tool_calls` 한 항목 모양 · arguments는 이미 객체(dict)" },
@@ -861,7 +861,7 @@ hits = rrf(bm25_search(q, 20), vector_search(q, 20))[:10]` },
                 { q: "제품 코드명 검색이 자주 실패할 때 먼저 시도할 것은?", options: ["온도를 낮추기", "BM25 하이브리드", "청크 크기 2배", "더 큰 LLM으로 교체"], a: 1, why: "정확한 문자열 일치는 키워드 검색이 강함 · 생성 모델을 바꿔도 검색 누락은 그대로" },
                 { type: "num", q: "a = (3, 4), b = (4, 3)의 코사인 유사도는?", answer: 0.96, tol: 0.005, why: "a·b = 24, |a||b| = 5 × 5 = 25 → 0.96" },
                 { type: "text", q: "정규화 없이 **내적** 1위와 **코사인** 1위 문서를 `내적,코사인` 형식으로 쓰면?", code: { lang: "txt", src: "q = (0.8, 0.3)\nA = (0.9, 0.15)   B = (1.8, 1.1)   C = (0.55, 0.25)" }, answer: ["B,C", "BC", "B/C"], why: "내적: B 1.77 (길이 덕) · 코사인: C 0.998, B 0.982, A 0.981 · 데모에서 정규화를 켜면 순위가 같아짐" },
-                { type: "num", q: "질문 4개의 첫 정답 순위가 1, 3, 없음, 2다. MRR은?", answer: 0.458, tol: 0.005, why: "(1 + 1/3 + 0 + 1/2) / 4 · 같은 결과의 recall@2 (정답 1 개씩) = 0.5" },
+                { type: "num", q: "질문 4개의 첫 정답 순위가 1, 3, 없음, 2다. MRR은?", answer: 0.458, tol: 0.005, why: "(1 + 1/3 + 0 + 1/2) / 4 · 같은 결과의 recall@2 (정답 1개씩) = 0.5" },
                 { type: "order", q: "RAG 한 번의 흐름", items: ["문서를 청크로 분할", "청크 임베딩 → 인덱스 저장", "질문을 같은 모델로 임베딩", "top-k 검색 (+ 재정렬)", "청크 + 질문으로 생성·인용"], why: "앞 둘은 오프라인 색인, 뒤 셋은 질문마다 · 검색과 생성 실패는 따로 잰다" }
             ],
             refs: [
@@ -1012,10 +1012,10 @@ with ThreadPoolExecutor() as pool:      # I/O 대기 툴은 동시에
                 { q: "툴 실행이 실패하면?", options: ["오류를 결과로 알려 줌", "빈 결과를 성공처럼 돌려줌", "루프를 즉시 끝내고 사과 문구", "같은 호출을 성공할 때까지 반복"], a: 0, why: "`is_error: true`인 tool_result로 전달 → 모델이 인자를 고치거나 다른 길을 택함 · 빈 결과는 틀린 결론을 부름" },
                 { q: "에이전트보다 고정 워크플로가 나은 경우는?", options: ["다음 단계를 미리 알 수 없을 때", "툴 종류가 아주 많을 때", "동시 사용자가 많을 때", "단계가 정해져 매번 같을 때"], a: 3, why: "순서가 정해진 일은 코드가 더 싸고 예측 가능 · 앞이 안 보이는 탐색이 에이전트 영역" },
                 { q: "MCP의 역할은?", options: ["모델 가중치 압축 파일 포맷", "툴 연결용 표준 프로토콜", "임베딩 학습 알고리즘", "GPU 작업 스케줄러"], a: 1, why: "툴을 MCP 서버로 만들면 여러 호스트 앱이 재사용 · 메시지는 JSON-RPC 2.0" },
-                { type: "num", q: "시스템+툴 정의 2,000 토큰, 단계마다 출력 300 + 툴 결과 1,500이 쌓인다. 8 번째 호출의 입력은 몇 토큰?", answer: 14600, why: "2,000 + 1,800 × 7 · 8번 호출 입력 합은 66,400 토큰" },
-                { type: "num", q: "단계마다 95%로 성공하고 실패가 독립이면 10 단계 작업의 성공 확률은?", answer: 0.599, tol: 0.005, why: "0.95¹⁰ ≈ 0.60 · 단계가 길수록 실패가 쌓임" },
+                { type: "num", q: "시스템+툴 정의 2,000 토큰, 단계마다 출력 300 + 툴 결과 1,500이 쌓인다. 8번째 호출의 입력은 몇 토큰?", answer: 14600, why: "2,000 + 1,800 × 7 · 8번 호출 입력 합은 66,400 토큰" },
+                { type: "num", q: "단계마다 95%로 성공하고 실패가 독립이면 10단계 작업의 성공 확률은?", answer: 0.599, tol: 0.005, why: "0.95¹⁰ ≈ 0.60 · 단계가 길수록 실패가 쌓임" },
                 { type: "num", q: "`for step in range(8)` 루프에서 모델이 매번 tool_use만 낸다면 모델 호출은 몇 번?", answer: 8, why: "단계 상한에서 멈춤 · 상한이 없으면 무한 루프·비용 폭주" },
-                { type: "order", q: "툴 사용 루프 한 바퀴", items: ["messages + tools로 모델 호출", "stop_reason이 tool_use 인지 확인", "입력 검증 후 툴 실행", "같은 id의 tool_result를 추가", "end_turn이면 종료, 아니면 반복"], why: "실행은 앱이 · 결과는 `tool_use_id`로 짝지어 user 메시지로 돌려줌" }
+                { type: "order", q: "툴 사용 루프 한 바퀴", items: ["messages + tools로 모델 호출", "stop_reason이 tool_use인지 확인", "입력 검증 후 툴 실행", "같은 id의 tool_result를 추가", "end_turn이면 종료, 아니면 반복"], why: "실행은 앱이 · 결과는 `tool_use_id`로 짝지어 user 메시지로 돌려줌" }
             ],
             refs: [
                 { title: "ReAct: Synergizing Reasoning and Acting in Language Models", by: "Yao et al.", year: 2022, url: "https://arxiv.org/abs/2210.03629", kind: "paper" },
@@ -1117,7 +1117,7 @@ model.save_pretrained("adapter/")            # 어댑터만 저장 (작음)
 # 배포용 병합
 merged = PeftModel.from_pretrained(
     AutoModelForCausalLM.from_pretrained(base_id), "adapter/").merge_and_unload()`,
-                    note: "모듈 이름은 구조마다 다름 → `model`을 print 해 확인 · PEFT 기본값은 r = 8, lora_alpha = 8"
+                    note: "모듈 이름은 구조마다 다름 → `model`을 print해 확인 · PEFT 기본값은 r = 8, lora_alpha = 8"
                 }
             ],
             optimize: [
@@ -1155,9 +1155,9 @@ model = get_peft_model(prepare_model_for_kbit_training(model), cfg)` },
                 { q: "B를 0으로 초기화하는 이유는?", options: ["학습 속도를 2배로 올리려고", "시작 출력이 원본과 같게", "메모리를 아끼려고", "랭크를 줄이려고"], a: 1, why: "BA = 0 → 처음엔 W만 작동하고 보정이 0에서부터 자람 · A는 난수로 시작" },
                 { q: "매달 바뀌는 사내 규정에 답하는 봇, 우선 선택은?", options: ["RAG로 검색해 근거 제시", "바뀔 때마다 전체 재학습", "LoRA 랭크를 키워 다시 학습", "온도를 낮춰 답을 고정"], a: 0, why: "자주 바뀌는 사실은 검색이 싸고 출처도 제시 · 가중치에 넣으면 바뀔 때마다 재학습" },
                 { q: "어댑터를 병합(merge)하면 좋은 점은?", options: ["추론 때 추가 연산이 없음", "어댑터를 더 쉽게 바꿔 낌", "학습 속도가 빨라짐", "필요한 데이터가 줄어듦"], a: 0, why: "W' 하나로 합쳐 구조가 원본과 같음 · 대신 어댑터 교체 유연성은 잃음" },
-                { q: "QLoRA 논문이 16비트 전체 파인튜닝 성능에 맞추려면 필요하다고 본 것은?", options: ["모든 선형층에 LoRA 적용", "q·v 투영에만 LoRA 적용", "랭크 r을 256 이상으로", "학습률을 10배로 올림"], a: 0, why: "q·v 만으론 큰 모델에서 재현 실패 · r 같은 다른 설정은 성능에 큰 영향이 없었다고 보고" },
+                { q: "QLoRA 논문이 16비트 전체 파인튜닝 성능에 맞추려면 필요하다고 본 것은?", options: ["모든 선형층에 LoRA 적용", "q·v 투영에만 LoRA 적용", "랭크 r을 256 이상으로", "학습률을 10배로 올림"], a: 0, why: "q·v만으론 큰 모델에서 재현 실패 · r 같은 다른 설정은 성능에 큰 영향이 없었다고 보고" },
                 { type: "num", q: "d = k = 4096, r = 8인 층의 LoRA 학습 파라미터 수는?", answer: 65536, why: "A(r×k) + B(d×r) = r(d + k) = 8 × 8192 · 원래 행렬 16,777,216의 0.39%" },
-                { type: "num", q: "PEFT에서 r = 16, lora_alpha = 32면 ΔW에 곱해지는 스케일은?", answer: 2, why: "α / r = 32 / 16 · α 를 두고 r만 바꾸면 보정 세기도 같이 바뀜" },
+                { type: "num", q: "PEFT에서 r = 16, lora_alpha = 32면 ΔW에 곱해지는 스케일은?", answer: 2, why: "α / r = 32 / 16 · α를 두고 r만 바꾸면 보정 세기도 같이 바뀜" },
                 { type: "num", q: "7B 모델을 혼합 정밀도 + Adam으로 전체 파인튜닝할 때 모델 상태 메모리는 몇 GB? (활성값 제외, 1 GB = 10⁹ B)", answer: 112, unit: "GB", why: "파라미터당 16 B: 가중치 2 + 기울기 2 + fp32 사본·m·v 12 (ZeRO 논문)" },
                 { type: "order", q: "LoRA 파인튜닝 작업 순서", items: ["평가셋부터 떼어 둠", "SFT 데이터 정제", "LoRA 설정 후 학습", "홀드아웃·회귀 평가", "병합 또는 어댑터로 배포"], why: "기준이 먼저 있어야 좋아졌는지 판단 · 배포 결정은 학습 손실이 아니라 평가 점수로" }
             ],
@@ -1182,7 +1182,7 @@ model = get_peft_model(prepare_model_for_kbit_training(model), cfg)` },
                 "변환 후엔 반드시 **기기 위에서** 정확도(accuracy)·지연(latency) 재측정"
             ],
             concepts: [
-                { term: "TinyML", en: "Tiny Machine Learning", def: "mW 급 MCU에서 돌리는 ML · 키워드 감지, 이상 진동, 제스처" },
+                { term: "TinyML", en: "Tiny Machine Learning", def: "mW급 MCU에서 돌리는 ML · 키워드 감지, 이상 진동, 제스처" },
                 { term: "학습 후 양자화 (PTQ)", en: "Post-Training Quantization (PTQ)", def: "학습 끝난 모델을 대표 입력으로 보정해 INT8로 변환" },
                 { term: "런타임", en: "Runtime", def: "LiteRT / TFLite Micro (MCU), ExecuTorch (PyTorch 계열), 벤더 SDK" },
                 { term: "NPU 위임", en: "Neural Processing Unit (NPU) delegation", def: "지원되는 op만 NPU가 가속 · 나머지는 CPU로 폴백" },
@@ -1315,7 +1315,7 @@ tflite = conv.convert()            # INT8 · CMSIS-NN / NPU 커널 사용` },
             ],
             glossary: [
                 { term: "엣지 AI", en: "Edge AI", def: "클라우드 대신 기기에서 직접 추론 · 지연·프라이버시·통신비↓" },
-                { term: "TinyML", en: "Tiny Machine Learning", def: "MCU 급 초저전력 기기에서 동작하는 ML" },
+                { term: "TinyML", en: "Tiny Machine Learning", def: "MCU급 초저전력 기기에서 동작하는 ML" },
                 { term: "LiteRT", en: "LiteRT (구 TensorFlow Lite)", def: "Google의 온디바이스 추론 런타임 · `.tflite` 포맷" },
                 { term: "ExecuTorch", en: "ExecuTorch", def: "PyTorch 모델을 모바일·엣지에 배포하는 런타임 · `.pte` 포맷" },
                 { term: "NPU", en: "Neural Processing Unit", def: "신경망 연산 전용 가속기 · 지원 op 범위가 정해져 있음" },
@@ -1329,7 +1329,7 @@ tflite = conv.convert()            # INT8 · CMSIS-NN / NPU 커널 사용` },
                 { q: "변환 후 꼭 해야 할 것은?", options: ["기기에서 정확도·지연 재측정", "FP32 모델로 되돌려 배포", "학습률을 낮춰 다시 학습", "PC에서 FP32 정확도만 확인"], a: 0, why: "양자화 오차·전처리 차이·op 폴백은 실제 기기에서만 드러남" },
                 { type: "num", q: "파라미터 25만 개 모델의 INT8 가중치는 약 몇 KB? (1 KB = 1000 B)", answer: 250, unit: "KB", why: "파라미터당 1 B · FP32면 1,000 KB라 Flash 1 MB 기기에 못 들어감" },
                 { type: "num", q: "활성값 범위 [−1, 3]을 INT8 [−128, 127]로 아핀 양자화할 때 zero_point는?", answer: -64, why: "scale = 4 / 255 ≈ 0.0157 · zp = −128 − round(−1 / 0.0157) = −64 · 실수 0 ↔ −64" },
-                { type: "num", q: "32×32 출력, 입력 8 → 출력 16 채널, 3×3 표준 합성곱의 MAC 수는?", answer: 1179648, why: "32·32·16·3·3·8 · 깊이별 분리면 204,800으로 약 5.8 배↓" },
+                { type: "num", q: "32×32 출력, 입력 8 → 출력 16 채널, 3×3 표준 합성곱의 MAC 수는?", answer: 1179648, why: "32·32·16·3·3·8 · 깊이별 분리면 204,800으로 약 5.8배↓" },
                 { type: "order", q: "MCU 배포 순서", items: ["FP32로 학습", "대표 데이터로 INT8 보정", "런타임 포맷으로 변환", "Flash·RAM 예산 확인", "기기에서 정확도·지연 측정"], why: "보정 → 변환 → 예산 → 실측 · 마지막 측정이 배포 기준" }
             ],
             refs: [

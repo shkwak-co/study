@@ -90,7 +90,7 @@ print(np.shares_memory(a, r), r.base is None)             # False False`,
             {
                 h: "dtype: 크기, 범위, 그리고 조용한 넘침",
                 p: [
-                    "dtype은 메모리 크기와 값의 범위를 함께 정한다. float64 백만 개는 7.63 MiB, float32로 바꾸면 3.81 MiB다. 이미지(uint8)·센서 값(int16)은 작은 정수 dtype이 흔한데, 고정 폭 정수는 범위를 넘으면 2ⁿ 으로 나눈 나머지가 되는 **정수 랩어라운드**(integer wraparound)가 일어난다.",
+                    "dtype은 메모리 크기와 값의 범위를 함께 정한다. float64 백만 개는 7.63 MiB, float32로 바꾸면 3.81 MiB다. 이미지(uint8)·센서 값(int16)은 작은 정수 dtype이 흔한데, 고정 폭 정수는 범위를 넘으면 2ⁿ으로 나눈 나머지가 되는 **정수 랩어라운드**(integer wraparound)가 일어난다.",
                     "NumPy 2의 형 승격 규칙(NEP 50)에서 Python 숫자는 '약하게' 취급된다. uint8 배열 + 100은 uint8로 계산되어 200 + 100이 44가 된다(배열 연산은 경고 없음, 스칼라 연산은 RuntimeWarning). 넣는 Python 정수 자체가 범위 밖이면(`+ 300`) `OverflowError: Python integer 300 out of bounds for uint8`가 난다. 반대로 NumPy 스칼라는 '강하다': float32 배열 + `np.float64(1.5)`의 결과는 float64다."
                 ],
                 table: {
@@ -241,7 +241,7 @@ print(w.mean(axis=1))
                 h: "실습: 거리 행렬 세 가지 — 시간과 메모리",
                 p: [
                     "같은 거리 행렬을 이중 루프, 브로드캐스팅, 행렬곱 전개로 구하고 시간과 임시 배열 크기를 비교한다. 결과가 같은지 `np.allclose`로 확인하는 습관을 함께 들이자. 출력은 이 PC에서 실행한 값이고, 시간은 CPU마다 다르지만 자릿수 관계는 비슷하게 나온다.",
-                    "세 결과의 최대 차이는 3.6×10⁻¹⁵ 로 float64 반올림 수준이었다. 루프 대비 브로드캐스팅은 약 6배, 행렬곱 전개는 거기서 다시 약 24배 빨랐고, 임시 메모리는 97.7 MiB에서 1.5 MiB로 줄었다."
+                    "세 결과의 최대 차이는 3.6×10⁻¹⁵로 float64 반올림 수준이었다. 루프 대비 브로드캐스팅은 약 6배, 행렬곱 전개는 거기서 다시 약 24배 빨랐고, 임시 메모리는 97.7 MiB에서 1.5 MiB로 줄었다."
                 ],
                 code: {
                     lang: "python",
@@ -590,7 +590,7 @@ print(" <- ".join(chain))
                         ["거듭제곱", "L = e²", "g·2e"],
                         ["tanh", "y = tanh z", "g·(1 − y²) — 출력 y를 저장해 씀"],
                         ["ReLU", "y = max(0, z)", "z > 0이면 g, 아니면 0"],
-                        ["행렬곱", "Y = X W", "G Wᵀ 를 X로, Xᵀ G를 W로"]
+                        ["행렬곱", "Y = X W", "G Wᵀ를 X로, Xᵀ G를 W로"]
                     ]
                 }
             },

@@ -294,7 +294,7 @@ _Static_assert(sizeof(struct item2) == 2 * sizeof(void *), "tail");`,
                 h: "packed 속성(packed attribute)과 비정렬 접근(unaligned access)",
                 p: [
                     "`__attribute__((packed))`는 구조체의 정렬을 1로 만들고 패딩을 모두 없앤다. `struct { uint8_t type; uint32_t len; uint16_t crc; }`는 보통 type 0, len 4, crc 8에 sizeof 12지만, packed면 0·1·5에 sizeof 7이다. 통신 프레임 형식과 바이트가 일대일로 맞으니 편해 보이지만, 이제 `len`은 홀수 주소에 있다.",
-                    "멤버를 이름으로 읽을 때(`f->len`)는 컴파일러가 packed 임을 알고 안전한 코드를 만든다. Cortex-M0/M0+ 처럼 비정렬 접근이 없는 코어에서는 바이트 load와 시프트·OR로 조립하고, Cortex-M3/M4/M7에서는 `LDR` 하나로 읽을 수 있다. 문제는 그 멤버의 주소를 `uint32_t *`로 꺼내는 순간이다. 포인터에는 packed라는 정보가 없어서 컴파일러는 정렬을 가정한 `LDR`을 내고, M0+ 에서는 HardFault가 난다. GCC 9부터 기본으로 켜진 `-Waddress-of-packed-member` 경고가 이 패턴을 알려 준다.",
+                    "멤버를 이름으로 읽을 때(`f->len`)는 컴파일러가 packed 임을 알고 안전한 코드를 만든다. Cortex-M0/M0+처럼 비정렬 접근이 없는 코어에서는 바이트 load와 시프트·OR로 조립하고, Cortex-M3/M4/M7에서는 `LDR` 하나로 읽을 수 있다. 문제는 그 멤버의 주소를 `uint32_t *`로 꺼내는 순간이다. 포인터에는 packed라는 정보가 없어서 컴파일러는 정렬을 가정한 `LDR`을 내고, M0+에서는 HardFault가 난다. GCC 9부터 기본으로 켜진 `-Waddress-of-packed-member` 경고가 이 패턴을 알려 준다.",
                     "Armv7-M의 허용 범위도 좁다. 비정렬이 허용되는 것은 `LDR`/`STR`/`LDRH`/`STRH` 계열뿐이고, `LDRD`/`STRD`/`LDM`/`STM`은 비정렬이면 항상 UsageFault다. 허용된 비정렬 접근도 버스 전송이 나뉘어 더 느리다. `SCB->CCR`의 `UNALIGN_TRP`를 켜면 허용되던 비정렬 접근까지 모두 fault로 잡혀 숨은 곳을 찾을 수 있다. x86은 대부분의 비정렬 접근을 하드웨어로 처리하지만 `movaps` 같은 정렬 필수 SIMD 명령은 fault를 낸다."
                 ],
                 code: {
@@ -388,7 +388,7 @@ size_t encode(const struct sample *s, uint8_t out[11]) {  /* 선 위: 11 B */
             }
         ],
         pitfalls: [
-            "수신 버퍼를 `*(uint32_t *)(rx + 1)`로 캐스팅한다. 비정렬이면 M0+ 에서 HardFault, 다른 코어에서도 strict aliasing 위반이라 UB다.",
+            "수신 버퍼를 `*(uint32_t *)(rx + 1)`로 캐스팅한다. 비정렬이면 M0+에서 HardFault, 다른 코어에서도 strict aliasing 위반이라 UB다.",
             "packed 구조체 멤버의 주소를 일반 포인터로 넘긴다. 받는 함수는 정렬을 가정한다.",
             "구조체를 `memcmp`로 비교하거나 통째로 전송해 패딩 바이트의 쓰레기값까지 비교하고 내보낸다.",
             "MCU와 PC가 같은 헤더의 구조체를 바이트 그대로 주고받는다. `long`·포인터 크기와 i386의 `double` 정렬 때문에 오프셋이 어긋난다.",

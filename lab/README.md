@@ -2,6 +2,7 @@
 
 Interactive study site: embedded, assembly, memory, robotics, languages (incl. programming-language theory in the AI era), data structures, protocols, deep learning, NumPy·PyTorch, AI, RAG & embeddings.
 Plain HTML/CSS/JS, no build, no CDN — open `lab/index.html` directly (`file://`).
+Font: Pretendard Variable is bundled in `assets/fonts/` (SIL OFL 1.1, license alongside). Accent text uses `--ink` (derived from the track color `--c`, readable in both themes); use `var(--ink)` for text, `var(--c)` for borders and fills.
 
 ## Pages
 
@@ -86,6 +87,7 @@ Per lesson: ≥ 8 quiz items with ≥ 3 of `num` / `text` / `order`, `checked` s
 `content/paths.js`: `LAB.path({ id, name, desc, lessons: ["track/lesson", ...] })` — cards with progress on the home page. Home groups tracks by `CATEGORIES` in `assets/lab.js`.
 
 Style: short lines, no paragraphs. Inline `` `code` `` and `**bold**` render in every text field.
+Korean particles attach to the word before them, also after English, numbers, symbols and code: `NumPy는`, `` `x`이다 ``, `C++의`, `2ⁿ으로`, `3개`.
 
 English originals: every Korean term card (`concepts`, `glossary`) has `en` — the full English name, acronym in parentheses (`Multi-Layer Perceptron (MLP)`).
 In the body (key → demo captions → code notes → optimize), a Korean term's **first** mention per lesson reads `오버샘플링(oversampling)` (bold: `**오버샘플링(oversampling)**`); trends: first mention per card.

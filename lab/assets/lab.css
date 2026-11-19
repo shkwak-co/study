@@ -926,7 +926,7 @@ input[type="range"] { width: 130px; accent-color: var(--c); }
 .d-sec { padding: 28px 0; border-bottom: 1px dashed var(--line); }
 .d-sec > h2 { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; font-size: 21px; letter-spacing: -0.02em; }
 .d-sec > h2 .n { font: 700 13px var(--mono); color: var(--ink); padding: 3px 8px; border: 1px solid color-mix(in srgb, var(--c) 40%, transparent); border-radius: 6px; }
-.d-sec p { margin: 0 0 14px; font-size: 17px; line-height: 1.8; }
+.d-sec p { margin: 0 0 20px; font-size: 17px; line-height: 1.8; }
 .d-sec .ticks { margin: 6px 0 14px; }
 .d-sec .ticks li { font-size: 16px; line-height: 1.7; }
 .d-sec .code, .d-sec .tbl, .d-sec .demo { margin: 16px 0; }
@@ -1125,3 +1125,5 @@ input:focus-visible, textarea:focus-visible { outline: none; }
 pre, code, kbd { word-break: normal; overflow-wrap: normal; }
 /* code blocks stay dark in the light theme too: inline code inside them uses the dark-theme accent */
 .code :not(pre) > code { color: color-mix(in srgb, var(--c) 80%, #e4e9f2); background: rgba(255, 255, 255, 0.08); }
+/* articles: each sentence on its own line (split in lab.js `prose`), paragraphs separated by a larger gap */
+.sn { display: block; }

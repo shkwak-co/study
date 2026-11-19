@@ -195,4 +195,4 @@ LAB.article("embedded", {
 });
 ```
 
-Full sentences are fine here. Same English-original rule: first mention per article reads `용어(English)` (checked for the lesson's card terms). No new refs — the page shows the lesson's `refs`.
+Full sentences are fine here. Intro and paragraphs render one sentence per line (`prose` in `assets/lab.js` splits after `.` `?` `!` that follows Hangul, `)`, a quote or a code span — never inside `` `code` `` or `**bold**`), so keep one paragraph per idea. Same English-original rule: first mention per article reads `용어(English)` (checked for the lesson's card terms). No new refs — the page shows the lesson's `refs`.

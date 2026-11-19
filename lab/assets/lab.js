@@ -1279,6 +1279,20 @@ ${(t.trends || []).length ? `<section class="sec wrap">
         const pad = (n) => String(n).padStart(2, "0");
         const table = (tb) => `<div class="tbl"><table><thead><tr>${tb.head.map((h) => `<th>${fmt(h)}</th>`).join("")}</tr></thead><tbody>${tb.rows.map((r) => `<tr>${r.map((c) => `<td>${fmt(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
         const extra = [a.pitfalls && ["d-pit", "자주 하는 실수"], a.summary && ["d-sum", "정리"], (l.refs || []).length && ["d-refs", "출처"]].filter(Boolean);
+        // article prose: one sentence per line — split after . ? ! that follows Hangul, ), ], a quote or `,
+        // never inside `code` or **bold** (so 0.5, et al., a.b stay whole)
+        const prose = (s) => {
+            const out = [];
+            let from = 0, code = false, bold = false;
+            for (let i = 0; i < s.length; i++) {
+                const c = s[i];
+                if (c === "`") code = !code;
+                else if (!code && c === "*" && s[i + 1] === "*") { bold = !bold; i++; }
+                else if (!code && !bold && ".?!".includes(c) && /\s/.test(s[i + 1] || "") && /[가-힣)\]'’"”`]/.test(s[i - 1] || "")) { out.push(s.slice(from, i + 1)); from = i + 1; }
+            }
+            out.push(s.slice(from));
+            return out.filter((x) => x.trim()).map((x) => `<span class="sn">${fmt(x.trim())}</span>`).join(" ");
+        };
         app.innerHTML = `
 <div class="stepbar"><div class="wrap"><a href="${lessonHref(t.id, l.id)}">← 강의</a>${a.sections.map((s, i) => `<a href="#d${i + 1}">${pad(i + 1)} ${esc(plain(s.h))}</a>`).join("")}${extra.map(([id, h]) => `<a href="#${id}">${h}</a>`).join("")}</div><i class="fill"></i></div>
 <div class="wrap narrow article">
@@ -1289,9 +1303,9 @@ ${(t.trends || []).length ? `<section class="sec wrap">
       ${l.demo && l.demo.type === "sim" ? `<a class="btn small" href="${labHref(t.id, l.id)}">⚗ 실험</a>` : ""}
       <a class="btn small" href="${lessonHref(t.id, l.id)}#s-quiz">퀴즈 →</a></div>
   </header>
-  <p class="lead">${fmt(a.intro)}</p>
+  <p class="lead">${prose(a.intro)}</p>
   ${a.sections.map((s, i) => `<section class="d-sec" id="d${i + 1}"><h2><span class="n">${pad(i + 1)}</span>${fmt(s.h)}</h2>
-    ${(s.p || []).map((p) => `<p>${fmt(p)}</p>`).join("")}
+    ${(s.p || []).map((p) => `<p>${prose(p)}</p>`).join("")}
     ${s.list ? `<ul class="ticks">${s.list.map((x) => `<li>${fmt(x)}</li>`).join("")}</ul>` : ""}
     ${s.table ? table(s.table) : ""}
     ${s.code ? codeBox(s.code) : ""}

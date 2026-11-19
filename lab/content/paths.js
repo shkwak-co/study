@@ -38,3 +38,22 @@ LAB.path({
         "rag/chunking", "rag/vector-store", "rag/rerank", "rag/rag-eval", "rag/rag-failures"
     ]
 });
+LAB.path({
+    id: "numpy-torch",
+    name: "NumPy·PyTorch 실전",
+    desc: "배열 메모리와 브로드캐스팅에서 autograd, 학습 루프, GPU·정밀도까지",
+    lessons: [
+        "languages/python-internals", "numpy-torch/np-ndarray", "numpy-torch/np-vectorize", "numpy-torch/np-indexing",
+        "numpy-torch/torch-tensor", "deep-learning/backprop", "numpy-torch/autograd", "deep-learning/optimizer",
+        "numpy-torch/torch-train", "languages/float", "numpy-torch/torch-gpu"
+    ]
+});
+LAB.path({
+    id: "lang-ai",
+    name: "AI 시대의 언어론",
+    desc: "구문·타입·평가에서 Python 위·커널 아래의 AI 스택, LLM 이 코드를 쓸 때의 검증까지",
+    lessons: [
+        "languages/plt-basics", "languages/build", "languages/python-internals", "numpy-torch/torch-tensor",
+        "languages/lang-ai-stack", "ai/assistant", "languages/lang-llm"
+    ]
+});

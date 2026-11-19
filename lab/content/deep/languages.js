@@ -1302,5 +1302,688 @@ static inline q15_t q15_mul(q15_t a, q15_t b) {
             "16bit 형식은 범위(bf16)와 정밀도(fp16) 중 하나를 고르는 것",
             "FPU 없는 MCU·재현성이 필요한 곳은 고정소수점"
         ]
+    },
+    "plt-basics": {
+        intro: "프로그래밍 언어론(programming language theory)은 '프로그램이란 무엇이고 무엇을 뜻하는가'를 다룬다. 이 글은 네 질문으로 정리한다. 어떤 문자열이 프로그램인가(**구문**(syntax)), 그 프로그램은 무엇을 하는가(**의미론**(semantics)), 실행 전에 무엇을 보장할 수 있는가(타입), 언제 계산하는가(**평가 전략**(evaluation strategy)). AI 가 코드를 쓰는 시대에 이 질문들은 오히려 더 실용적이 됐다. LLM 은 토큰을 이어 쓰는 기계라 네 질문 어디에도 스스로 답하지 않고, 답을 주는 것은 여전히 문법·타입 검사기·의미 규칙이다.",
+        sections: [
+            {
+                h: "구문과 의미: 모양과 뜻은 따로 논다",
+                p: [
+                    "구문은 어떤 문자열이 '모양이 맞는' 프로그램인지 정하는 규칙이고, 의미론은 모양이 맞는 프로그램이 무엇을 하는지 정하는 규칙이다. 둘은 독립이다. `[1, 2] * 2` 와 `np.array([1, 2]) * 2` 는 구문이 똑같지만 앞은 리스트 반복 `[1, 2, 1, 2]`, 뒤는 원소별 곱 `[2 4]` 다. 같은 `*` 에 타입마다 다른 뜻을 붙이는 장치가 연산자 오버로딩이고, NumPy 와 PyTorch 는 이 장치 위에 서 있다.",
+                    "의미가 같은데 구문이 다른 경우도 흔하다. `for` 루프로 더한 값과 `sum()` 으로 더한 값은 같다. 언어 버전이 바뀌며 같은 구문의 의미가 바뀐 예도 있다. Python 2 에서 `7 / 2` 는 3 이었고 Python 3 에서는 3.5 다. 코드를 다른 언어나 버전으로 옮기는 LLM 이 가장 잘 틀리는 곳이 이런 '모양은 같고 뜻이 다른' 자리다.",
+                    "컴파일러는 소스를 여러 단계로 처리한다(아래 데모). 각 단계는 앞 단계가 보장한 것을 믿고 일한다. **구문 분석기**(parser)가 만든 나무는 괄호 짝이 맞다고 믿어도 되고, 타입 검사를 통과한 코드는 `int + str` 이 없다고 믿어도 된다. LLM 이 생성한 텍스트에는 이런 보장이 하나도 없으므로 생성된 코드는 이 사슬을 처음부터 통과해야 한다."
+                ],
+                demo: "lesson"
+            },
+            {
+                h: "문법 적기: BNF 에서 PEG 까지",
+                p: [
+                    "구문은 문법(grammar)으로 적는다. 가장 널리 쓰인 표기는 BNF(Backus–Naur Form)로, ALGOL 60 보고서가 언어 정의에 쓰면서 퍼졌다. 규칙 하나는 '왼쪽 기호는 오른쪽 나열 중 하나로 바뀔 수 있다'는 뜻이다. 아래 계산식 문법은 '곱셈이 덧셈보다 먼저'라는 우선순위와 '같은 연산자는 왼쪽부터 묶는다'는 결합 방향을 규칙의 층으로 표현한다.",
+                    "문법이 모호하면 같은 문자열이 두 나무를 가진다. 고전 예가 'dangling else'다. `if a then if b then s1 else s2` 의 else 가 어느 if 에 붙는지 규칙만으로는 정해지지 않아, 많은 언어가 '가장 가까운 if' 규칙을 덧붙인다. Python 은 들여쓰기로 블록을 정해 이 문제를 피한다.",
+                    "PEG(Parsing Expression Grammar)는 선택 `|` 에 순서를 둔다. 앞 대안이 맞으면 뒤는 보지 않으므로 정의상 모호함이 없다. CPython 은 3.9 부터 PEG 기반 파서를 쓰고, 공식 문서의 'Full Grammar specification'은 파서 생성에 쓰는 `Grammar/python.gram` 에서 코드 생성·오류 복구 부분만 뺀 것이다. 언어의 '모양'이 문서 한 장에 기계가 읽을 수 있는 형태로 있다는 뜻이다."
+                ],
+                code: {
+                    lang: "text",
+                    title: "계산식 문법 (EBNF)",
+                    src: `expr   := term   (("+" | "-") term)*     # 덧셈·뺄셈: 가장 늦게 묶임
+term   := factor (("*" | "/") factor)*   # 곱셈·나눗셈: 먼저 묶임
+factor := NUMBER | "(" expr ")"          # 괄호 안은 다시 expr
+
+1 + 2 * 3     →  ('+', 1, ('*', 2, 3))   →  7
+(1 + 2) * 3   →  ('*', ('+', 1, 2), 3)   →  9
+8 - 3 - 2     →  ('-', ('-', 8, 3), 2)   →  3   (왼쪽 결합)`,
+                    note: "규칙의 층(expr → term → factor)이 곧 우선순위 · 맨 아래 실습에서 이 문법을 그대로 함수로 옮긴다"
+                }
+            },
+            {
+                h: "토큰과 AST: 컴파일러의 눈, LLM 의 눈",
+                p: [
+                    "**어휘 분석기**(lexer)는 문자를 토큰으로 자른다. `x = 1 + 2 * y` 는 Python `tokenize` 로 `x` `=` `1` `+` `2` `*` `y` 일곱 토큰과 NEWLINE·ENDMARKER 가 된다. 공백과 주석은 이 단계에서 사라지고, Python 은 들여쓰기 변화를 INDENT·DEDENT 토큰으로 바꿔 문법이 블록을 알게 한다.",
+                    "구문 분석기는 토큰 줄을 문법에 맞춰 나무로 만든다. 괄호와 공백을 버리고 연산 구조만 남긴 나무가 **추상 구문 트리**(abstract syntax tree, AST)다. `1 + 2 * y` 의 AST 는 `BinOp(1, +, BinOp(2, *, y))` 로, 곱셈이 안쪽에 있다는 사실 자체가 '곱셈 먼저'를 표현한다. 린터·포매터·리팩터링 도구·타입 검사기는 모두 이 나무 위에서 일한다. Python 3.9 이상에서는 `python -m ast file.py` 로 파일의 AST 를 바로 볼 수 있다.",
+                    "LLM 의 토큰은 다르다. BPE 같은 통계적 토큰화는 자주 붙어 나오는 문자열을 한 토큰으로 묶으므로, `):` 나 들여쓰기 공백 묶음이 한 토큰일 수도 있고 긴 변수 이름이 여러 토큰으로 쪼개질 수도 있다. 모델은 이 토큰 줄의 다음 토큰 확률을 배울 뿐, 괄호 짝이나 블록 깊이를 세는 장치가 따로 없다. 긴 코드에서 괄호 하나가 빠지는 실수가 나오는 이유이고, 디코딩할 때 문법을 강제하는 제약 디코딩(constrained decoding)이 나온 이유다."
+                ],
+                table: {
+                    head: ["", "컴파일러 (어휘·구문 분석)", "LLM"],
+                    rows: [
+                        ["단위", "문법 토큰: NAME, OP, NUMBER …", "통계 토큰: 자주 붙는 바이트 묶음"],
+                        ["구조", "AST (나무) · 괄호 짝이 보장됨", "토큰 줄 · 구조는 확률로만 학습"],
+                        ["규칙 위반", "즉시 SyntaxError", "그럴듯하면 그대로 출력"],
+                        ["결정성", "같은 입력 → 같은 나무", "샘플링: 같은 프롬프트도 다른 출력"]
+                    ]
+                },
+                tip: "`ast.parse` 는 모양만 본다. 함수 밖의 `return 42` 도 트리는 만들어지고, 'return 은 함수 안에서만'은 `compile` 단계에서 잡힌다."
+            },
+            {
+                h: "의미론: '무엇을 하는가'를 정의하는 세 방법",
+                p: [
+                    "의미를 정의하는 고전적 방법은 셋이다. 조작적 의미론(operational semantics)은 실행 규칙으로 정의한다. '`e1 + e2` 는 e1 을 값 v1 으로, e2 를 값 v2 로 줄인 뒤 v1 + v2 가 된다'처럼 식이 한 걸음씩 줄어드는 규칙을 적는다. 인터프리터를 짜는 것과 가장 가깝다.",
+                    "표시적 의미론(denotational semantics)은 프로그램을 수학적 대상, 주로 함수에 대응시킨다. 루프는 고정점(fixed point)으로 해석된다. 공리적 의미론(axiomatic semantics)은 실행 전후에 성립하는 조건으로 의미를 정한다. Hoare 삼중항 `{P} C {Q}` 는 'P 가 성립할 때 C 를 실행해 끝나면 Q 가 성립한다'는 뜻이고, Dafny 같은 검증 언어의 `requires`/`ensures` 가 바로 이 형식이다. 이 트랙의 'LLM 이 코드를 쓸 때' 강의에서 다시 나온다.",
+                    "실무에서 의미론이 드러나는 곳은 '정의되지 않은 동작'(undefined behavior)이다. C 표준은 부호 있는 정수 오버플로의 결과를 정의하지 않고, 컴파일러는 그런 일이 없다고 가정하고 최적화한다. 의미가 정의되지 않은 코드를 LLM 이 그럴듯하게 써 주면, 테스트에서는 맞다가 최적화 수준만 바꿔도 결과가 달라질 수 있다."
+                ]
+            },
+            {
+                h: "타입 시스템의 두 축: 언제, 얼마나",
+                p: [
+                    "정적(static)·동적(dynamic)은 타입 오류를 언제 잡느냐의 축이다. 정적 언어는 실행 전에 프로그램 전체를 검사하고, 동적 언어는 그 연산이 실제로 실행될 때 검사한다. 강한(strong)·약한(weak)은 타입이 다른 값을 만났을 때 암묵적으로 얼마나 변환해 주느냐의 축이다. 두 축은 독립이다. Python 은 동적이지만 `1 + \"1\"` 을 TypeError 로 거부하는 강한 쪽이고, JavaScript 는 동적이면서 `\"11\"` 을 만들어 주는 약한 쪽이다. C 는 정적이지만 정수·실수·포인터 사이 변환에 관대하다.",
+                    "두 세계를 섞는 방식도 있다. 주석을 단 부분만 정적으로 검사하고 나머지는 동적으로 두는 방식으로, Python 타입 힌트(PEP 484)와 TypeScript 가 대표다. 이런 언어의 검사는 의도적으로 완전하지 않다. `Any` 나 `cast` 를 쓰면 검사기는 믿고 넘어가고, Python 은 실행 중에 주석을 전혀 검사하지 않는다. TypeScript 문서도 컴파일 시점에 안전을 알 수 없는 연산을 허용하므로 타입 시스템이 '건전하지 않다'고 밝힌다."
+                ],
+                table: {
+                    head: ["언어", "언제 (정적/동적)", "얼마나 (강/약)", "타입 추론"],
+                    rows: [
+                        ["C", "정적", "약한 편 (암묵 변환·포인터 캐스트)", "거의 없음 (C23 `auto`)"],
+                        ["Java", "정적", "강한 편", "지역 변수 `var`"],
+                        ["Rust · Haskell · OCaml", "정적", "강함", "강력 (HM 계열)"],
+                        ["Python", "동적 (+ 선택적 정적 검사)", "강함", "검사기가 추론"],
+                        ["JavaScript", "동적", "약함", "-"],
+                        ["TypeScript", "점진적 (실행 시 JS 로 지워짐)", "JS 와 같음", "강력, 의도적으로 불건전"]
+                    ]
+                }
+            },
+            {
+                h: "타입 추론과 건전성: Milner 1978",
+                p: [
+                    "**힌들리-밀너 타입 추론**(Hindley–Milner type inference)은 주석이 거의 없어도 프로그램의 가장 일반적인 타입을 찾는다. Milner(1978)는 ML 언어를 위해 이 검사를 알고리즘 W 로 제시했다. OCaml 에서 `fun x -> x` 는 x 에 아무 제약이 없으니 `'a -> 'a`, `fun x -> x + 1` 은 `+` 가 정수 연산이라 `int -> int` 다. 변수마다 '아직 모르는 타입'을 두고, 식을 따라 '이 둘은 같아야 한다'는 등식을 모은 뒤 한꺼번에 푸는(unification) 방식이다.",
+                    "같은 논문의 핵심 주장이 **타입 건전성**(type soundness)이다. 의미 건전성 정리는 '잘 타입된 프로그램은 잘못되지 않는다'(well-typed programs cannot \"go wrong\")고 말한다. 여기서 '잘못됨'은 정수에 리스트 연산을 적용하는 것 같은, 뜻이 없는 실행 상태다. 논문 서문의 예처럼 LISP 에서 원자에 CDR 을 적용하는 실수를 실행 전에 막는다는 뜻이지, 논리 버그나 무한 루프까지 막는다는 뜻은 아니다.",
+                    "건전성은 구멍이 없을 때만 성립한다. Rust 의 `unsafe`, Python 의 `# type: ignore` 와 `cast`, TypeScript 의 `any` 는 사람이 '이 부분은 내가 책임진다'고 선언하는 탈출구다. LLM 이 타입 오류를 '고칠' 때 이 탈출구로 덮는 경우가 있으므로, 생성된 diff 에서 이런 표시가 늘었는지 보는 것이 좋은 검토 습관이다.",
+                    "Python 검사기의 추론은 HM 보다 보수적이다. 아래처럼 mypy 는 지역 변수의 타입은 추론하지만, 반환 타입 주석이 없는 함수의 반환은 `Any` 로 둔다. `Any` 는 검사를 끄는 값이라, 주석 없는 함수가 많을수록 검사기가 볼 수 있는 범위가 줄어든다."
+                ],
+                code: {
+                    lang: "python",
+                    title: "mypy 가 추론하는 것과 놓치는 것",
+                    src: `nums = [1, 2, 3]
+pairs = {n: str(n) for n in nums}
+reveal_type(pairs)          # Revealed type is "dict[int, str]"
+
+def first(xs: list[int]):   # 반환 주석 없음
+    return xs[0]
+reveal_type(first)          # Revealed type is "def (xs: list[int]) -> Any"
+
+def find(names: list[str], key: str) -> str | None:
+    return key if key in names else None
+
+name = find(["a"], "b")
+print(name.upper())
+# error: Item "None" of "str | None" has no attribute "upper"  [union-attr]`,
+                    note: "mypy 2.4.1 실제 출력 · `reveal_type` 은 검사기용 표시라 실제 실행용 코드에서는 지움"
+                }
+            },
+            {
+                h: "평가 전략: 엄격, 지연, 그리고 단락",
+                p: [
+                    "대부분의 언어는 엄격 평가(strict evaluation, call-by-value)다. `f(g())` 에서 `g()` 를 먼저 계산해 값을 넘긴다. Haskell 은 기본이 **지연 평가**(lazy evaluation)라 값이 실제로 필요할 때 계산하고, 한 번 계산한 값은 저장해 다시 쓴다(call-by-need).",
+                    "Hughes(1990)는 지연 평가를 고차 함수와 함께 모듈성을 높이는 '접착제'로 봤다. 무한한 후보를 만드는 쪽과 필요한 만큼만 꺼내 쓰는 쪽을 따로 짤 수 있기 때문이다. Python 의 제너레이터가 같은 효과를 낸다. `(x * x for x in range(10**9))` 는 만드는 순간 아무것도 계산하지 않고, `next` 를 부를 때마다 하나씩 계산한다.",
+                    "엄격한 언어에도 지연되는 곳이 있다. `and`·`or`·조건식은 단락 평가(short-circuit evaluation)라 필요 없는 쪽을 계산하지 않는다. 반대로 '딱 한 번'만 계산되는 곳도 있다. Python 의 기본 인자는 `def` 문이 실행될 때 한 번 평가되므로, `def add(x, acc=[])` 의 리스트는 호출 사이에 공유된다. 평가 시점을 모르면 생기는 대표 버그이고, LLM 이 생성한 코드에서도 종종 보인다."
+                ],
+                code: {
+                    lang: "python",
+                    title: "기본 인자는 언제 평가되나",
+                    src: `def add(x, acc=[]):        # 기본값은 def 가 실행될 때 한 번 평가된다
+    acc.append(x)
+    return acc
+
+print(add(1), add(2))      # [1, 2] [1, 2]  ← 같은 리스트 객체
+
+def add2(x, acc=None):     # 고친 판: 호출마다 새 리스트
+    if acc is None:
+        acc = []
+    acc.append(x)
+    return acc
+
+print(add2(1), add2(2))    # [1] [2]`,
+                    note: "Python 3.14 실제 출력 · 첫 줄이 `[1] [1, 2]` 가 아닌 이유: print 가 인자를 다 계산한 뒤(엄격 평가) 같은 객체를 두 번 출력"
+                }
+            },
+            {
+                h: "패러다임과 AI 프레임워크",
+                p: [
+                    "패러다임은 프로그램을 무엇으로 보느냐의 차이다. 명령형(imperative)은 상태를 바꾸는 명령의 나열, 함수형(functional)은 값을 받아 값을 돌려주는 함수의 조합, 객체지향(object-oriented)은 상태와 동작을 묶은 객체들의 협력, 논리형(logic)은 사실과 규칙에서 답을 찾는 탐색이다. 현대 언어는 대부분 여럿을 섞는다.",
+                    "AI 프레임워크에서 이 차이가 실제로 드러난다. PyTorch 의 기본 모드는 명령형이다. 텐서를 제자리에서 바꿀 수 있고(`x.add_(1)`), 코드가 실행되는 순서대로 연산이 일어난다. JAX 는 함수형을 요구한다. 배열은 바꿀 수 없고(`x.at[0].set(1)` 은 새 배열을 돌려줌), `jit`·`grad`·`vmap` 같은 변환은 부수효과 없는 순수 함수에서 제대로 동작한다. 순수 함수는 같은 입력에 같은 출력을 내므로 추적·미분·병렬화가 안전하다. 다음 강의 'AI 스택의 언어'에서 이 차이가 왜 성능과 연결되는지 본다."
+                ],
+                table: {
+                    head: ["패러다임", "프로그램 =", "대표 언어", "AI 쪽 예"],
+                    rows: [
+                        ["명령형", "상태를 바꾸는 명령의 나열", "C, Python", "PyTorch eager, 학습 루프"],
+                        ["함수형", "값 → 값 함수의 조합", "Haskell, OCaml", "JAX 변환 (jit·grad·vmap)"],
+                        ["객체지향", "상태 + 동작을 묶은 객체", "Java, C++", "`nn.Module` 계층"],
+                        ["논리형·선언형", "사실·규칙·제약", "Prolog, SQL", "SQL 로 학습 데이터 뽑기"]
+                    ]
+                }
+            },
+            {
+                h: "실습: 40줄 계산기 — 토큰 → 나무 → 값",
+                p: [
+                    "앞의 EBNF 문법을 그대로 함수로 옮긴 재귀 하강 파서(recursive descent parser)다. 규칙 하나가 함수 하나이고, 규칙의 `*` 반복은 while 루프가 된다. 어휘 분석(`lex`), 구문 분석(`parse`), 의미(`evaluate`)가 서로 다른 함수라서 오류가 어느 단계에서 나는지 출력으로 보인다.",
+                    "실행 결과(Python 3.14): `1 + 2 * 3` 은 `('+', 1, ('*', 2, 3))` 으로 7, `(1 + 2) * 3` 은 9, `8 - 3 - 2` 는 왼쪽 결합 `('-', ('-', 8, 3), 2)` 로 3 이다. `2 * (3 + 4` 는 구문 분석에서 `expected ), got None`, `7 / 0` 은 모양은 맞지만 평가에서 ZeroDivisionError 다. 모양 오류와 의미 오류가 서로 다른 단계에서 잡힌다.",
+                    "더 해 볼 것: (1) 거듭제곱 `**` 를 오른쪽 결합으로 추가해 `2 ** 3 ** 2` 가 512 가 되게, (2) 변수와 환경(dict)을 넣어 `x * 2` 를 평가, (3) 평가 전에 나무를 훑어 '상수 0 으로 나누기'를 찾는 정적 검사 함수 추가 — 실행 전에 잡는 검사가 곧 정적 분석이다."
+                ],
+                code: {
+                    lang: "python",
+                    title: "calc.py",
+                    src: `import re
+
+# expr := term (("+" | "-") term)*  ·  term := factor (("*" | "/") factor)*
+# factor := NUMBER | "(" expr ")"
+def lex(s):
+    toks = re.findall(r"\\d+|[-+*/()]|\\S", s)
+    bad = [t for t in toks if not re.fullmatch(r"\\d+|[-+*/()]", t)]
+    if bad:
+        raise SyntaxError(f"unknown token {bad[0]!r}")
+    return toks
+
+def parse(toks):
+    pos = 0
+    def peek():
+        return toks[pos] if pos < len(toks) else None
+    def eat(t=None):
+        nonlocal pos
+        tok = peek()
+        if tok is None or (t and tok != t):
+            raise SyntaxError(f"expected {t or 'token'}, got {tok}")
+        pos += 1
+        return tok
+    def factor():
+        if peek() == "(":
+            eat("("); node = expr(); eat(")")
+            return node
+        tok = eat()
+        if not tok.isdigit():
+            raise SyntaxError(f"expected number, got {tok}")
+        return int(tok)
+    def term():
+        node = factor()
+        while peek() in ("*", "/"):
+            node = (eat(), node, factor())
+        return node
+    def expr():
+        node = term()
+        while peek() in ("+", "-"):
+            node = (eat(), node, term())
+        return node
+    tree = expr()
+    if peek() is not None:
+        raise SyntaxError(f"unexpected {peek()}")
+    return tree
+
+OPS = {"+": lambda a, b: a + b, "-": lambda a, b: a - b,
+       "*": lambda a, b: a * b, "/": lambda a, b: a // b}
+
+def evaluate(node):          # 의미: 나무 → 값
+    if isinstance(node, int):
+        return node
+    op, left, right = node
+    return OPS[op](evaluate(left), evaluate(right))
+
+for s in ["1 + 2 * 3", "(1 + 2) * 3", "8 - 3 - 2", "2 * (3 + 4", "7 / 0"]:
+    try:
+        tree = parse(lex(s))
+        print(f"{s:12} tree={tree}  value={evaluate(tree)}")
+    except (SyntaxError, ZeroDivisionError) as e:
+        print(f"{s:12} {type(e).__name__}: {e}")
+
+# 1 + 2 * 3    tree=('+', 1, ('*', 2, 3))  value=7
+# (1 + 2) * 3  tree=('*', ('+', 1, 2), 3)  value=9
+# 8 - 3 - 2    tree=('-', ('-', 8, 3), 2)  value=3
+# 2 * (3 + 4   SyntaxError: expected ), got None
+# 7 / 0        ZeroDivisionError: division by zero`,
+                    note: "`/` 는 정수 나눗셈(`//`)으로 단순화 · 실행: `python calc.py`"
+                }
+            }
+        ],
+        pitfalls: [
+            "구문이 같으면 의미도 같다고 가정 → `*` 는 list 에선 반복, ndarray 에선 원소별 곱",
+            "강한 타입과 정적 타입을 혼동 → Python 은 강하지만 동적",
+            "타입 주석이 실행 중 검사된다고 믿음 → 검사기(mypy·pyright 등)를 따로 돌려야 함",
+            "기본 인자 `acc=[]` → `def` 때 한 번 평가되어 호출 사이에 공유",
+            "설정·데이터를 `eval` 로 읽음 → 리터럴만 필요하면 `ast.literal_eval` + 크기 제한",
+            "LLM 수정 diff 에서 `# type: ignore`·`cast`·`any`·`unsafe` 증가를 놓침 → 건전성의 구멍"
+        ],
+        summary: [
+            "구문 = 모양(문법·AST), 의미론 = 뜻(실행 규칙)",
+            "정적/동적은 '언제', 강/약은 '얼마나' · 두 축은 독립",
+            "HM 추론은 주석 없이 가장 일반적인 타입을 찾고, 건전성은 타입 붕괴가 없음을 보장",
+            "엄격 평가가 기본 · 지연은 제너레이터·단락 평가로 부분적으로",
+            "LLM 출력은 이 사슬의 어떤 보장도 없이 시작 → 검사기를 통과해야 프로그램"
+        ]
+    },
+    "lang-ai-stack": {
+        intro: "딥러닝 코드는 거의 모두 Python 으로 쓰지만, 실제 계산은 거의 모두 C++·CUDA 로 쓴 커널이 한다. 이 글은 왜 이런 2층 구조가 됐고(**두 언어 문제**(two-language problem)), 두 층의 경계에서 어떤 비용이 생기며, 그 비용을 줄이려고 언어 기술(추적, JIT, 그래프 컴파일, DSL)이 어떻게 쓰이는지 본다. NumPy·PyTorch 를 쓰는 입장에서 '이 코드는 왜 느린가', '`torch.compile` 은 왜 이 줄에서 멈추는가'에 답하는 것이 목표다.",
+        sections: [
+            {
+                h: "두 언어 문제와 ML 의 타협",
+                p: [
+                    "Bezanson et al.(2014)은 과학 계산의 오래된 믿음 둘을 문제 삼았다. '고수준 동적 프로그램은 느릴 수밖에 없다', 그리고 '시제품은 한 언어로 만들고 속도나 배포를 위해 다른 언어로 다시 써야 한다'. 뒤의 것이 두 언어 문제이고, Julia 는 한 언어로 둘 다 하려는 시도였다.",
+                    "머신러닝은 다른 길로 갔다. 다시 쓰는 대신 층을 나눴다. 위층 Python 은 모델 구조·학습 루프·데이터 처리를 표현하는 **접착 언어**(glue language)이고, 아래층 C++·CUDA 는 행렬 곱·합성곱 같은 무거운 연산을 커널로 제공한다. 사용자가 쓰는 `x @ w` 한 줄에서 Python 은 µs 단위만 쓰고 나머지 시간은 C++·GPU 가 쓴다. 연산이 충분히 크면 Python 의 느림은 전체 시간에 묻힌다.",
+                    "이 타협이 통하는 조건은 '연산 하나가 충분히 클 것'이다. 연산이 작고 많아지면 Python 쪽 비용이 드러나고, 그때부터 그래프 캡처와 커널 융합(kernel fusion) 같은 언어·컴파일러 기술이 필요해진다."
+                ],
+                demo: "lesson"
+            },
+            {
+                h: "Python 이 ML 의 위층이 된 이유",
+                list: [
+                    "읽고 고치기 쉬운 문법과 대화형 실행(REPL·노트북): 한 줄씩 바꿔 보는 실험 방식에 맞음",
+                    "C 확장 생태계: NumPy 이후 '계산은 C, 호출은 Python' 관행이 굳음",
+                    "**연산자 오버로딩**(operator overloading): `a @ b`, `x * 2` 가 라이브러리 객체의 메서드 호출이 되어 수식처럼 쓰는 API 가 가능",
+                    "동적 타입과 리플렉션: 실행 중 객체를 들여다보고 바꿀 수 있어 추적기·디버거·프로파일러를 만들기 쉬움",
+                    "데이터 처리·시각화·서빙까지 같은 언어로 이어져 생태계가 스스로 커짐"
+                ],
+                p: [
+                    "약한 곳도 분명하다. 인터프리터 오버헤드, GIL(3.14 부터 free-threaded 빌드가 공식 지원되지만 아직 선택형), 그리고 실행 전에 타입·모양 오류를 못 잡는 점이다. 아래 절들은 이 약점을 언어 바깥에서 메우는 방법들이다."
+                ]
+            },
+            {
+                h: "인터프리터 비용을 숫자로",
+                p: [
+                    "Python 의 `a + b` 하나는 바이트코드를 해석하고, 두 객체의 타입을 보고 알맞은 `__add__` 를 찾고, 결과 객체를 할당하는 일이다. NumPy·PyTorch 연산 하나는 여기에 인자 검사, dtype·장치 확인, 출력 배열 할당, 커널 선택이 더해져 µs 단위가 된다. 이 PC(Python 3.14, NumPy 2.4.6, torch 2.15 CPU)에서 잰 값은 아래 표와 같다(5회 중 최솟값, 두 번 실행한 범위).",
+                    "간단한 모델로 쓰면 '한 스텝 시간 ≈ 연산 수 × (호출 비용 + 연산당 계산 시간)'이다. 계산 시간이 호출 비용보다 훨씬 크면 Python 은 보이지 않고, 반대면 Python 과 디스패치가 시간의 대부분이다. 큰 행렬 곱 위주의 학습은 앞쪽, 작은 연산이 많은 추론·강화학습·작은 모델은 뒤쪽에 가깝다."
+                ],
+                table: {
+                    head: ["측정 (이 PC)", "시간", "해석"],
+                    rows: [
+                        ["Python 생성식으로 100만 개 × 2.0 합", "30.6–32.2 ms", "원소마다 바이트코드 실행·float 객체 생성"],
+                        ["NumPy `(a * 2.0).sum()` (100만 개)", "2.06–2.24 ms", "C 루프 · Python 호출은 2번"],
+                        ["NumPy 4원소 배열 × 2.0, 1번", "≈ 0.5 µs", "계산은 ns, 나머지는 호출 비용"],
+                        ["torch CPU 4원소 텐서 × 2, 1번", "≈ 3.1 µs", "디스패처·autograd 확인 포함"],
+                        ["NumPy (10000, 4) 배열 × 2.0, 1번", "0.006–0.009 ms", "위 4원소 1만 번과 같은 계산을 호출 1번으로"]
+                    ]
+                },
+                code: {
+                    lang: "python",
+                    title: "vec.py — 같은 계산, 다른 호출 횟수",
+                    src: `import time, numpy as np
+
+def best(f, r=5):
+    ts = []
+    for _ in range(r):
+        t = time.perf_counter(); f(); ts.append(time.perf_counter() - t)
+    return min(ts)
+
+n = 1_000_000
+xs = list(range(n)); a = np.arange(n, dtype=np.float64)
+t1 = best(lambda: sum(x * 2.0 for x in xs))
+t2 = best(lambda: (a * 2.0).sum())
+print(f"python {t1*1e3:.1f} ms, numpy {t2*1e3:.2f} ms, x{t1/t2:.0f}")
+
+small = [np.ones(4) for _ in range(10000)]
+big = np.ones((10000, 4))
+t3 = best(lambda: [v * 2.0 for v in small])
+t4 = best(lambda: big * 2.0)
+print(f"small calls {t3*1e3:.2f} ms ({t3/10000*1e6:.2f} us/call), one call {t4*1e3:.3f} ms, x{t3/t4:.0f}")
+
+# python 32.2 ms, numpy 2.06 ms, x16
+# small calls 5.08 ms (0.51 us/call), one call 0.006 ms, x794`,
+                    note: "숫자는 PC·버전마다 다름 · 비율의 크기(10배대, 수백 배)를 보는 것이 목적"
+                },
+                tip: "프로파일러에서 GPU 사용률이 낮고 CPU 한 코어만 바쁘면, 계산이 아니라 호출이 병목이라는 신호다."
+            },
+            {
+                h: "경계 넘기: FFI, 버퍼, GIL",
+                p: [
+                    "Python 과 C 사이의 통로가 **외부 함수 인터페이스**(foreign function interface, FFI)다. CPython C API 로 확장 모듈을 직접 쓰거나, `ctypes`·`cffi` 로 이미 있는 공유 라이브러리를 부르거나, pybind11·nanobind 로 C++ 클래스를 감싼다. PyTorch 의 `torch.mul` 은 Python 바인딩을 거쳐 C++ 디스패처로 들어가고, 디스패처가 dtype·장치·autograd 여부를 보고 실제 커널을 고른다.",
+                    "경계를 넘을 때 데이터를 복사하지 않는 것이 핵심이다. NumPy 배열은 버퍼 프로토콜로 메모리 주소·모양·스트라이드를 넘기고, 프레임워크끼리는 DLPack 으로 텐서를 복사 없이 주고받는다. `torch.from_numpy` 가 같은 메모리를 공유하는 것도 같은 원리다.",
+                    "C 코드는 계산하는 동안 GIL 을 놓을 수 있다. NumPy 의 큰 연산이나 PyTorch 커널이 도는 동안 다른 Python 스레드가 실행될 수 있는 이유다. 반대로 작은 연산을 여러 스레드에서 부르면 GIL 을 잡는 Python 부분이 직렬화되어 빨라지지 않는다."
+                ]
+            },
+            {
+                h: "즉시 실행(eager execution)과 그래프 실행",
+                p: [
+                    "Ansel et al.(2024)은 프레임워크를 둘로 나눈다. **즉시 실행**(eager execution) 프레임워크(PyTorch, JAX)는 'define-by-run', 즉 코드가 실행될 때마다 모델이 만들어진다. 그래프 모드 프레임워크(TensorFlow 1, Caffe, Theano)는 'define-and-run', 그래프를 먼저 선언하고 나중에 실행한다. 사용자는 print 와 pdb 로 그대로 디버깅되는 즉시 실행을 압도적으로 선호해 왔다.",
+                    "대가는 최적화다. 즉시 실행 프레임워크는 한 번에 연산 하나만 보므로 연산 경계를 넘는 최적화(융합, 스케줄링)를 자동으로 할 수 없다. 그래프가 있으면 컴파일러가 '이 세 연산은 한 커널로 합쳐도 된다'를 판단할 수 있다. '쓸 때는 즉시 실행, 돌릴 때는 그래프'를 얻는 것이 지난 몇 년 ML 시스템의 핵심 과제였다."
+                ],
+                table: {
+                    head: ["", "즉시 실행 (define-by-run)", "그래프 (define-and-run)"],
+                    rows: [
+                        ["예", "PyTorch 기본, JAX (변환 전)", "TensorFlow 1, Caffe, Theano"],
+                        ["디버깅", "print·pdb 그대로", "그래프를 따로 들여다봐야 함"],
+                        ["Python 기능", "dict·클래스·외부 라이브러리 자유", "그래프로 옮길 수 있는 것만"],
+                        ["최적화", "연산 하나씩 · 융합 어려움", "전체를 보고 융합·스케줄링"],
+                        ["호출 비용", "연산마다", "그래프 실행 단위"]
+                    ]
+                }
+            },
+            {
+                h: "그래프를 얻는 법: 추적과 바이트코드 분석",
+                p: [
+                    "**추적 JIT**(tracing just-in-time compilation)은 함수를 가짜 값으로 한 번 실행하면서 일어나는 연산을 기록한다. `jax.jit` 은 인자를 tracer 객체로 감싸 연산을 jaxpr 로 기록하고 XLA 로 컴파일한다. 이후 호출은 Python 함수를 다시 돌리지 않고 컴파일된 코드를 쓴다. Python 으로 '나중에 실행할 프로그램'을 만드는 셈이라 언어론에서는 이를 **스테이징**(multi-stage programming)이라 부른다.",
+                    "추적의 한계는 언어론으로 정확히 설명된다. 추적은 실제로 실행된 한 경로만 기록한다. `print` 같은 부수효과는 추적할 때 한 번만 실행되고 그래프에 남지 않는다. 텐서 값에 따른 `if` 는 추적 시점에 값을 모르므로 JAX 에서는 TracerBoolConversionError 가 난다. 모양·dtype 처럼 정적인 속성에 따른 분기는 괜찮고, 값 분기는 `jax.lax.cond` 로 바꾸거나 인자를 `static_argnums` 로 정적이라고 표시한다.",
+                    "TorchDynamo 는 다른 길을 택했다. CPython 의 프레임 평가 API 에 끼어들어 함수의 바이트코드를 실행 직전에 분석하고, PyTorch 연산 부분만 FX 그래프로 뽑아 나머지 Python 과 섞여 실행되도록 바이트코드를 다시 쓴다. 그래프로 옮길 수 없는 곳(텐서 값 분기, 지원하지 않는 라이브러리 호출)을 만나면 그 지점까지를 한 그래프로 끝내고 Python 으로 돌아간다(graph break). 입력의 모양·타입 같은 가드(guard)를 걸어 두고, 가드가 깨지면 다시 컴파일한다. 논문은 이전 방식 중 record/replay 가 잘못된 결과를 낼 수 있고, Python 소스 파싱 방식은 실제 모델의 절반 넘게에서 실패했다고 비교한다.",
+                    "TorchInductor 는 이 그래프를 받아 GPU 용 Triton, CPU 용 C++/OpenMP 코드를 만든다. 논문은 NVIDIA A100 에서 실제 모델 180여 개 기준 기하평균으로 추론 2.27배, 학습 1.41배 빨라졌다고 보고했다. 그 속도의 중심에 있는 최적화가 다음 절의 커널 융합이다."
+                ],
+                code: {
+                    lang: "python",
+                    title: "explain 으로 그래프가 끊기는 곳 보기",
+                    src: `import torch
+
+def f(x):
+    y = x * 2
+    if y.sum() > 0:              # 텐서 '값'에 따른 분기
+        return torch.relu(y + 1)
+    return y
+
+print(torch._dynamo.explain(f)(torch.randn(8)))
+# Graph Count: 1
+# Break Reasons:
+#   Break Reason 1:
+#     Reason: generic_jump TensorVariable()
+#     User Stack: ... line 4 in f              ← if 줄
+
+# 끊기지 않게 쓰기: 두 갈래를 모두 계산하고 고른다 (값 분기 → 데이터 선택)
+def g(x):
+    y = x * 2
+    return torch.where(y.sum() > 0, torch.relu(y + 1), y)`,
+                    note: "torch 2.15.0 (CPU) 실제 출력 일부 · `torch.where` 는 두 갈래를 다 계산하므로 갈래가 무거우면 `torch.cond` 같은 제어 흐름 연산을 검토"
+                }
+            },
+            {
+                h: "커널 융합과 메모리 트래픽",
+                p: [
+                    "원소별 연산(곱, 더하기, relu)은 계산이 가볍고 메모리 읽기·쓰기가 무겁다. float32 100만 개(4 MB)에 `relu(x * 2 + 1)` 을 즉시 실행하면 커널 3개가 각각 4 MB 를 읽고 4 MB 를 써서 24 MB 가 오간다. **커널 융합**(kernel fusion)한 커널 하나는 x 를 한 번 읽고 결과를 한 번 써서 8 MB 다. 메모리 대역폭이 한계인 연산에서 트래픽 3배 차이는 시간 차이에 가깝다.",
+                    "융합은 그래프가 있어야 가능하다. 즉시 실행에서는 mul 이 끝나는 시점에 다음에 add 가 올지 알 수 없다. 그래서 프로그램 전체를 담는 **중간 표현**(intermediate representation, IR)이 필요하다. PyTorch 의 FX 그래프, XLA 의 HLO, LLVM IR 이 모두 이 역할을 한다. 소스(Python) → IR → 기계어로 낮추며 각 층에서 최적화한다는 점에서, ML 컴파일러는 앞 강의의 컴파일러 단계를 그대로 따른다."
+                ]
+            },
+            {
+                h: "커널 언어: CUDA C++, Triton, MLIR",
+                p: [
+                    "커널을 쓰는 언어도 **도메인 특화 언어**(domain-specific language, DSL)로 분화했다. CUDA C++ 는 스레드 하나가 무엇을 할지 쓰는 모델이다. 공유 메모리 배치, 동기화, 메모리 접근 병합을 사람이 챙겨야 빨라진다.",
+                    "Triton(Tillet et al. 2019)은 단위를 타일(tile), 즉 정적으로 모양이 정해진 다차원 부분 배열로 올렸다. 프로그래머는 '이 프로그램 인스턴스가 A 타일과 B 타일을 곱해 C 타일을 만든다'를 쓰고, 스레드 배치와 메모리 이동은 컴파일러가 정한다. 논문은 이렇게 쓴 행렬 곱·합성곱 커널이 cuBLAS·cuDNN 같은 손으로 튜닝한 벤더 라이브러리와 대등하다고 보고했다. TorchInductor 가 GPU 코드를 Triton 으로 생성하는 것도 이 추상화 덕분이다.",
+                    "MLIR(Lattner et al. 2020)은 여러 추상 수준의 IR 을 '방언'(dialect)으로 한 틀에 담는 컴파일러 기반이다. 텐서 연산 수준에서 루프 수준, 하드웨어 명령 수준까지 단계적으로 낮추며 각 단계의 최적화를 재사용한다. 새 가속기마다 컴파일러를 처음부터 만들지 않으려는 시도다.",
+                    "Python 과 비슷한 문법을 유지하면서 시스템 언어 수준의 성능을 노리는 새 언어(예: Mojo)도 나왔지만, 2026 년 생태계의 중심은 여전히 'Python 으로 쓰고, 컴파일러가 만든 커널로 돌린다'이다."
+                ]
+            },
+            {
+                h: "배열 API 표준(array API standard): 한 코드로 여러 라이브러리",
+                p: [
+                    "NumPy, PyTorch, CuPy, JAX 는 비슷하지만 함수 이름과 인자가 조금씩 다르다. Python Data API 표준 컨소시엄의 **배열 API 표준**(Python array API standard)은 'array·tensor 라이브러리를 위한 공통 API'를 정한다(최신판 2025.12). 배열이 `__array_namespace__()` 로 자기 라이브러리의 표준 이름공간을 알려 주면, 함수는 그 이름공간 `xp` 로 코드를 쓴다.",
+                    "이 PC 의 NumPy 2.4.6 배열은 `__array_namespace__()` 가 `numpy` 모듈 자체를 돌려준다. torch 2.15 텐서에는 이 메서드가 없어서(확인함) `array-api-compat` 패키지의 `array_namespace(x)` 같은 호환 계층을 거친다.",
+                    "언어론으로 보면 '같은 구문, 바꿀 수 있는 의미'를 인터페이스로 고정하는 일이다. 연산자 오버로딩이 연산자 수준의 다형성이라면, 배열 API 는 라이브러리 수준의 다형성이다."
+                ],
+                code: {
+                    lang: "python",
+                    title: "라이브러리를 고르지 않는 softmax",
+                    src: `import numpy as np
+
+def softmax(x):
+    xp = x.__array_namespace__()          # 배열이 자기 표준 이름공간을 알려 준다
+    m = xp.max(x, axis=-1, keepdims=True)
+    e = xp.exp(x - m)
+    return e / xp.sum(e, axis=-1, keepdims=True)
+
+x = np.array([[1.0, 2.0, 3.0]])
+print(x.__array_namespace__().__name__)   # numpy
+print(softmax(x).round(4))                # [[0.09   0.2447 0.6652]]`,
+                    note: "NumPy 2.4.6 실제 출력 · 최댓값을 빼는 것은 exp 넘침을 막는 표준 기법"
+                }
+            },
+            {
+                h: "실습: 추적 → 융합 → 트래픽 계산",
+                p: [
+                    "강의의 작은 추적기를 키워, 함수를 한 번 돌려 그래프를 얻고, 이어지는 원소별 연산을 한 커널로 묶고, 메모리 트래픽을 비교한다. Inductor 가 하는 일의 아주 작은 모형이다.",
+                    "실행 결과(Python 3.14): 그래프는 `mul → add → relu → sum` 4개 노드다. 즉시 실행이면 커널 4개, 융합하면 `[mul, add, relu]` 와 `[sum]` 2개다. 원소별 부분의 트래픽은 24 MB 에서 8 MB 로 줄어든다(float32 100만 개 기준).",
+                    "더 해 볼 것: (1) `sum` 같은 리덕션을 앞 원소별 연산과 함께 융합하면 트래픽이 얼마가 되는지 계산, (2) 함수 안에 `if` 를 넣고 `__bool__` 에서 그래프를 끊어 두 조각으로 나누기, (3) 같은 함수를 모양이 다른 입력으로 부를 때 '가드'를 검사해 재추적하는 캐시 추가."
+                ],
+                code: {
+                    lang: "python",
+                    title: "fuse.py",
+                    src: `class T:   # 연산을 기록하는 가짜 텐서
+    def __init__(self, name, g):
+        self.name, self.g = name, g
+    def _op(self, op, *args):
+        out = T(f"t{len(self.g)}", self.g)
+        self.g.append((out.name, op, [a.name if isinstance(a, T) else a for a in args]))
+        return out
+    def __mul__(self, k): return self._op("mul", self, k)
+    def __add__(self, k): return self._op("add", self, k)
+    def relu(self): return self._op("relu", self)
+    def sum(self): return self._op("sum", self)
+
+def model(x):
+    return (x * 2 + 1).relu().sum()
+
+g = []
+model(T("x", g))                 # 1) 추적: 그래프 얻기
+for node in g:
+    print(node)
+
+ELEMENTWISE = {"mul", "add", "relu"}
+kernels, cur = [], []            # 2) 이어지는 원소별 연산을 한 커널로
+for name, op, args in g:
+    if op in ELEMENTWISE:
+        cur.append(op)
+    else:
+        if cur: kernels.append(cur); cur = []
+        kernels.append([op])
+if cur: kernels.append(cur)
+print("eager kernels:", len(g), " fused kernels:", kernels)
+
+N, B = 1_000_000, 4              # 3) float32 100만 개의 트래픽
+eager = sum(2 * N * B for _, op, _ in g if op in ELEMENTWISE)   # 커널마다 읽기 1 + 쓰기 1
+fused = 2 * N * B                                               # x 읽기 1 + 결과 쓰기 1
+print(f"elementwise traffic: eager {eager/1e6:.0f} MB, fused {fused/1e6:.0f} MB")
+
+# ('t0', 'mul', ['x', 2])
+# ('t1', 'add', ['t0', 1])
+# ('t2', 'relu', ['t1'])
+# ('t3', 'sum', ['t2'])
+# eager kernels: 4  fused kernels: [['mul', 'add', 'relu'], ['sum']]
+# elementwise traffic: eager 24 MB, fused 8 MB`,
+                    note: "실행: `python fuse.py` · 실제 컴파일러는 융합 가능 여부를 모양·메모리 배치까지 보고 판단"
+                }
+            }
+        ],
+        pitfalls: [
+            "작은 텐서 연산을 Python 루프로 수천 번 → 배치로 묶거나 컴파일",
+            "jit 함수 안 `print` 로 값 디버깅 → 추적 때 한 번만 출력, `jax.debug.print` 사용",
+            "텐서 값으로 `if` → 그래프 끊김·추적 오류, `torch.where`·`lax.cond` 로",
+            "호출마다 입력 모양이 바뀜 → 가드가 깨져 재컴파일 반복",
+            "`torch.compile` 첫 호출 시간을 성능으로 잼 → 워밍업 후 측정",
+            "GPU 시간을 동기화 없이 잼 → 커널은 비동기, `torch.cuda.synchronize()` 후 측정"
+        ],
+        summary: [
+            "Python 은 위층 접착 언어, 계산은 C++·CUDA 커널 · 두 언어 문제를 '다시 쓰기' 대신 '층 나누기'로 풂",
+            "시간 ≈ 연산 수 × (호출 비용 + 계산) · 작은 연산이 많으면 호출이 병목",
+            "그래프 얻기: 추적(jax.jit), 바이트코드 분석(TorchDynamo) · 값 분기에서 끊김",
+            "그래프가 있어야 융합 · 원소별 연산은 메모리 트래픽이 곧 시간",
+            "커널은 DSL(Triton·CUDA), IR 기반은 MLIR, 라이브러리 경계는 배열 API 표준"
+        ]
+    },
+    "lang-llm": {
+        intro: "LLM 은 이제 코드의 상당 부분을 쓴다. 그런데 모델은 다음 토큰을 확률로 고를 뿐이라, 나온 코드가 문법에 맞는지, 타입이 맞는지, 의도대로 동작하는지 스스로 보장하지 않는다. 이 글은 그 보장을 어디서 얻는지를 언어론의 눈으로 본다. 핵심은 **검증기**(verifier)다. 컴파일러, 타입 검사기, 테스트, 증명 검사기처럼 '맞다/틀리다'를 기계적으로 판정하는 도구가 있으면 LLM 의 출력은 '후보'가 되고, 검증기의 오류 메시지는 다음 생성의 입력이 된다.",
+        sections: [
+            {
+                h: "LLM 은 무엇을 보장하지 않나",
+                p: [
+                    "언어 모델의 출력은 학습 데이터에서 본 패턴을 이어 쓴 토큰 줄이다. 대부분은 맞지만, 틀릴 때도 모양은 그럴듯하다. 흔한 실패는 다섯 갈래다. 괄호·들여쓰기 같은 구문 오류, 없는 함수나 인자를 부르는 API 환각, `str + int` 같은 타입 불일치, 경계값·빈 입력에서의 동작 오류, 그리고 요구 자체를 다르게 이해한 명세(specification) 오류다.",
+                    "뒤로 갈수록 잡기 비싸다. 구문 오류는 파서가 ms 단위로 잡고, 타입 불일치는 검사기가 실행 없이 잡는다. 동작 오류는 그 입력을 다루는 테스트가 있어야 보이고, 명세 오류는 테스트를 쓴 사람이 같은 오해를 했다면 끝까지 안 보인다. 그래서 '어떤 검증기를 붙였는가'가 '어떤 모델을 쓰는가'만큼 결과를 좌우한다."
+                ],
+                demo: "lesson"
+            },
+            {
+                h: "검증기의 사다리: 싼 것부터",
+                p: [
+                    "검증기는 비용과 보장이 다르다. 에이전트 루프에서는 싼 것부터 돌려 빨리 실패하게 하고, 비싼 것은 앞을 통과한 후보에만 쓴다.",
+                    "**린터**(linter)는 실행 없이 미사용 변수, 위험한 패턴, 스타일 위반을 찾는다. **속성 기반 테스트**(property-based testing)는 '결과는 [lo, hi] 안에 있다' 같은 성질을 적고 입력을 무작위로 수백~수천 개 만들어 검사한다. 예시 몇 개만 맞추는 코드의 빈틈을 찾는 데 특히 좋다(Python 은 Hypothesis 라이브러리). 다만 성질을 약하게 고르면 틀린 코드도 통과한다는 점을 맨 아래 실습에서 확인한다."
+                ],
+                table: {
+                    head: ["검증기", "잡는 것", "못 잡는 것", "비용"],
+                    rows: [
+                        ["구문 분석 (`compile`, `ast.parse`)", "괄호·들여쓰기·잘못된 토큰", "나머지 전부", "ms"],
+                        ["린터 (Ruff·ESLint·Clippy)", "미사용 변수, 위험 패턴, 스타일", "의도와 다른 동작", "ms–s"],
+                        ["타입 검사 (mypy·pyright·tsc·rustc)", "타입 불일치, 없는 속성, None 가능성", "값의 범위·경계", "s"],
+                        ["단위 테스트", "적어 둔 사례의 동작", "적지 않은 입력", "s–min"],
+                        ["속성 기반 테스트", "무작위 입력에서 성질 위반", "성질로 적지 않은 요구", "s–min"],
+                        ["형식 검증 (Dafny·Lean·Verus)", "명세에 대한 모든 입력의 위반", "명세 자체의 오류", "min–h, 사람 노력 큼"],
+                        ["사람 리뷰", "명세 오해, 설계 문제", "피로·누락", "가장 비쌈"]
+                    ]
+                }
+            },
+            {
+                h: "타입은 LLM 에게 무엇을 주나",
+                p: [
+                    "타입 검사기는 실행하지 않고도 '이 줄의 이 값은 이 자리에 올 수 없다'를 줄 번호와 함께 알려 준다. 강의 예에서 mypy 는 `label` 함수의 `str + int` 를 잡았는데, 이 함수는 호출되지 않으면 실행해도 터지지 않는다. 테스트가 그 경로를 지나지 않으면 테스트로는 끝내 못 잡는 오류다.",
+                    "Mündler et al.(2025)은 한 걸음 더 나가 타입을 생성 과정에 넣었다. **타입 제약 디코딩**(type-constrained decoding)은 모델이 다음 토큰을 고를 때, 지금까지의 코드에 이어 붙이면 타입 규칙상 올바른 프로그램이 될 수 없는 토큰을 막는다. HumanEval·MBPP 에서 컴파일 오류를 절반 넘게 줄였고 코드 합성·번역·수정에서 기능적 정확도도 올렸다고 보고한다. 문법만 강제하는 제약 디코딩보다 한 단계 강한 보장이다.",
+                    "생태계에서도 비슷한 흐름이 보인다. GitHub Octoverse 2025 는 2025년 8월 TypeScript 가 월간 기여자 수로 처음 1위가 됐다고 발표하며, 타입 시스템이 모호함을 줄이고 LLM 이 만든 오류를 일찍 잡는다고 해석했다. 다만 이것은 상관관계에 대한 해석이고, 보고서 스스로 다른 지수에서는 순위가 다를 수 있다고 적는다.",
+                    "Python 은 **점진적 타이핑**(gradual typing)이다. PEP 484 타입 힌트는 실행 중에 검사되지 않으므로 검사기를 돌리지 않으면 주석은 문서일 뿐이다. 검사기도 빨라지고 있다. Meta 의 Pyrefly 는 2026-05-12 에 1.0 안정판을 냈고, Astral 의 ty 는 2026-11 현재 베타(0.0.x)다. 둘 다 Rust 로 쓰였다. 검사가 빠를수록 에이전트 루프에서 매 수정마다 돌리기 쉽다."
+                ],
+                code: {
+                    lang: "python",
+                    title: "LLM 이 흔히 놓치는 None",
+                    src: `def find(names: list[str], key: str) -> str | None:
+    return key if key in names else None
+
+name = find(["a"], "b")
+print(name.upper())        # 실행하면 AttributeError: 'NoneType' ...
+
+# $ mypy infer.py
+# error: Item "None" of "str | None" has no attribute "upper"  [union-attr]
+
+if name is not None:       # 고친 판: 좁히기(narrowing) 후 사용
+    print(name.upper())`,
+                    note: "mypy 2.4.1 실제 출력 · 반환 타입에 `| None` 을 적어 두면 '없을 수 있음'이 명세가 되어 호출하는 쪽 코드를 검사기가 강제"
+                }
+            },
+            {
+                h: "오류 메시지가 곧 프롬프트",
+                p: [
+                    "검증기 루프에서 오류 메시지는 다음 생성의 입력이다. 좋은 메시지는 위치(파일·줄), 무엇이 틀렸는지, 가능하면 고치는 방향을 담는다. Python 3.14 는 괄호가 빠진 코드에 `'(' was never closed` 처럼 원인을 구체적으로 말하고, Rust 컴파일러는 오류마다 E0382(이동된 값 사용) 같은 코드를 붙이고 '여기서 이동됨', '여기서 다시 쓰임'을 소스 위에 표시한다. 이런 메시지는 사람에게도 좋지만 LLM 에게는 거의 그대로 수정 지시가 된다.",
+                    "되먹임 요령은 셋이다. 첫째, 메시지를 요약하지 말고 그대로 붙인다. 줄 번호와 기대 타입이 핵심 정보다. 둘째, 너무 긴 로그는 첫 오류와 마지막 몇 줄만 남긴다. 오류 하나가 수십 개의 연쇄 오류를 만들기 때문이다. 셋째, 테스트 실패에는 입력·기대값·실제값을 함께 준다. '테스트 실패'만으로는 무엇을 고칠지 알 수 없다.",
+                    "경계할 것은 '검증기를 속이는' 수정이다. 타입 오류를 `cast`·`# type: ignore`·`any` 로 덮거나, 테스트 입력만 특별 취급하는 분기를 넣거나, 테스트 자체를 고쳐 버리는 것이다. 검증기가 통과라고 말해도 diff 에서 이런 변화는 따로 확인해야 한다."
+                ]
+            },
+            {
+                h: "테스트가 명세다: pass@k 와 검증기 루프",
+                p: [
+                    "LLM 코드 벤치마크는 대부분 테스트로 채점한다. 한 문제에 n 개를 생성해 c 개가 통과했을 때, k 개를 골라 하나라도 통과할 확률의 추정값이 pass@k = 1 − C(n−c, k) / C(n, k) 다. n = 10, c = 3 이면 pass@1 = 0.3, pass@5 = 1 − 21/252 ≈ 0.917 이다.",
+                    "이 숫자에는 전제가 있다. k 개 중 어느 것이 맞는지 알 수 있어야 한다. 테스트 같은 검증기가 있으면 여러 번 생성해 통과한 것을 고르면 되지만, 검증기가 없으면 k 개는 그냥 k 개의 후보다. 한 번 성공 확률이 0.4 이고 시도가 독립이라면 3회 루프의 성공 확률은 1 − 0.6³ = 0.784 까지 오른다. 실제로는 같은 실수를 반복하는 경향이 있어 이보다 낮다.",
+                    "SWE-bench(Jimenez et al. 2023)는 이 방식을 실제 저장소로 넓혔다. Python 저장소 12곳의 실제 GitHub 이슈 2,294개를 주고 코드베이스를 고치게 한 뒤, 그 이슈에 딸린 테스트로 채점한다. 발표 당시 가장 좋은 모델(Claude 2)도 1.96% 만 해결했고, 이후 에이전트 방식이 발전하며 점수가 크게 올랐다. 거꾸로 말하면, 테스트가 약한 과제에서는 '통과'가 곧 '해결'이 아니다.",
+                    "**명세**(specification)는 '맞다'의 정의다. 시그니처, 문서의 예시(doctest), 테스트, 계약(`requires`/`ensures`), 정리(theorem)는 모두 강도가 다른 명세다. LLM 시대에는 명세를 먼저 쓰고 구현을 맡기는 순서가 자연스럽다. 구현은 다시 생성할 수 있지만, 명세는 사람이 의도를 고정한 기록이기 때문이다."
+                ]
+            },
+            {
+                h: "언어마다 LLM 성적이 다르다",
+                p: [
+                    "모델이 언어를 '아는' 정도는 학습 데이터에 그 언어가 얼마나 있었느냐에 크게 좌우된다. MultiPL-E(Cassano et al. 2022)는 Python 벤치마크 HumanEval·MBPP 를 18개 언어로 옮겨, 언어별 성적과 함께 언어 인기도·언어 특징이 성적에 주는 영향을 살폈다. Codex 는 여러 언어에서 Python 과 같거나 더 나은 성적을 냈다. 데이터 양만이 아니라 언어 특징도 성적에 영향을 준다는 뜻이다.",
+                    "실무 교훈은 셋이다. 작은 DSL 이나 드문 언어처럼 학습 데이터가 적은 언어에서는 모델이 다른 언어의 관용구를 섞어 쓰기 쉽다. 이때는 문법 요약과 예제를 컨텍스트에 넣고 컴파일러를 검증기로 붙인다. 언어에 새 문법이 들어온 직후에는 모델이 옛 문법을 쓰기 쉬우니 버전을 명시한다. 그리고 타입과 컴파일러가 엄격한 언어는 생성이 더 어렵더라도 검증이 싸다는 장점이 있다."
+                ]
+            },
+            {
+                h: "검증하기 좋은 코드의 모양",
+                p: [
+                    "같은 언어 안에서도 '검사기가 많이 볼 수 있는' 쓰는 법이 있다. 사람이 쓰든 LLM 이 쓰든, 이런 모양으로 쓰면 검증기의 그물이 촘촘해진다. 강의에서 본 '명세를 먼저'를 코드 모양으로 옮긴 것이다.",
+                    "가장 효과가 큰 것은 경우 나누기를 타입으로 닫는 것이다. 상태를 문자열 대신 열거형(enum)으로 두고 `match` 로 처리하면, 경우를 하나 빠뜨렸을 때 Rust 는 컴파일 오류(빠진 패턴)를 내고, Python 도 `assert_never` 를 두면 타입 검사기가 빠진 값을 알려 준다. LLM 이 새 상태를 추가하고 처리 코드 한 곳을 고치지 않는 실수가 실행 전에 잡힌다."
+                ],
+                list: [
+                    "상태·종류는 문자열 대신 열거형 + `match`, 마지막 갈래에 `assert_never`",
+                    "'없을 수 있음'은 반환 타입 `T | None` 으로 · 예외 대신 값으로 드러내기",
+                    "함수 경계(공개 함수)에는 항상 타입 주석 · 주석 없는 반환은 `Any` 가 되어 검사가 끊김",
+                    "부수효과(파일·네트워크)는 가장자리로, 계산은 순수 함수로 · 테스트가 쉬워짐",
+                    "포매터(Ruff·rustfmt·gofmt)로 모양을 고정 · LLM diff 에서 의미 없는 변경이 사라짐"
+                ],
+                code: {
+                    lang: "python",
+                    title: "빠진 경우를 검사기가 잡게 하기",
+                    src: `from enum import Enum
+from typing import assert_never
+
+class Light(Enum):
+    RED = 1
+    YELLOW = 2
+    GREEN = 3
+
+def next_light(s: Light) -> Light:
+    match s:
+        case Light.RED:
+            return Light.GREEN
+        case Light.GREEN:
+            return Light.YELLOW
+        case _:
+            assert_never(s)        # YELLOW 처리를 빠뜨림
+
+# $ mypy exh.py
+# exh.py:16: error: Argument 1 to "assert_never" has incompatible type
+#     "Literal[Light.YELLOW]"; expected "Never"  [arg-type]`,
+                    note: "mypy 2.4.1 실제 출력(한 줄을 둘로 나눠 표시) · 남은 경우가 없으면 s 의 타입이 `Never` 로 좁혀져 통과"
+                }
+            },
+            {
+                h: "형식 검증(formal verification)과 LLM",
+                p: [
+                    "**형식 검증**(formal verification)은 명세가 모든 입력에서 성립함을 기계가 확인하게 하는 방법이다. Dafny 는 메서드에 `requires`(전제)와 `ensures`(보장)를 적고, 루프에는 불변식(invariant)을 적으면 검증기가 증명을 시도한다. 앞 강의의 Hoare 삼중항 `{P} C {Q}` 의 실용판이다.",
+                    "어려운 부분은 사람이 써야 하던 불변식과 보조 정리다. DafnyBench(Loughridge et al. 2024)는 750개가 넘는 Dafny 프로그램에서 검증에 필요한 주석을 LLM 이 채우게 했고, 가장 좋은 모델·프롬프트 조합이 68% 를 통과했다. 중요한 구조는 '모델은 증명 후보를 내고, 검증기가 판정한다'는 것이다. 증명 검사기는 틀린 증명을 통과시키지 않으므로 모델을 믿을 필요가 없다.",
+                    "남는 위험은 명세 자체다. 검증은 '코드가 명세를 지킨다'를 보장할 뿐 '명세가 의도와 같다'를 보장하지 않는다. 아래 예에서 둘째 `ensures` 를 빼면 '더 큰 값 + 1' 을 돌려주는 엉뚱한 구현도 검증을 통과한다."
+                ],
+                code: {
+                    lang: "text",
+                    title: "Dafny: 명세가 곧 정답의 정의",
+                    src: `method Max(a: int, b: int) returns (m: int)
+  ensures m >= a && m >= b      // 둘보다 크거나 같고
+  ensures m == a || m == b      // 둘 중 하나다   ← 이 줄이 없으면 a+1, b+1 도 통과
+{
+  if a >= b { m := a; } else { m := b; }
+}`,
+                    note: "문법 예시 (이 글에서 Dafny 를 실행하지는 않음) · 명세가 약하면 증명도 약함"
+                }
+            },
+            {
+                h: "자연어는 프로그래밍 언어가 될 수 있나",
+                p: [
+                    "Dijkstra 는 1970년대 후반의 글 EWD667(On the foolishness of \"natural language programming\")에서 **자연어 프로그래밍**(natural language programming)을 어리석은 생각이라 부르며, 형식 기호를 쓰는 것을 부담이 아니라 특권으로 여겨야 한다고 썼다. 형식 기호는 말이 안 되는 문장을 쓰기 어렵게 하지만, 자연어는 말이 안 된다는 것이 잘 드러나지 않는 문장을 쓰기 쉽게 만든다는 것이다.",
+                    "LLM 은 자연어 프로그래밍을 실제로 쓸 만하게 만들었지만 Dijkstra 의 지적은 그대로 남는다. '날짜를 파싱하라'는 요청은 형식·공백·잘못된 날짜·시간대를 정하지 않는다. 모델은 빈칸을 그럴듯하게 채우고, 그 선택은 사람이 확인하기 전까지 보이지 않는다. 그래서 실무의 답은 '자연어로 시작하되 형식으로 고정'이다. 자연어 요청 → 시그니처·예시·테스트 → 구현 → 검증기의 순서다.",
+                    "Karpathy 는 2017년 글 'Software 2.0' 에서 신경망 가중치가 사람이 쓰는 코드를 대신하는 흐름을 그렸다. 오늘의 코드 생성은 그 중간 형태다. 코드는 여전히 형식 언어로 남지만, 그 코드를 만드는 입력이 자연어와 명세가 됐다. 오래 남는 자산은 명세와 테스트이고, 구현은 점점 '다시 생성할 수 있는 산출물'에 가까워진다."
+                ]
+            },
+            {
+                h: "실습: 검증기 루프와 속성 테스트",
+                p: [
+                    "LLM 대신 정해 둔 후보 3개를 차례로 내는 가짜 생성기로 루프의 뼈대를 만든다(강의의 첫 코드). 검증은 구문(`compile`) → 동작(테스트 4개) 순서이고, 실패하면 오류 문구를 프롬프트에 붙인다. 실제 모델을 붙이려면 `CANDIDATES[attempt]` 를 OpenAI 호환 API 호출로 바꾸고 주소·모델 이름은 환경 변수로 받는다.",
+                    "실행 결과(Python 3.14): 1회차 `SyntaxError line 2: '(' was never closed`, 2회차 `test failed: clamp(10, 0, 10) = 9, want 10`, 3회차 PASS. 두 번째 후보는 문법도 타입도 맞지만 경계값에서 틀린다. 타입 검사로는 못 잡고 테스트가 잡는 전형이다.",
+                    "아래 코드는 같은 두 번째 후보를 속성 테스트로 검사한다. '결과는 [lo, hi] 안'이라는 성질은 무작위 입력 1,000개를 모두 통과한다. `hi - 1` 도 범위 안이기 때문이다. 'x 가 [lo, hi] 안이면 x 를 그대로'라는 성질을 더하면 바로 반례(x = 14, lo = −31, hi = 14 → 13)가 나온다. 검증기의 힘은 명세의 강도를 넘지 못한다.",
+                    "더 해 볼 것: (1) `exec` 대신 `subprocess` 와 시간 제한으로 생성 코드를 격리, (2) 같은 오류가 두 번 나오면 루프를 멈추는 규칙, (3) 반례를 찾으면 그 입력을 단위 테스트로 영구히 추가."
+                ],
+                code: {
+                    lang: "python",
+                    title: "prop.py — 약한 성질과 강한 성질",
+                    src: `import random
+
+def clamp_bad(x, lo, hi):
+    return max(lo, min(x, hi - 1))     # 2회차 후보: 경계값 실수
+
+def prop_range(f, x, lo, hi):          # 성질 1: 결과는 [lo, hi] 안
+    return lo <= f(x, lo, hi) <= hi
+
+def prop_identity(f, x, lo, hi):       # 성질 2: x 가 [lo, hi] 안이면 x 그대로
+    return not (lo <= x <= hi) or f(x, lo, hi) == x
+
+def check(prop, f, n=1000, seed=0):
+    rnd = random.Random(seed)
+    for _ in range(n):
+        lo = rnd.randint(-50, 50)
+        hi = lo + rnd.randint(1, 50)
+        x = rnd.randint(-100, 100)
+        if not prop(f, x, lo, hi):
+            return f"counterexample: x={x}, lo={lo}, hi={hi} -> {f(x, lo, hi)}"
+    return "ok (1000 cases)"
+
+print("range   :", check(prop_range, clamp_bad))
+print("identity:", check(prop_identity, clamp_bad))
+# range   : ok (1000 cases)
+# identity: counterexample: x=14, lo=-31, hi=14 -> 13`,
+                    note: "표준 라이브러리만 사용 · Hypothesis 를 쓰면 입력 생성과 반례 축소(shrinking)를 대신해 줌"
+                }
+            }
+        ],
+        pitfalls: [
+            "생성 코드를 바로 커밋 → 최소한 구문·타입·테스트 루프를 거침",
+            "오류 메시지를 요약해 되먹임 → 줄 번호·기대 타입이 사라짐",
+            "같은 LLM 이 테스트와 구현을 함께 씀 → 같은 오해가 양쪽에 들어감, 명세는 사람이 확인",
+            "`# type: ignore`·`cast`·테스트 수정으로 얻은 '통과' → diff 에서 따로 확인",
+            "생성 코드를 같은 프로세스에서 `exec` → 샌드박스·시간 제한",
+            "루프 상한 없음 → 비용 폭주, 같은 오류가 반복되면 중단"
+        ],
+        summary: [
+            "LLM 출력은 후보 · 보장은 검증기에서 나옴",
+            "싼 검증기(구문·린터·타입)부터, 비싼 것(테스트·증명·사람)은 뒤에",
+            "타입은 실행 없이, 테스트는 사례를, 형식 검증은 모든 입력을",
+            "명세(시그니처·예시·테스트·계약)가 진짜 소스 · 구현은 다시 생성 가능",
+            "오류 메시지는 그대로 되먹이고, 검증기를 속이는 수정을 경계"
+        ]
     }
 });

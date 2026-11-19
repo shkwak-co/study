@@ -3,7 +3,7 @@
     "use strict";
 
     // Add a new track: create content/<id>.js and list the id here.
-    const TRACK_IDS = ["embedded", "assembly", "memory", "robotics", "languages", "data-structures", "protocols", "deep-learning", "ai", "rag"];
+    const TRACK_IDS = ["embedded", "assembly", "memory", "robotics", "languages", "data-structures", "protocols", "deep-learning", "numpy-torch", "ai", "rag"];
     const EXTRA = [{
         id: "fpga",
         name: "FPGA / ASIC",
@@ -18,7 +18,7 @@
         { name: "소프트웨어 기초", tracks: ["languages", "data-structures"] },
         { name: "통신", tracks: ["protocols"] },
         { name: "로보틱스", tracks: ["robotics"] },
-        { name: "AI", tracks: ["deep-learning", "ai", "rag"] }
+        { name: "AI", tracks: ["deep-learning", "numpy-torch", "ai", "rag"] }
     ];
 
     const LAB = window.LAB = window.LAB || {};

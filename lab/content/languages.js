@@ -77,6 +77,22 @@ LAB.track({
                 { title: "Product Security Bad Practices", by: "CISA", year: 2025, url: "https://www.cisa.gov/resources-tools/resources/product-security-bad-practices", kind: "doc" },
                 { title: "C++26 is done! — Trip report: March 2026 ISO C++ standards meeting (London Croydon, UK)", by: "Sutter", year: 2026, url: "https://herbsutter.com/2026/03/29/c26-is-done-trip-report-march-2026-iso-c-standards-meeting-london-croydon-uk/", kind: "doc" }
             ]
+        },
+        {
+            title: "AI 코딩 시대의 타입 있는 언어",
+            when: "2025–2026",
+            points: [
+                "Octoverse 2025: 2025-08 TypeScript 가 **월간 기여자 수**로 GitHub 1위 (약 264만, Python·JavaScript 추월)",
+                "GitHub 의 해석: 타입이 에이전트가 쓴 코드의 오류를 일찍 잡음 · 상관관계이며 인과는 입증 안 됨",
+                "Rust 로 쓴 Python **타입 검사기(type checker)**: Pyrefly 1.0 안정판 (2026-05-12) · ty 는 아직 베타 0.0.x (2026-11)",
+                "LLM + **형식 검증(formal verification)**: DafnyBench 750+ 프로그램, 검증 주석 채우기 최고 68% (2024)"
+            ],
+            refs: [
+                { title: "Octoverse: A new developer joins GitHub every second as AI leads TypeScript to #1", by: "GitHub", year: 2025, url: "https://github.blog/news-insights/octoverse/octoverse-a-new-developer-joins-github-every-second-as-ai-leads-typescript-to-1/", kind: "doc" },
+                { title: "Pyrefly v1.0.0 release notes", by: "Meta", year: 2026, url: "https://github.com/facebook/pyrefly/releases/tag/1.0.0", kind: "doc" },
+                { title: "ty — PyPI", by: "Astral", url: "https://pypi.org/project/ty/", kind: "doc" },
+                { title: "DafnyBench: A Benchmark for Formal Software Verification", by: "Loughridge et al.", year: 2024, url: "https://arxiv.org/abs/2406.08467", kind: "paper" }
+            ]
         }
     ],
     lessons: [
@@ -1222,6 +1238,459 @@ while queue:
                 { title: "The Art of Computer Programming, Vol. 3: Sorting and Searching (2nd ed.)", by: "Knuth", year: 1998, url: "https://www-cs-faculty.stanford.edu/~knuth/taocp.html", kind: "book" },
                 { title: "Time complexity of operations on built-in types", by: "Python Software Foundation", url: "https://docs.python.org/3/builtins/time-complexity.html", kind: "doc" },
                 { title: "collections — Container datatypes", by: "Python Software Foundation", url: "https://docs.python.org/3/library/collections.html", kind: "doc" }
+            ]
+        },
+        {
+            id: "plt-basics",
+            title: "언어론 기초 — 구문·의미·타입·평가",
+            level: 1,
+            mins: 15,
+            pre: ["languages/build"],
+            checked: "2026-11-19",
+            key: [
+                "**구문(syntax)**은 모양, **의미론(semantics)**은 실행 결과 · 문법은 BNF·PEG 로 적음",
+                "컴파일러는 **추상 구문 트리(abstract syntax tree, AST)**를, LLM 은 토큰 줄을 봄",
+                "정적/동적 = 타입을 **언제** 검사 · 강/약 = 암묵 변환을 **얼마나** 허용",
+                "**타입 건전성(type soundness)**: 검사를 통과하면 실행 중 타입 붕괴 없음 (Milner 1978)",
+                "**평가 전략(evaluation strategy)**: 인자를 먼저(엄격) vs 필요할 때(**지연 평가(lazy evaluation)**)"
+            ],
+            concepts: [
+                { term: "구문", en: "Syntax", def: "어떤 문자열이 프로그램으로 '모양이 맞는지'를 정하는 규칙 · 문법(grammar)으로 적음" },
+                { term: "의미론", en: "Semantics", def: "모양이 맞는 프로그램이 '무엇을 하는지'를 정하는 규칙 · 같은 `*` 도 타입마다 의미가 다름" },
+                { term: "추상 구문 트리", en: "Abstract Syntax Tree (AST)", def: "괄호·공백을 버리고 연산 구조만 남긴 나무 · 우선순위가 모양에 들어감" },
+                { term: "타입 건전성", en: "Type soundness", def: "타입 검사를 통과한 프로그램은 실행 중 타입 오류로 '잘못되지' 않는다는 성질" },
+                { term: "평가 전략", en: "Evaluation strategy", def: "식을 언제 계산하나 · 엄격(값 먼저) vs 지연(필요할 때)" }
+            ],
+            demo: {
+                type: "steps",
+                nodes: [
+                    { id: "llm", label: "LLM", sub: "토큰을 하나씩 출력", x: 0, y: 0 },
+                    { id: "src", label: "소스 코드", sub: "x = 1 + 2 * y", x: 1, y: 0 },
+                    { id: "lex", label: "어휘 분석", sub: "NAME OP NUMBER…", x: 2, y: 0 },
+                    { id: "parse", label: "구문 분석", sub: "문법 규칙 적용", x: 3, y: 0 },
+                    { id: "ast", label: "AST", sub: "BinOp(1,+,BinOp…)", x: 3, y: 1 },
+                    { id: "tc", label: "타입 검사", sub: "int + int → int", x: 2, y: 1 },
+                    { id: "ir", label: "IR", sub: "바이트코드·LLVM IR", x: 1, y: 1 },
+                    { id: "run", label: "실행", sub: "기계어 / VM", x: 0, y: 1 }
+                ],
+                edges: [
+                    { from: "llm", to: "src", label: "생성" },
+                    { from: "src", to: "lex" },
+                    { from: "lex", to: "parse" },
+                    { from: "parse", to: "ast" },
+                    { from: "ast", to: "tc" },
+                    { from: "tc", to: "ir" },
+                    { from: "ir", to: "run" }
+                ],
+                steps: [
+                    { on: ["llm", "llm>src"], text: "LLM 은 다음 토큰을 확률로 고를 뿐 · 결과는 아직 '그럴듯한 텍스트'이고 문법도 보장 안 됨" },
+                    { on: ["src", "src>lex", "lex"], text: "**어휘 분석기(lexer)**: 문자 → 토큰 `x` `=` `1` `+` `2` `*` `y` · 공백·주석은 사라짐" },
+                    { on: ["lex>parse", "parse"], text: "**구문 분석기(parser)**: 토큰 줄을 문법 규칙에 맞춰 나무로 · 괄호 짝이 틀리면 여기서 SyntaxError" },
+                    { on: ["parse>ast", "ast"], text: "AST: `1 + 2 * y` → `BinOp(1, +, BinOp(2, *, y))` · 곱셈이 먼저라는 규칙이 나무 모양에 박힘" },
+                    { on: ["ast>tc", "tc"], text: "정적 언어는 실행 전에 여기서 타입을 거름 · Python 은 이 검사가 실행 중(동적)에 일어남" },
+                    { on: ["tc>ir", "ir"], text: "중간 표현(IR)으로 낮춤 · CPython 은 바이트코드, Clang 은 LLVM IR" },
+                    { on: ["ir>run", "run"], text: "실행: 의미 규칙대로 값이 나와야 함 · LLM 이 쓴 코드도 결국 이 줄을 모두 통과해야 '동작'" }
+                ]
+            },
+            code: [
+                {
+                    lang: "python",
+                    title: "같은 한 줄: 토큰 → AST → 의미 검사",
+                    src: `import ast, io, tokenize
+
+src = "x = 1 + 2 * y"
+
+# 1) 어휘 분석: 문자 → 토큰
+toks = [t.string for t in tokenize.generate_tokens(io.StringIO(src).readline)
+        if t.type not in (tokenize.NEWLINE, tokenize.ENDMARKER)]
+print(toks)        # ['x', '=', '1', '+', '2', '*', 'y']
+
+# 2) 구문 분석: 토큰 → 나무 (우선순위가 모양으로)
+print(ast.dump(ast.parse(src).body[0].value))
+# BinOp(left=Constant(value=1), op=Add(),
+#       right=BinOp(left=Constant(value=2), op=Mult(), right=Name(id='y', ctx=Load())))
+
+# 3) 모양은 맞아도 규칙 위반은 다음 단계에서
+ast.parse("return 42")                 # 트리는 만들어짐
+compile("return 42", "m.py", "exec")   # SyntaxError: 'return' outside function`,
+                    note: "Python 3.14 에서 실행 · `tokenize` 토큰은 문법 단위, LLM 토큰(BPE)은 통계 단위라 경계가 다름"
+                },
+                {
+                    lang: "python",
+                    title: "두 축: 언제 검사하나(정적/동적) · 얼마나 변환하나(강/약)",
+                    src: `def area(w, h):
+    return w * h
+
+print(area(3, 4))      # 12
+print(area("ab", 3))   # ababab   ← 동적 타입: 실행해 봐야 무슨 일인지 앎
+print(1 + "1")         # TypeError: unsupported operand type(s) for +: 'int' and 'str'
+                       #          ← 강한 타입: 암묵 변환 거부
+
+# JavaScript (Node):  1 + "1" → "11",  "3" * "4" → 12   ← 약한 타입: 알아서 변환`,
+                    note: "Python·JS 는 둘 다 동적 · 차이는 강/약 축 · C 는 정적이지만 `int`↔`double`·포인터 변환에 관대"
+                }
+            ],
+            optimize: [
+                {
+                    title: "설정 문자열 읽기: `eval` → `ast.literal_eval`",
+                    before: { lang: "python", src: `cfg = eval(open("cfg.txt").read())   # 문자열을 '코드'로 실행 → 무엇이든 실행됨` },
+                    after: { lang: "python", src: `import ast
+text = open("cfg.txt").read()
+if len(text) > 10_000:                 # 문서: 큰 입력은 메모리·스택을 소모할 수 있음
+    raise ValueError("config too large")
+cfg = ast.literal_eval(text)           # 리터럴(숫자·문자열·list·dict…)만 허용
+# literal_eval("__import__('os').getcwd()") → ValueError: malformed node or string on line 1: Call` },
+                    gain: "함수 호출이 든 입력은 실행 전에 거부",
+                    note: "구문 분석 결과(AST)에서 허용한 노드만 값으로 바꿈 · 실행이 아니라 '모양 검사'"
+                },
+                {
+                    title: "실행해야 터지는 타입 오류 → 주석 + 정적 검사",
+                    before: { lang: "python", src: `def total(items):
+    return sum(i.price for i in items)
+
+total([Item("pen", 3), {"name": "cup", "price": 5}])
+# 실행 중: AttributeError: 'dict' object has no attribute 'price'` },
+                    after: { lang: "python", src: `def total(items: list[Item]) -> int:
+    return sum(i.price for i in items)
+
+total([Item("pen", 3), {"name": "cup", "price": 5}])
+# mypy: error: List item 1 has incompatible type "dict[str, object]"; expected "Item"  [list-item]` },
+                    gain: "실행 전 발견",
+                    note: "mypy 2.4.1 실제 출력 · Python 은 주석을 실행 중에 검사하지 않음 → 검사기를 따로 돌려야 함"
+                }
+            ],
+            glossary: [
+                { term: "BNF", en: "Backus–Naur Form", def: "`<expr> ::= <expr> \"+\" <term> | <term>` 식으로 문법을 적는 표기 · ALGOL 60 보고서로 널리 퍼짐" },
+                { term: "PEG", en: "Parsing Expression Grammar", def: "순서 있는 선택(앞 대안 우선)이라 모호함이 없는 문법 표기 · CPython 3.9 부터 파서 문법" },
+                { term: "어휘 분석기", en: "Lexer (lexical analyzer)", def: "문자열을 토큰(이름·숫자·연산자)으로 자르는 단계 · 공백·주석은 여기서 사라짐" },
+                { term: "구문 분석기", en: "Parser", def: "토큰 줄을 문법 규칙에 맞춰 트리로 만드는 단계 · 괄호 짝이 틀리면 여기서 오류" },
+                { term: "힌들리-밀너 타입 추론", en: "Hindley–Milner type inference", def: "주석 없이 가장 일반적인 타입을 찾는 방법 · ML·OCaml·Haskell 의 기반 (Milner 1978 의 알고리즘 W)" },
+                { term: "지연 평가", en: "Lazy evaluation", def: "값이 필요할 때까지 계산을 미룸 · Haskell 기본, Python 은 제너레이터·`and`/`or` 에서 부분적으로" }
+            ],
+            quiz: [
+                { q: "`1 + \"1\"` 이 Python 에선 TypeError, JavaScript 에선 \"11\". 이 차이를 가르는 축은?", options: ["정적 vs 동적 타입", "강한 vs 약한 타입", "컴파일 vs 인터프리트", "엄격 vs 지연 평가"], a: 1, why: "둘 다 동적 타입 · 차이는 암묵 변환을 허용하느냐 (JS 는 약한 타입이라 숫자를 문자열로 바꿈)" },
+                { q: "함수 밖에 `return 42` 한 줄만 있는 소스를 `ast.parse` 하면?", options: ["SyntaxError 발생", "트리가 만들어짐", "TypeError 발생", "None 을 반환"], a: 1, why: "문장 모양은 문법에 맞음 · 'return 은 함수 안에서만'은 compile 단계 검사 (실행 결과: 'return' outside function)" },
+                { q: "Milner (1978) 의 의미 건전성 정리가 말하는 것은?", options: ["타입 검사기는 어떤 입력에서도 유한 시간에 끝난다", "잘 타입된 프로그램은 '잘못되지' 않는다", "타입이 맞으면 논리 버그도 없다", "모든 변수에 타입 주석이 필요하다"], a: 1, why: "'well-typed programs cannot go wrong' = 타입 오류로 인한 실행 중 붕괴가 없음 · 논리 버그까지 막지는 않음" },
+                { q: "엄격 평가 언어에서 `f(g())` 를 부르면 `g()` 는 언제 계산되나?", options: ["f 본문에서 처음 쓰일 때", "f 로 들어가기 전에", "f 가 반환된 뒤에", "결과를 출력할 때"], a: 1, why: "엄격 평가(Python·C·Java)는 인자를 먼저 계산 · '처음 쓰일 때'는 지연 평가(Haskell)" },
+                { q: "Hindley–Milner 추론으로 OCaml `fun x -> x` 의 타입은?", options: ["int -> int", "'a -> 'a", "unit -> unit", "추론할 수 없음"], a: 1, why: "x 에 아무 제약이 없으니 가장 일반적인 타입은 다형 타입 'a -> 'a · 주석 없이 결정됨" },
+                { q: "제약 없는 디코딩으로 LLM 이 낸 코드에 대해, 컴파일러에 넣기 전에 보장되는 것은?", options: ["문법이 맞음", "타입이 맞음", "아무것도 없음", "테스트 통과"], a: 2, why: "모델은 확률로 다음 토큰을 고를 뿐 · 문법·타입 보장은 제약 디코딩이나 검사기를 붙여야 생김" },
+                { type: "num", q: "`tokenize` 로 `x = 1 + 2 * y` 를 자르면 NEWLINE·ENDMARKER 를 빼고 토큰이 몇 개?", answer: 7, tol: 0, unit: "개", why: "x, =, 1, +, 2, *, y · 공백은 토큰이 아님 (Python 3.14 실행)" },
+                { type: "num", q: "출력은? (`range(10**9)` 인데 바로 끝난다)", code: { lang: "python", src: "gen = (x * x for x in range(10**9))\nprint(next(gen) + next(gen) + next(gen))" }, answer: 5, tol: 0, why: "제너레이터는 지연 평가 · 요청한 0, 1, 4 만 계산 → 5" },
+                { type: "text", q: "출력은?", code: { lang: "python", src: "print(1 + 2 * 3 ** 2)" }, answer: ["19"], why: "문법이 우선순위를 정함: `**` > `*` > `+` → 1 + 2 × 9 = 19" },
+                { type: "text", q: "출력은? (Node.js)", code: { lang: "js", src: "console.log(1 + \"1\", \"3\" * \"4\")" }, answer: ["11 12"], why: "약한 타입: `+` 는 문자열이 있으면 연결, `*` 는 숫자로 변환 → \"11\", 12" },
+                { type: "text", q: "출력은?", code: { lang: "python", src: "def loud(v):\n    print(v, end=\" \")\n    return v\n\nx = loud(0) and loud(1)\ny = loud(2) or loud(3)\nprint(x, y)" }, answer: ["0 2 0 2"], why: "단락 평가: `and` 는 왼쪽이 거짓(0)이면, `or` 는 왼쪽이 참(2)이면 오른쪽을 계산하지 않음 → 1, 3 은 출력 안 됨" },
+                { type: "order", q: "컴파일러가 소스를 처리하는 순서", items: ["어휘 분석 (토큰)", "구문 분석 (AST)", "의미 분석·타입 검사", "중간 표현(IR) 생성", "최적화·코드 생성"], why: "모양 → 뜻 → 낮은 표현 → 기계어 · 앞 단계 오류는 뒤 단계에 닿지 못함" }
+            ],
+            refs: [
+                { title: "A Theory of Type Polymorphism in Programming", by: "Milner", year: 1978, url: "https://homepages.inf.ed.ac.uk/wadler/papers/papers-we-love/milner-type-polymorphism.pdf", kind: "paper" },
+                { title: "Why Functional Programming Matters", by: "Hughes", year: 1990, url: "https://www.cs.kent.ac.uk/people/staff/dat/miranda/whyfp90.pdf", kind: "paper" },
+                { title: "Full Grammar specification", by: "Python Software Foundation", url: "https://docs.python.org/3/reference/grammar.html", kind: "spec" },
+                { title: "ast — Abstract syntax trees", by: "Python Software Foundation", url: "https://docs.python.org/3/library/ast.html", kind: "doc" }
+            ]
+        },
+        {
+            id: "lang-ai-stack",
+            title: "AI 스택의 언어 — 위는 Python, 아래는 C++·CUDA",
+            level: 2,
+            mins: 18,
+            pre: ["languages/python-internals", "languages/plt-basics"],
+            checked: "2026-11-19",
+            key: [
+                "**두 언어 문제(two-language problem)**: 시제품은 쉬운 언어, 속도는 다른 언어로 다시",
+                "ML 의 타협: Python 은 **접착 언어(glue language)**, 계산은 C++·CUDA 커널",
+                "연산마다 µs 단위 호출 비용 · 작은 연산이 수천 개면 계산보다 호출이 병목",
+                "**즉시 실행(eager execution)** → 그래프 캡처 → **커널 융합(kernel fusion)** (`torch.compile`)",
+                "커널은 DSL 로: Triton(타일 단위) · CUDA C++ · MLIR 로 여러 하드웨어"
+            ],
+            concepts: [
+                { term: "두 언어 문제", en: "Two-language problem", def: "시제품은 쉬운 고수준 언어로, 성능·배포용은 다른 언어로 다시 쓰는 관행 (Bezanson et al.)" },
+                { term: "외부 함수 인터페이스", en: "Foreign Function Interface (FFI)", def: "다른 언어로 컴파일된 함수를 부르는 통로 · Python C API, ctypes, pybind11" },
+                { term: "즉시 실행", en: "Eager execution", def: "연산을 만나는 즉시 실행 (define-by-run) · 디버깅 쉬움, 연산 사이 최적화는 어려움" },
+                { term: "추적 JIT", en: "Tracing just-in-time (JIT) compilation", def: "가짜 값으로 함수를 한 번 돌려 연산을 기록하고 그 그래프를 컴파일 · `jax.jit`" },
+                { term: "커널 융합", en: "Kernel fusion", def: "원소별 연산 여러 개를 커널 하나로 묶어 메모리 왕복을 줄임" }
+            ],
+            demo: {
+                type: "steps",
+                nodes: [
+                    { id: "py", label: "Python", sub: "relu(x * 2 + 1)", x: 0, y: 0 },
+                    { id: "disp", label: "디스패처", sub: "C++ · dtype·device", x: 1, y: 0 },
+                    { id: "k3", label: "커널 ×3", sub: "mul · add · relu", x: 2, y: 0 },
+                    { id: "gpu", label: "GPU 메모리", sub: "왕복 3번", x: 3, y: 0 },
+                    { id: "dyn", label: "Dynamo", sub: "바이트코드 → 그래프", x: 1, y: 1 },
+                    { id: "ind", label: "Inductor", sub: "융합 + 코드 생성", x: 2, y: 1 },
+                    { id: "tri", label: "Triton 커널", sub: "mul+add+relu 1개", x: 3, y: 1 }
+                ],
+                edges: [
+                    { from: "py", to: "disp", label: "eager" },
+                    { from: "disp", to: "k3" },
+                    { from: "k3", to: "gpu" },
+                    { from: "py", to: "dyn", label: "compile" },
+                    { from: "dyn", to: "ind" },
+                    { from: "ind", to: "tri" },
+                    { from: "tri", to: "gpu" }
+                ],
+                steps: [
+                    { on: ["py"], text: "모델 코드는 Python · 읽고 바꾸기 쉬움 · 무거운 계산은 여기서 하지 않음" },
+                    { on: ["py>disp", "disp"], text: "**즉시 실행(eager execution)**: 연산마다 Python → C++ 디스패처 · **외부 함수 인터페이스(FFI)** 너머에서 dtype·장치를 보고 커널 선택" },
+                    { on: ["disp>k3", "k3", "k3>gpu", "gpu"], text: "mul, add, relu 가 커널 3개 · 중간 결과가 메모리를 매번 읽고 씀 · 호출 비용도 3번" },
+                    { on: ["py>dyn", "dyn"], text: "`torch.compile`: TorchDynamo 가 Python 프레임 실행에 끼어들어 바이트코드를 분석 → 연산 그래프(FX) 추출" },
+                    { on: ["dyn>ind", "ind"], text: "TorchInductor: 그래프 전체를 보고 **커널 융합(kernel fusion)** · GPU 는 Triton, CPU 는 C++/OpenMP 코드 생성" },
+                    { on: ["ind>tri", "tri", "tri>gpu", "gpu"], text: "커널 1개가 x 를 한 번 읽고 결과를 한 번 씀 · Python 코드는 그대로, 아래층만 바뀜" }
+                ]
+            },
+            code: [
+                {
+                    lang: "python",
+                    title: "추적의 원리: 값 대신 '기록하는 객체'를 넣어 함수를 한 번 돌린다",
+                    src: `class T:  # 아주 작은 추적기: 값을 계산하지 않고 연산을 기록한다
+    def __init__(self, name, log):
+        self.name, self.log = name, log
+    def _op(self, op, k):
+        out = T(f"t{len(self.log)}", self.log)
+        self.log.append((out.name, op, self.name, k))
+        return out
+    def __mul__(self, k): return self._op("mul", k)
+    def __add__(self, k): return self._op("add", k)
+    def __bool__(self): raise TypeError("추적 중에는 값으로 분기할 수 없다")
+
+def f(x):
+    print("Python 본문 실행")   # 추적할 때 한 번만 실행된다
+    return x * 2 + 1
+
+log = []
+f(T("x", log))
+print(log)    # [('t0', 'mul', 'x', 2), ('t1', 'add', 't0', 1)]
+
+def g(x):
+    if x:                       # 값에 따른 분기 → 기록할 수 없음
+        return x * 2
+    return x
+g(T("x", []))  # TypeError: 추적 중에는 값으로 분기할 수 없다`,
+                    note: "**연산자 오버로딩(operator overloading)** 덕분에 같은 `f` 가 숫자에도, 추적기에도 동작 · `jax.jit` 의 tracer 와 같은 발상"
+                },
+                {
+                    lang: "python",
+                    title: "torch.compile 이 그래프를 끊는 곳 보기",
+                    src: `import torch
+
+def f(x):
+    y = x * 2
+    if y.sum() > 0:              # 텐서 '값'에 따른 분기
+        return torch.relu(y + 1)
+    return y
+
+print(torch._dynamo.explain(f)(torch.randn(8)))
+# Break Reasons:
+#   Break Reason 1:
+#     Reason: generic_jump TensorVariable()      ← if 줄(4행)에서 그래프가 끊김
+
+fast = torch.compile(f)   # 첫 호출: 캡처 + 코드 생성(느림) · 이후: 가드 확인 후 캐시된 코드`,
+                    note: "torch 2.15.0 (CPU) 에서 실행한 `explain` 출력 · 끊긴 곳마다 Python 으로 돌아와 다시 그래프를 시작"
+                }
+            ],
+            optimize: [
+                {
+                    title: "작은 배열 1만 번 → 큰 배열 한 번 (호출 묶기)",
+                    before: { lang: "python", src: `small = [np.ones(4) for _ in range(10000)]
+out = [v * 2.0 for v in small]        # 호출 1만 번: 5.1–5.4 ms` },
+                    after: { lang: "python", src: `big = np.ones((10000, 4))
+out = big * 2.0                       # 호출 1번: 0.006–0.009 ms` },
+                    gain: "×575–794 (이 PC 측정)",
+                    note: "계산량은 같음 · 차이는 호출당 약 0.5 µs 의 Python·디스패치 비용 (NumPy 2.4, Python 3.14) · torch CPU 작은 연산은 약 3 µs"
+                },
+                {
+                    title: "원소별 연산 3개 → 융합 커널 1개",
+                    before: { lang: "python", src: `y = torch.relu(x * 2 + 1)    # eager: mul, add, relu 커널 3개
+# x: float32 100만 개 → 커널마다 4 MB 읽고 4 MB 씀 = 24 MB` },
+                    after: { lang: "python", src: `f = torch.compile(lambda x: torch.relu(x * 2 + 1))
+y = f(x)                     # 융합 커널 1개: 4 MB 읽고 4 MB 씀 = 8 MB` },
+                    gain: "메모리 트래픽 24 → 8 MB",
+                    note: "원소별 연산은 메모리 대역폭이 한계라 트래픽이 곧 시간 · 첫 호출은 컴파일 시간, 모양이 바뀌면 재컴파일"
+                }
+            ],
+            glossary: [
+                { term: "접착 언어", en: "Glue language", def: "다른 언어로 만든 부품을 이어 붙이는 언어 · 느려도 전체 시간에서 비중이 작으면 문제없음" },
+                { term: "스테이징", en: "Multi-stage programming (staging)", def: "프로그램이 '나중에 실행할 프로그램'을 만드는 기법 · 추적 JIT 은 Python 으로 그래프를 만드는 스테이징" },
+                { term: "중간 표현", en: "Intermediate Representation (IR)", def: "소스와 기계어 사이의 형태 · FX 그래프, LLVM IR, MLIR 방언(dialect)" },
+                { term: "도메인 특화 언어", en: "Domain-Specific Language (DSL)", def: "한 분야만 잘 표현하는 작은 언어 · SQL, 정규식, Triton" },
+                { term: "연산자 오버로딩", en: "Operator overloading", def: "`*`·`+` 의 의미를 타입마다 정의 · NumPy·PyTorch·추적기가 Python 문법을 빌려 쓰는 바탕" },
+                { term: "배열 API 표준", en: "Python array API standard", def: "NumPy·PyTorch·CuPy·JAX 등이 맞추는 공통 배열 함수 규격 · 최신판 2025.12" }
+            ],
+            quiz: [
+                { q: "Bezanson et al. 이 말한 '두 언어 문제'는?", options: ["시제품과 배포용을 다른 언어로 다시 씀", "Python 2 와 3 을 함께 유지해야 함", "타입 있는 언어와 없는 언어를 섞어 씀", "CPU 코드와 GPU 코드를 따로 빌드함"], a: 0, why: "'프로토타입은 한 언어, 속도·배포는 다른 언어로 재작성' · Julia 는 이 관행을 없애려 함" },
+                { q: "GPU 에서 작은 텐서 연산 1만 개가 느린 주된 이유는?", options: ["GPU 산술 유닛이 작은 텐서에서 느려서", "연산마다 Python·디스패치·실행 비용이 붙어서", "GIL 이 GPU 커널 실행을 직렬화해서", "PyTorch 기본 dtype 이 float64 라서"], a: 1, why: "계산은 금방 끝나도 호출 비용이 연산 수만큼 쌓임 · PyTorch 기본 dtype 은 float32" },
+                { q: "`torch.compile` 에서 TorchDynamo 가 하는 일은?", options: ["Python 바이트코드를 분석해 그래프 추출", "CUDA C++ 커널을 사람 대신 손으로 작성", "모델 가중치를 INT8 로 자동 양자화해 저장", "Python 소스를 C 로 번역해 배포"], a: 0, why: "CPython 프레임 평가 API 에 끼어들어 실행 직전 바이트코드에서 연산을 FX 그래프로 뽑음 (Ansel et al. 2024)" },
+                { q: "`jax.jit` 함수 안의 `print(x)` 는?", options: ["매 호출마다 실제 값을 출력", "추적할 때 한 번, 추적값을 출력", "컴파일 오류로 실행되지 않음", "GPU 쪽 로그에만 출력"], a: 1, why: "print 는 Python 부수효과라 추적 중에만 실행되고 그래프에 안 남음 · 실행 중 값은 `jax.debug.print`" },
+                { q: "Triton(Tillet et al. 2019)이 커널을 표현하는 기본 단위는?", options: ["스레드 하나", "타일(블록)", "워프 하나", "텐서 전체"], a: 1, why: "정적 모양의 다차원 부분 배열(tile) 단위로 쓰면 컴파일러가 스레드 배치·메모리 이동을 맡음" },
+                { q: "추적 JIT 에서 `if x.sum() > 0:` 처럼 텐서 값으로 분기하면?", options: ["항상 참인 쪽으로 고정됨", "그래프 끊김 또는 추적 오류", "자동으로 GPU 분기로 바뀜", "아무 영향 없음"], a: 1, why: "추적 때는 값을 모름 · JAX 는 TracerBoolConversionError, Dynamo 는 그래프를 끊고 Python 으로 돌아감" },
+                { q: "Python 배열 API 표준의 목적은?", options: ["배열 라이브러리 공통 함수 규격", "CUDA·ROCm 드라이버 공통 규격", "넘파이 전용 타입 힌트 규격", "텐서 저장용 파일 형식 규격"], a: 0, why: "'A common API for array and tensor Python libraries' · 같은 코드가 NumPy·PyTorch·CuPy 배열에서 동작" },
+                { type: "num", q: "연산 하나에 호출 비용 10 µs + 계산 2 µs, 연산 500개(eager). 융합해 커널 20개(커널당 호출 10 µs, 계산 합 1 ms 그대로)로 줄이면 몇 배 빨라지나?", answer: 5, tol: 0.01, unit: "배", why: "500 × 12 µs = 6 ms → 20 × 10 µs + 1,000 µs = 1.2 ms · 6 / 1.2 = 5" },
+                { type: "num", q: "float32 100만 개에 mul·add·relu 를 커널 3개로(각 커널 읽기 1번 + 쓰기 1번). 총 메모리 트래픽은 몇 MB? (1 MB = 10⁶ B)", answer: 24, tol: 0, unit: "MB", why: "3 × (4 MB + 4 MB) = 24 MB · 융합하면 8 MB" },
+                { type: "text", q: "'추적의 원리' 코드의 `T`, `f` 로 아래를 실행하면 **마지막 줄** 출력은?", code: { lang: "python", src: "log = []\nf(T(\"x\", log))\nprint(len(log), log[-1][1])" }, answer: ["2 add"], why: "첫 줄은 f 본문의 'Python 본문 실행' · 기록은 mul, add 두 개이고 마지막은 add" },
+                { type: "text", q: "출력은?", code: { lang: "python", src: "import numpy as np\nprint([1, 2] * 2, np.array([1, 2]) * 2)" }, answer: ["[1, 2, 1, 2] [2 4]"], why: "같은 `*` 구문, 다른 의미: list 는 반복, ndarray 는 원소별 곱 (연산자 오버로딩)" },
+                { type: "order", q: "`torch.compile` 함수의 첫 호출에서 일어나는 순서", items: ["Dynamo 가 프레임 실행에 끼어듦", "바이트코드 분석 → FX 그래프", "Inductor 가 Triton·C++ 코드 생성", "컴파일된 코드를 캐시하고 실행"], why: "두 번째 호출부터는 가드(입력 모양·타입)만 확인하고 캐시를 씀" }
+            ],
+            refs: [
+                { title: "Julia: A Fresh Approach to Numerical Computing", by: "Bezanson et al.", year: 2014, url: "https://arxiv.org/abs/1411.1607", kind: "paper" },
+                { title: "PyTorch 2: Faster Machine Learning Through Dynamic Python Bytecode Transformation and Graph Compilation", by: "Ansel et al.", year: 2024, url: "https://docs.pytorch.org/assets/pytorch2-2.pdf", kind: "paper" },
+                { title: "Triton: An Intermediate Language and Compiler for Tiled Neural Network Computations", by: "Tillet et al.", year: 2019, url: "https://www.eecs.harvard.edu/~htk/publication/2019-mapl-tillet-kung-cox.pdf", kind: "paper" },
+                { title: "Python array API standard", by: "Consortium for Python Data API Standards", year: 2025, url: "https://data-apis.org/array-api/latest/", kind: "spec" }
+            ]
+        },
+        {
+            id: "lang-llm",
+            title: "LLM 이 코드를 쓸 때 — 타입·테스트·검증의 역할",
+            level: 2,
+            mins: 18,
+            pre: ["languages/plt-basics", "ai/assistant"],
+            checked: "2026-11-19",
+            key: [
+                "LLM 출력은 그럴듯한 토큰 줄 · 문법·타입·동작 무엇도 스스로 보장하지 않음",
+                "**검증기(verifier)**: 컴파일러·타입 검사·테스트가 판정 → 에이전트는 그 오류로 고침",
+                "**타입 제약 디코딩(type-constrained decoding)**: 타입이 깨질 토큰을 막음 → 컴파일 오류 절반↓",
+                "**명세(specification)**가 진짜 소스: 시그니처·예시·테스트로 '맞다'를 먼저 정의",
+                "타입은 모양, 테스트는 사례, **형식 검증(formal verification)**은 모든 입력을 증명"
+            ],
+            concepts: [
+                { term: "검증기", en: "Verifier", def: "후보 코드가 맞는지 기계적으로 판정하는 도구 · 컴파일러, 타입 검사기, 테스트, 증명 검사기" },
+                { term: "타입 제약 디코딩", en: "Type-constrained decoding", def: "생성 중 타입 규칙상 이어질 수 없는 토큰을 막는 디코딩 (Mündler et al. 2025)" },
+                { term: "점진적 타이핑", en: "Gradual typing", def: "주석 단 부분만 정적으로 검사하고 나머지는 동적으로 · Python 타입 힌트, TypeScript" },
+                { term: "형식 검증", en: "Formal verification", def: "명세가 모든 입력에서 성립함을 기계로 증명 · Dafny, Lean, Verus" }
+            ],
+            demo: {
+                type: "seq",
+                actors: ["개발자", "LLM", "타입 검사·컴파일", "테스트"],
+                msgs: [
+                    { from: 0, to: 1, label: "요구 + 시그니처 + 예시", text: "자연어 한 줄 대신 명세를 함께: `def clamp(x, lo, hi) -> int` + 예시 입력·출력" },
+                    { from: 1, to: 2, label: "초안 코드", text: "모델은 토큰을 낼 뿐 · 괄호가 맞는지도 아직 아무도 모름" },
+                    { from: 2, to: 1, label: "'(' was never closed (2행)", text: "구문·타입 검사는 실행 없이 줄 번호와 이유를 줌 · 가장 싼 피드백" },
+                    { from: 1, to: 2, label: "수정본", text: "오류 문구를 그대로 프롬프트에 붙여 다시 생성 · 에이전트 루프 한 바퀴" },
+                    { from: 2, to: 3, label: "통과 → 실행", text: "타입은 '모양'만 보장 · 동작은 테스트가 판정" },
+                    { from: 3, to: 1, label: "clamp(10,0,10)=9, 기대 10", text: "실패한 입력과 기대값이 다음 수정의 근거 · 경계값 실수는 타입이 못 잡음" },
+                    { from: 1, to: 3, label: "수정본", text: "같은 루프를 상한(예: 3회)까지 · 상한이 없으면 비용이 끝없이 늘 수 있음" },
+                    { from: 3, to: 0, label: "전부 통과 + diff", text: "사람은 명세와 diff 를 검토 · 테스트가 약하면 '통과'도 약함" }
+                ]
+            },
+            code: [
+                {
+                    lang: "python",
+                    title: "검증기 루프: 가짜 LLM(후보 3개) + compile + 테스트",
+                    src: `CANDIDATES = [   # 지어낸 생성 결과 3개
+    "def clamp(x, lo, hi):\\n    return max(lo, min(x, hi)\\n",        # 괄호 빠짐
+    "def clamp(x, lo, hi):\\n    return max(lo, min(x, hi - 1))\\n",   # 경계값 실수
+    "def clamp(x, lo, hi):\\n    return max(lo, min(x, hi))\\n",       # 정답
+]
+TESTS = [((5, 0, 10), 5), ((-3, 0, 10), 0), ((10, 0, 10), 10), ((99, 0, 10), 10)]
+
+def verify(src):
+    try:
+        code = compile(src, "gen.py", "exec")          # 1) 구문
+    except SyntaxError as e:
+        return f"SyntaxError line {e.lineno}: {e.msg}"
+    ns = {}
+    exec(code, ns)                                      # 실습용 · 실제로는 격리된 프로세스에서
+    for args, want in TESTS:                            # 2) 동작
+        got = ns["clamp"](*args)
+        if got != want:
+            return f"test failed: clamp{args} = {got}, want {want}"
+    return None
+
+prompt = "clamp(x, lo, hi) 를 작성하라. 테스트: ..."
+for attempt in range(3):                                # 상한 3회
+    src = CANDIDATES[attempt]                           # 실제로는 llm(prompt)
+    err = verify(src)
+    print(attempt + 1, err or "PASS")
+    if not err:
+        break
+    prompt += f"\\n이전 답의 오류: {err}"               # 오류를 그대로 되먹임
+# 1 SyntaxError line 2: '(' was never closed
+# 2 test failed: clamp(10, 0, 10) = 9, want 10
+# 3 PASS`,
+                    note: "Python 3.14 실제 출력 · 생성된 코드를 `exec` 하는 것은 실습에서만 · 실제 에이전트는 샌드박스에서 실행"
+                },
+                {
+                    lang: "python",
+                    title: "타입 주석 + 타입 검사기: LLM 이 흔히 내는 실수를 실행 전에",
+                    src: `from dataclasses import dataclass
+
+@dataclass
+class Item:
+    name: str
+    price: int
+
+def total(items: list[Item]) -> int:
+    return sum(i.price for i in items)
+
+def label(item: Item) -> str:
+    return item.name + ": " + item.price      # int 를 str 에 더함
+
+print(total([Item("pen", 3), {"name": "cup", "price": 5}]))   # dict 를 Item 자리에
+
+# $ mypy typed.py
+# typed.py:12: error: Unsupported operand types for + ("str" and "int")  [operator]
+# typed.py:14: error: List item 1 has incompatible type "dict[str, object]"; expected "Item"  [list-item]
+# Found 2 errors in 1 file (checked 1 source file)`,
+                    note: "mypy 2.4.1 실제 출력 · 12행은 실행해도 `label` 을 안 부르면 안 터짐 → 테스트로는 놓치고 타입 검사는 잡는 경우 · **점진적 타이핑(gradual typing)**이라 주석 없는 함수는 검사가 느슨"
+                }
+            ],
+            optimize: [
+                {
+                    title: "자연어 한 줄 → 시그니처·예시(doctest)부터",
+                    before: { lang: "text", src: `"날짜 문자열을 파싱하는 함수 만들어 줘"
+→ 형식? 공백? 잘못된 날짜? 반환 타입? 모두 모델이 추측` },
+                    after: { lang: "python", src: `def parse_ymd(s: str) -> date:
+    """'YYYY-MM-DD' 만 받는다. 앞뒤 공백 허용, 그 밖은 ValueError.
+
+    >>> parse_ymd(" 2026-11-19 ")
+    datetime.date(2026, 11, 19)
+    >>> parse_ymd("2026/11/19")
+    Traceback (most recent call last):
+    ValueError: expected YYYY-MM-DD
+    """
+    ...   # ← 이 본문만 LLM 에게` },
+                    gain: "'맞다'를 기계가 판정 (doctest 3개 통과)",
+                    note: "예시가 곧 테스트 · 오류 문구는 Python 버전마다 다를 수 있어(3.14 의 2월 29일 메시지가 바뀜) 직접 만든 메시지로 고정"
+                },
+                {
+                    title: "한 번 생성하고 끝 → 검증기 루프 (상한 3회)",
+                    before: { lang: "python", src: `code = llm(prompt)
+save(code)                    # 통과 여부 모름` },
+                    after: { lang: "python", src: `for _ in range(3):
+    code = llm(prompt)
+    err = verify(code)        # 구문 → 타입 → 테스트
+    if not err:
+        save(code); break
+    prompt += f"\\n오류: {err}"` },
+                    gain: "1회 성공률 0.4 → 3회 0.784",
+                    note: "시도가 독립이고 검증기가 완벽하다는 가정의 상한 · 실제로는 같은 실수를 반복하기도 함"
+                }
+            ],
+            glossary: [
+                { term: "명세", en: "Specification", def: "프로그램이 지켜야 할 것을 적은 것 · 시그니처, 문서 예시, 테스트, 계약, 정리(theorem)" },
+                { term: "속성 기반 테스트", en: "Property-based testing", def: "입력을 무작위로 많이 만들어 '결과는 정렬돼 있다' 같은 성질을 검사 · Python 은 Hypothesis" },
+                { term: "린터", en: "Linter", def: "실행 없이 위험한 패턴·스타일을 찾는 도구 · Ruff, ESLint, Clippy" },
+                { term: "pass@k", en: "pass@k metric", def: "k 개 생성 중 하나라도 테스트를 통과할 확률 · n 개 뽑아 c 개 통과면 1 − C(n−c, k) / C(n, k)" },
+                { term: "자연어 프로그래밍", en: "Natural language programming", def: "자연어로 프로그램을 지시하는 발상 · Dijkstra(EWD667)는 형식 기호를 버리는 것을 '어리석다'고 봄" }
+            ],
+            quiz: [
+                { q: "'실행 없이' 가장 싸게 잡히는 LLM 코드 오류는?", options: ["경계값 처리 실수", "타입 불일치", "성능 저하", "요구사항 오해"], a: 1, why: "타입 검사기는 실행 없이 줄 번호와 이유를 줌 · 경계값·성능·요구 오해는 테스트·측정·사람이 봐야 함" },
+                { q: "Mündler et al. (2025) 의 타입 제약 디코딩 결과로 보고된 것은?", options: ["컴파일 오류가 절반 넘게 줄었다", "같은 성능에 모델 크기가 절반", "테스트 없이도 정답을 보장했다", "생성 속도가 두 배로 빨라졌다"], a: 0, why: "초록: 컴파일 오류를 절반 이상 줄이고 합성·번역·수정에서 기능적 정확도도 올림 · 정답 보장은 아님" },
+                { q: "LLM 이 쓴 함수가 테스트 10개를 모두 통과했다. 말할 수 있는 것은?", options: ["어떤 입력에서도 결과가 맞다", "테스트한 입력에서는 맞다", "모든 변수의 타입이 맞다", "보안 취약점이 하나도 없다"], a: 1, why: "테스트는 사례 검사 · 모든 입력은 형식 검증의 영역" },
+                { q: "SWE-bench (Jimenez et al. 2023) 의 과제는?", options: ["실제 저장소 이슈를 패치로 해결", "경시 대회식 알고리즘 문제를 풀기", "함수 주석으로 설명문 생성", "파일 속 문법 오류 위치 찾기"], a: 0, why: "Python 저장소 12곳의 실제 GitHub 이슈 2,294개 · 발표 당시 최고 해결률 1.96%" },
+                { q: "Dijkstra(EWD667)가 '자연어 프로그래밍'을 어리석다고 본 이유에 가까운 것은?", options: ["자연어 처리는 계산 비용이 커서", "헛소리가 티 나지 않게 쓰기 쉬워서", "당시 컴퓨터가 자연어 문장을 읽지 못해서", "영어 사용자만 쓸 수 있어서"], a: 1, why: "형식 기호는 무의미한 문장을 쓰기 어렵게 만드는 '특권' · 자연어는 말이 안 되는 문장을 그럴듯하게 쓰기 쉬움" },
+                { q: "GitHub Octoverse 2025 에서 TypeScript 가 1위가 된 기준은?", options: ["월간 기여자 수", "새로 만든 저장소 수", "커밋된 코드 줄 수", "검색 엔진 검색량"], a: 0, why: "2025-08 월간 기여자 수 약 264만으로 Python·JavaScript 추월 · 다른 지수는 방법이 달라 순위가 다를 수 있음" },
+                { q: "Python 타입 힌트(PEP 484)는 실행 중에?", options: ["매 호출마다 검사됨", "검사되지 않음", "디버그 모드에서만 검사됨", "import 할 때 검사됨"], a: 1, why: "PEP 484: 'no type checking happens at runtime' · mypy·pyright 같은 검사기를 따로 돌려야 함" },
+                { type: "num", q: "한 문제에 코드 n = 10 개를 생성해 c = 3 개가 테스트를 통과했다. pass@5 추정값은? (1 − C(n−c, k) / C(n, k))", answer: 0.9167, tol: 0.001, why: "1 − C(7, 5) / C(10, 5) = 1 − 21/252 = 0.9167 (Python `math.comb` 계산)" },
+                { type: "num", q: "한 번 생성의 성공 확률 0.4, 시도는 독립이고 검증기가 완벽하다면 최대 3회 루프의 성공 확률은?", answer: 0.784, tol: 0.001, why: "1 − 0.6³ = 1 − 0.216 = 0.784 · 검증기가 없으면 어느 답이 맞는지 몰라 이 이득도 없음" },
+                { type: "text", q: "출력은? (Python 3.14)", code: { lang: "python", src: "src = \"def clamp(x, lo, hi):\\n    return max(lo, min(x, hi)\\n\"\ntry:\n    compile(src, \"gen.py\", \"exec\")\nexcept SyntaxError as e:\n    print(e.lineno, e.msg)" }, answer: ["2 '(' was never closed"], why: "괄호가 열린 채 끝남 · 최신 Python 은 위치와 이유를 구체적으로 알려 줌 → 그대로 LLM 에 되먹임" },
+                { type: "text", q: "출력은?", code: { lang: "python", src: "def double(x: int) -> int:\n    return x * 2\n\nprint(double(\"ab\"))" }, answer: ["abab"], why: "주석은 실행 중 검사되지 않음 · 문자열 × 2 = 반복 · 타입 검사기만 경고" },
+                { type: "order", q: "검증기 루프를 쓰는 에이전트 작업의 순서", items: ["시그니처·테스트(명세) 작성", "LLM 초안 생성", "구문·타입 검사", "테스트 실행", "실패 메시지로 재생성", "사람이 diff 검토"], why: "싼 검증기부터 · 사람은 마지막에 명세와 변경분을 봄" }
+            ],
+            refs: [
+                { title: "Type-Constrained Code Generation with Language Models", by: "Mündler et al.", year: 2025, url: "https://arxiv.org/abs/2504.09246", kind: "paper" },
+                { title: "MultiPL-E: A Scalable and Extensible Approach to Benchmarking Neural Code Generation", by: "Cassano et al.", year: 2022, url: "https://arxiv.org/abs/2208.08227", kind: "paper" },
+                { title: "SWE-bench: Can Language Models Resolve Real-World GitHub Issues?", by: "Jimenez et al.", year: 2023, url: "https://arxiv.org/abs/2310.06770", kind: "paper" },
+                { title: "On the foolishness of \"natural language programming\" (EWD667)", by: "Dijkstra", url: "https://www.cs.utexas.edu/users/EWD/transcriptions/EWD06xx/EWD667.html", kind: "doc" }
             ]
         }
     ]

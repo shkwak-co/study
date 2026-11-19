@@ -385,6 +385,34 @@ Object.entries(LAB.SIM_INFO || {}).forEach(([n, info]) => { if (!LAB.SIM_TAGS.in
     assert.equal(cx({ limit: 8192 }), "0 5990 대화,대화,대화,대화", "context: 8k holds the whole chat");
 }
 
+// numpy-torch labs: views / strides (values from NumPy 2.5.5, int32 → bytes = elements × 4), broadcasting, autograd (torch 2.15.0)
+{
+    const N = LAB.nd;
+    const nd = (ops) => { const r = N.ndRun([3, 4], ops); return `${r.v.shape} | ${r.v.strides.map((s) => s * 4)} | ${r.shares ? "view" : "copy"} ${+r.c}${+r.f} | ${r.values.join(" ")}`; };
+    assert.equal(nd([{ k: "T" }]), "4,3 | 4,16 | view 01 | 0 4 8 1 5 9 2 6 10 3 7 11", "a.T swaps strides");
+    assert.equal(nd([{ k: "slice", axis: -1, step: 2 }]), "3,2 | 16,8 | view 00 | 0 2 4 6 8 10", "a[..., ::2] doubles the stride");
+    assert.equal(nd([{ k: "slice", axis: 0, step: -1 }]), "3,4 | -16,4 | view 00 | 8 9 10 11 4 5 6 7 0 1 2 3", "a[::-1] negative stride");
+    assert.equal(nd([{ k: "T" }, { k: "reshape", shape: [-1] }]), "12 | 4 | copy 11 | 0 4 8 1 5 9 2 6 10 3 7 11", "a.T.reshape(-1) copies");
+    assert.equal(nd([{ k: "slice", axis: -1, step: 2 }, { k: "reshape", shape: [-1] }]), "6 | 8 | view 00 | 0 2 4 6 8 10", "a[:, ::2].reshape(-1) is still a view");
+    assert.equal(nd([{ k: "slice", axis: 0, step: 2 }, { k: "reshape", shape: [-1] }]), "8 | 4 | copy 11 | 0 1 2 3 8 9 10 11", "a[::2].reshape(-1) copies");
+    assert.equal(nd([{ k: "slice", axis: -1, step: 2 }, { k: "reshape", shape: [6, 1] }]), "6,1 | 8,8 | view 00 | 0 2 4 6 8 10", "trailing size-1 axis takes the last stride");
+    assert.equal(nd([{ k: "take", axis: 0, list: [0, 2] }]), "2,4 | 16,4 | copy 10 | 0 1 2 3 8 9 10 11", "fancy indexing copies");
+    assert.equal(nd([{ k: "bcast", shape: [2, 3, 4] }]), "2,3,4 | 0,16,4 | view 00 | 0 1 2 3 4 5 6 7 8 9 10 11 0 1 2 3 4 5 6 7 8 9 10 11", "broadcast_to: stride 0");
+    assert.match(N.ndRun([3, 4], [{ k: "bcast", shape: [2, 4] }]).frames[0].err, /could not be broadcast/, "broadcast_to (2,4) fails");
+    assert.match(N.ndRun([3, 4], [{ k: "reshape", shape: [5, -1] }]).frames[0].err, /cannot reshape array of size 12/, "reshape size check");
+    assert.equal([N.pySlice(4, null, null, -1), N.pySlice(4, 1, 3, 1), N.pySlice(4, -1, null, -2), N.pySlice(4, 5, 1, -1)].join(" "), "3,4 1,2 3,2 3,2", "python slice.indices: ::-1, 1:3, -1::-2, 5:1:-1");
+    const bc = (a, b) => { const r = N.bcast(a, b); return r.ok ? r.out.join(",") : "err"; };
+    assert.deepEqual([bc([3, 4], [4]), bc([3, 4], [3]), bc([3, 4], [3, 1]), bc([3], [3, 1]), bc([8, 1, 6, 1], [7, 1, 5]), bc([32, 3, 224, 224], [3, 1, 1]), bc([0], [1]), bc([0], [3])],
+        ["3,4", "err", "3,4", "3,3", "8,7,6,5", "32,3,224,224", "0", "err"], "broadcast shapes (np.broadcast_shapes)");
+    const near = (a, b) => Math.abs(a - b) < 5e-6;
+    const g = N.agRun({ x: 2, w: 0.5, b: 0.1, t: 1, act: "tanh" });
+    assert.ok(near(g.L, 0.039801) && near(g.nodes.w.g, -0.286644) && near(g.nodes.b.g, -0.143322) && g.nodes.x.g === null, "autograd tanh = torch");
+    const r = N.agRun({ x: 2, w: -0.5, b: 0.1, t: 1, act: "relu", xGrad: true });
+    assert.ok(r.L === 1 && r.nodes.w.g === 0 && r.nodes.x.g === 0, "autograd relu z<0: zero grads");
+    const n = N.agRun({ x: 2, w: 0.5, b: 0.1, t: 1, act: "none", xGrad: true });
+    assert.ok(near(n.L, 0.01) && near(n.nodes.w.g, 0.4) && near(n.nodes.b.g, 0.2) && near(n.nodes.x.g, 0.1) && n.back.length === 5, "autograd linear + x.grad");
+}
+
 // quiz grading: numbers (hex, tolerance), text answers, order
 {
     const g = LAB.grade;

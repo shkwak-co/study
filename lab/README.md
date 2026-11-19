@@ -1,6 +1,6 @@
 # Study Lab
 
-Interactive study site: embedded, assembly, memory, robotics, languages, data structures, protocols, deep learning, AI, RAG & embeddings.
+Interactive study site: embedded, assembly, memory, robotics, languages (incl. programming-language theory in the AI era), data structures, protocols, deep learning, NumPy·PyTorch, AI, RAG & embeddings.
 Plain HTML/CSS/JS, no build, no CDN — open `lab/index.html` directly (`file://`).
 
 ## Pages
@@ -158,13 +158,16 @@ References: `refs` on lessons and trends — original papers (arXiv/DOI), offici
 | `race` | `mode n` | two threads doing `count++` as load/add/store: step A / B by hand, worst or random order, lost updates · mode `plain` `mutex` `atomic` · wrong rate over 1000 random orders |
 | `quant` | `bits scheme` | INT8 / INT4 quantization of two weight channels: `sym` / `asym`, per-tensor vs per-channel scale, an outlier · integers used, max error |
 | `graph` | `algo src` | BFS / DFS / Dijkstra / topological sort on a 6-node graph, frame by frame: queue / stack / priority queue, distances · algo `bfs` `dfs` `dijkstra` `topo` |
+| `strides` | `shape item ops?` | ndarray memory: one buffer, the current view's shape / strides (bytes) / offset, C/F contiguity, `np.shares_memory` · buttons `.T` `[..., ::2]` `[::-1]` `[1:]` `[0]` `.reshape(-1)` `.reshape(2, -1)` `[[0, 2]]` `broadcast_to` `.copy()` · `ops` = keys of `ND_OPS` applied at start · hover a cell to see its buffer slot |
+| `broadcast` | `preset` | NumPy broadcasting of two shapes: right-aligned table, which axis stretches (stride 0) or fails, real values for small 2-D cases, result memory · presets `row` `col` `colfix` `outer` `trap` `doc` `img` |
+| `autograd` | `x w b t act lr` | L = (act(w·x + b) − t)²: forward values, backward one node at a time (local derivative on the edge), `.grad` accumulation, `zero_grad()` (None), `step()`, 10-step loop with / without zero_grad · act `none` `tanh` `relu` |
 
 **cpu** program rules: Armv7-M Thumb-2 UAL subset — `mov mvn add adc sub sbc rsb neg mul udiv sdiv and orr eor bic lsl lsr asr ror cmp cmn tst` (+`s` suffix sets flags; operand 2 may be `#imm`, a register, or `rX, lsl #n`), `b` + condition (`eq ne cs/hs cc/lo mi pl vs vc hi ls ge lt gt le`), `cbz cbnz bl bx blx`, `push pop` (`{r4-r7, lr}`, `pop {.., pc}` returns), `ldr str ldrb strb ldrh strh ldrsb ldrsh` with `[rn]`, `[rn, #imm]`, `[rn, rm]`, `[rn, rm, lsl #2]`, pre-index `[rn, #4]!`, post-index `[rn], #4`, and `ldr rX, =label|imm`.
 Data: `.data` / `.text`, `label: .word 1, 2` · `.hword` `.byte` `.space n` `.asciz "s"` → RAM from `0x20000000`. Comments `@` `;` `//`.
 LR starts at `0xFFFFFFFF`: `bx lr` from the top level ends the program (or falling off the end). SP starts at `0x20001000`. Out-of-RAM access → HardFault. Simplified: 4 bytes per instruction, no IT blocks, no `ldm/stm`, no reading `pc`.
 
 Every sim also needs a line in `LAB.SIM_INFO` (`assets/anim.js`): `[title, one line, tag]` — it is listed on `labs.html`.
-Pure models are tested by `check.mjs`: `LAB.num` (`alu`, `fenc`/`fdec`, `crcDiv`, `quant`), `LAB.proto` (UART, CAN, `i2cTxn`, `spiEdges`), `LAB.sys` (`nvicRun`, `raceRun`), `LAB.ds` (cache, layout, ring, hash, heap, BST, sorts, `graphRun`), `LAB.ai` (BPE, vector ranking, `hybridRun`: BM25 / toy embedding / RRF / filter, `ctxRun`: context window).
+Pure models are tested by `check.mjs`: `LAB.num` (`alu`, `fenc`/`fdec`, `crcDiv`, `quant`), `LAB.proto` (UART, CAN, `i2cTxn`, `spiEdges`), `LAB.sys` (`nvicRun`, `raceRun`), `LAB.ds` (cache, layout, ring, hash, heap, BST, sorts, `graphRun`), `LAB.ai` (BPE, vector ranking, `hybridRun`: BM25 / toy embedding / RRF / filter, `ctxRun`: context window), `LAB.nd` (`ndRun` / `ndOp`: views vs copies checked against NumPy 2.5.5, `bcast`, `agRun` checked against torch 2.15.0).
 
 ## Long-form articles (상세 설명)
 

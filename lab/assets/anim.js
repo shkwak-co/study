@@ -4418,6 +4418,382 @@
         build();
     };
 
+    /* ---------- numpy-torch: ndarray views, broadcasting, autograd — pure models tested by check.mjs ---------- */
+    // ndarray view = (buffer, offset, shape, strides), counted in elements here; × itemsize = NumPy's byte strides
+    const ndSize = (shape) => shape.reduce((a, b) => a * b, 1);
+    const ndC = (shape) => { const s = []; let k = 1; for (let i = shape.length - 1; i >= 0; i--) { s[i] = k; k *= shape[i]; } return s; };
+    const ndIdx = (shape) => range(ndSize(shape)).map((f) => { const idx = []; for (let i = shape.length - 1; i >= 0; i--) { idx[i] = f % shape[i]; f = Math.floor(f / shape[i]); } return idx; });
+    const ndAddrs = (v) => ndIdx(v.shape).map((idx) => idx.reduce((a, x, i) => a + x * v.strides[i], v.offset));
+    const ndFlag = (shape, strides, order) => { // C / F contiguity; NumPy ignores the stride of a size-1 axis
+        let k = 1;
+        for (const i of order === "C" ? range(shape.length).reverse() : range(shape.length)) { if (shape[i] !== 1 && strides[i] !== k) return false; k *= shape[i]; }
+        return true;
+    };
+    function pySlice(n, start, stop, step = 1) { // Python slice.indices(n) → [first index, length]
+        const norm = (v, dflt, lo, hi) => (v == null ? dflt : v < 0 ? Math.max(v + n, lo) : Math.min(v, hi));
+        const s = step > 0 ? norm(start, 0, 0, n) : norm(start, n - 1, -1, n - 1);
+        const e = step > 0 ? norm(stop, n, 0, n) : norm(stop, -1, -1, n - 1);
+        return [s, Math.max(0, Math.ceil((e - s) / step))];
+    }
+    // one NumPy operation on view v; copies append a new buffer to bufs. ops: T · slice {axis, start, stop, step} · index {axis, i}
+    // · reshape {shape} (view when some strides reproduce the same element order, else copy) · bcast {shape} (stride 0) · take {axis, list} · copy
+    function ndOp(bufs, v, op) {
+        const sh = [...v.shape];
+        const st = [...v.strides];
+        const ax = (a) => (a < 0 ? a + sh.length : a);
+        if (!sh.length && ["slice", "index", "take"].includes(op.k)) return { err: "IndexError: too many indices for array: array is 0-dimensional" };
+        const view = (shape, strides, offset) => ({ v: { buf: v.buf, shape, strides, offset }, copy: false });
+        const copy = (shape, addrs) => { bufs.push(addrs.map((a) => bufs[v.buf][a])); return { v: { buf: bufs.length - 1, shape, strides: ndC(shape), offset: 0 }, copy: true }; };
+        if (op.k === "T") return view(sh.reverse(), st.reverse(), v.offset);
+        if (op.k === "slice") {
+            const a = ax(op.axis);
+            const step = op.step || 1;
+            const [s, len] = pySlice(sh[a], op.start, op.stop, step);
+            const off = v.offset + (len ? s * st[a] : 0);
+            sh[a] = len;
+            st[a] *= step;
+            return view(sh, st, off);
+        }
+        if (op.k === "index") {
+            const a = ax(op.axis);
+            const i = op.i < 0 ? op.i + sh[a] : op.i;
+            if (!(i >= 0 && i < sh[a])) return { err: `IndexError: index ${op.i} is out of bounds for axis ${a} with size ${sh[a]}` };
+            const off = v.offset + i * st[a];
+            sh.splice(a, 1);
+            st.splice(a, 1);
+            return view(sh, st, off);
+        }
+        if (op.k === "reshape") {
+            const n = ndSize(sh);
+            const known = ndSize(op.shape.filter((d) => d !== -1));
+            const shape = op.shape.map((d) => (d === -1 ? n / known : d));
+            if (ndSize(shape) !== n || !shape.every(Number.isInteger)) return { err: `ValueError: cannot reshape array of size ${n} into shape (${op.shape.join(", ")})` };
+            const addrs = ndAddrs(v);
+            const cs = ndC(shape);
+            const last = shape.reduce((p, d, i) => (d > 1 ? i : p), -1);
+            const strides = shape.map((d, i) => (d > 1 ? addrs[cs[i]] - addrs[0] : i > last && last >= 0 ? addrs[cs[last]] - addrs[0] : cs[i]));
+            const cand = { buf: v.buf, shape, strides, offset: n ? addrs[0] : v.offset };
+            return ndAddrs(cand).every((a, i) => a === addrs[i]) ? { v: cand, copy: false } : copy(shape, addrs);
+        }
+        if (op.k === "bcast") {
+            const d = op.shape.length - sh.length;
+            const strides = [];
+            for (let i = 0; i < op.shape.length; i++) {
+                const j = i - d;
+                if (j < 0 || (sh[j] === 1 && op.shape[i] !== 1)) strides.push(0);
+                else if (sh[j] === op.shape[i]) strides.push(st[j]);
+                else return { err: `ValueError: operands could not be broadcast together with remapped shapes [original->remapped]: (${sh.join(",")}) and requested shape (${op.shape.join(",")})` };
+            }
+            if (d < 0) return { err: "ValueError: input operand has more dimensions than allowed by the axis remapping" };
+            return view([...op.shape], strides, v.offset);
+        }
+        if (op.k === "take") { // a[[i, j]]: advanced indexing always copies
+            const a = ax(op.axis);
+            const bad = op.list.find((i) => !(i >= -sh[a] && i < sh[a]));
+            if (bad !== undefined) return { err: `IndexError: index ${bad} is out of bounds for axis ${a} with size ${sh[a]}` };
+            const shape = [...sh];
+            shape[a] = op.list.length;
+            const pick = op.list.map((i) => (i < 0 ? i + sh[a] : i));
+            return copy(shape, ndIdx(shape).map((idx) => idx.reduce((acc, x, i) => acc + (i === a ? pick[x] : x) * st[i], v.offset)));
+        }
+        if (op.k === "copy") return copy(sh, ndAddrs(v));
+        return { err: `unknown op ${op.k}` };
+    }
+    // base = np.arange(n).reshape(shape); apply ops in order → frames [{ v, copy, err, values, shares }]
+    function ndRun(shape, ops) {
+        const bufs = [range(ndSize(shape))];
+        let v = { buf: 0, shape: [...shape], strides: ndC(shape), offset: 0 };
+        const frames = [];
+        for (const op of ops) {
+            const r = ndOp(bufs, v, op);
+            if (r.err) { frames.push({ v, err: r.err }); break; }
+            v = r.v;
+            frames.push({ v, copy: r.copy });
+        }
+        const addrs = ndAddrs(v);
+        return { v, bufs, frames, addrs, values: addrs.map((a) => bufs[v.buf][a]), shares: v.buf === 0, c: ndFlag(v.shape, v.strides, "C"), f: ndFlag(v.shape, v.strides, "F") };
+    }
+
+    // broadcasting (NumPy rule): align shapes from the right; two sizes fit when equal or one of them is 1; a missing axis counts as 1
+    function bcast(a, b) {
+        const n = Math.max(a.length, b.length);
+        const dims = range(n).map((i) => {
+            const x = a[a.length - n + i];
+            const y = b[b.length - n + i];
+            const o = x === undefined ? y : y === undefined ? x : x === y || y === 1 ? x : x === 1 ? y : null;
+            const how = o === null ? "bad" : x === undefined ? "a-new" : y === undefined ? "b-new" : x === y ? "same" : x === 1 ? "a-stretch" : "b-stretch";
+            return { a: x, b: y, o, how };
+        });
+        const ok = dims.every((d) => d.o !== null);
+        return { ok, out: ok ? dims.map((d) => d.o) : null, dims, err: ok ? "" : `ValueError: operands could not be broadcast together with shapes (${a.join(",")}${a.length === 1 ? "," : ""}) (${b.join(",")}${b.length === 1 ? "," : ""})` };
+    }
+
+    // reverse-mode autograd on one neuron: L = (act(w·x + b) − t)². Each node passes upstream grad × local derivative to its inputs;
+    // leaves (w, b, and x when x.requires_grad) get .grad, intermediate (non-leaf) grads are not kept by PyTorch
+    const AG_ACT = {
+        none: [(z) => z, () => 1, ""],
+        tanh: [Math.tanh, (z, y) => 1 - y * y, "TanhBackward0"],
+        relu: [(z) => Math.max(0, z), (z) => (z > 0 ? 1 : 0), "ReluBackward0"]
+    };
+    function agRun(o) {
+        const act = o.act || "tanh";
+        const [f, df, fn] = AG_ACT[act];
+        const { x, w, b, t } = o;
+        const u = w * x;
+        const z = u + b;
+        const y = f(z);
+        const e = y - t;
+        const L = e * e;
+        const ge = 2 * e;
+        const gz = ge * df(z, y);
+        const out = act === "none" ? "z" : "y";
+        const nodes = {
+            x: { label: "x", v: x, leaf: true, rg: !!o.xGrad, g: o.xGrad ? gz * w : null },
+            w: { label: "w", v: w, leaf: true, rg: true, g: gz * x },
+            b: { label: "b", v: b, leaf: true, rg: true, g: gz },
+            t: { label: "t", v: t, leaf: true, rg: false, g: null },
+            u: { label: "w·x", v: u, fn: "MulBackward0", ins: ["w", "x"], g: gz },
+            z: { label: "+ b", v: z, fn: "AddBackward0", ins: ["u", "b"], g: gz },
+            e: { label: "− t", v: e, fn: "SubBackward0", ins: [out, "t"], g: ge },
+            L: { label: "L = e²", v: L, fn: "PowBackward0", ins: ["e"], g: 1 }
+        };
+        if (act !== "none") nodes.y = { label: act, v: y, fn, ins: ["z"], g: ge };
+        const n4 = (v) => +v.toFixed(4);
+        const back = [
+            { on: ["L"], edges: [], text: `L.backward(): ∂L/∂L = 1 에서 출발` },
+            { on: ["e"], edges: ["e>L"], text: `PowBackward0: ∂L/∂e = 2e = ${n4(ge)}` }
+        ];
+        if (act !== "none") back.push({ on: ["y"], edges: ["y>e"], text: `SubBackward0: ∂L/∂y = ∂L/∂e × 1 = ${n4(ge)} · t 는 requires_grad=False 라 건너뜀` });
+        back.push({ on: ["z"], edges: [`z>${out === "y" ? "y" : "e"}`], text: act === "none" ? `SubBackward0: ∂L/∂z = ∂L/∂e × 1 = ${n4(gz)}` : act === "tanh" ? `TanhBackward0: × (1 − y²) = × ${n4(df(z, y))} → ∂L/∂z = ${n4(gz)}` : `ReluBackward0: z ${z > 0 ? "> 0 → × 1" : "≤ 0 → × 0 (기울기 끊김)"} → ∂L/∂z = ${n4(gz)}` });
+        back.push({ on: ["u", "b"], edges: ["u>z", "b>z"], text: `AddBackward0: 두 입력에 그대로 → ∂L/∂u = ${n4(gz)}, b.grad += ${n4(gz)}` });
+        back.push({ on: ["w", ...(o.xGrad ? ["x"] : [])], edges: ["w>u", ...(o.xGrad ? ["x>u"] : [])], text: `MulBackward0: w.grad += ∂L/∂u × x = ${n4(gz * x)}${o.xGrad ? ` · x.grad += ∂L/∂u × w = ${n4(gz * w)}` : " · x 는 requires_grad=False → grad 없음"}` });
+        return { L, y, z, nodes, back, out };
+    }
+    LAB.nd = { ndC, ndOp, ndRun, pySlice, bcast, agRun };
+
+    // ndarray memory: one buffer, many views — shape / strides / offset, view or copy
+    const ND_OPS = [
+        ["T", ".T", { k: "T" }],
+        ["step", "[..., ::2]", { k: "slice", axis: -1, step: 2 }],
+        ["rev", "[::-1]", { k: "slice", axis: 0, step: -1 }],
+        ["drop", "[1:]", { k: "slice", axis: 0, start: 1 }],
+        ["row", "[0]", { k: "index", axis: 0, i: 0 }],
+        ["flat", ".reshape(-1)", { k: "reshape", shape: [-1] }],
+        ["r2", ".reshape(2, -1)", { k: "reshape", shape: [2, -1] }],
+        ["take", "[[0, 2]]", { k: "take", axis: 0, list: [0, 2] }],
+        ["bc", "broadcast_to (2, …)", null],
+        ["copy", ".copy()", { k: "copy" }]
+    ];
+    SIMS.strides = (host, spec) => {
+        const base = spec.shape || [3, 4];
+        let item = spec.item || 4;
+        let ops = (spec.ops || []).map((k) => ND_OPS.find((o) => o[0] === k)).filter(Boolean);
+        let errMsg = "";
+        const bar = ctlBar(host);
+        const st = stage(host);
+        const bar2 = ctlBar(host);
+        const out = readout(host);
+        const DT = { 1: "int8", 4: "int32", 8: "float64" };
+        const run = (list) => {
+            const bufs = [range(ndSize(base))];
+            let v = { buf: 0, shape: [...base], strides: ndC(base), offset: 0 };
+            let err = "";
+            let lastCopy = false;
+            for (const o of list) {
+                const r = ndOp(bufs, v, o[0] === "bc" ? { k: "bcast", shape: [2, ...v.shape] } : o[2]);
+                if (r.err) { err = r.err; break; }
+                v = r.v;
+                lastCopy = r.copy;
+            }
+            const addrs = ndAddrs(v);
+            return { v, bufs, addrs, values: addrs.map((x) => bufs[v.buf][x]), err, lastCopy };
+        };
+        const expr = (list) => list.reduce((s, o) => (o[0] === "bc" ? `np.broadcast_to(${s}, (2,) + ${s}.shape)` : s + o[1]), "a");
+        const cells = (R, from, n) => range(n).map((i) => `<span class="nd-c" data-a="${R.addrs[from + i]}">${R.values[from + i]}</span>`).join("");
+        const grid = (R) => {
+            const shape = R.v.shape;
+            if (shape.length < 2) return `<div class="nd-g" style="grid-template-columns:repeat(${shape[0] || 1},auto)">${cells(R, 0, R.values.length)}</div>`;
+            const [r, c] = shape.slice(-2);
+            const k = r * c;
+            const outer = ndIdx(shape.slice(0, -2));
+            return outer.map((idx, s) => `${shape.length > 2 ? `<small>[${idx.join(", ")}]</small>` : ""}<div class="nd-g" style="grid-template-columns:repeat(${c},auto)">${cells(R, s * k, k)}</div>`).join("");
+        };
+        const draw = () => {
+            const R = run(ops);
+            const v = R.v;
+            const uses = new Map();
+            R.addrs.forEach((x) => uses.set(x, (uses.get(x) || 0) + 1));
+            const mem = (bi) => R.bufs[bi].map((x, a) => {
+                const on = bi === v.buf && uses.has(a);
+                return `<span class="nd-m${on ? " on" : ""}"${on ? ` data-a="${a}"` : ""}><b>${x}</b><small>${(a * item).toString(16).toUpperCase().padStart(2, "0")}</small>${on && uses.get(a) > 1 ? `<i>×${uses.get(a)}</i>` : ""}</span>`;
+            }).join("");
+            const rows = [0, ...(v.buf ? [v.buf] : [])].map((bi) => `<div class="nd-row"><span class="nd-l">${bi ? "새 버퍼 (복사본)" : "a 의 버퍼 · 주소(16진, B)"}</span><div class="nd-mem">${mem(bi)}</div></div>`).join("");
+            st.innerHTML = `<div class="nd"><code class="nd-x">a = np.arange(${ndSize(base)}, dtype=np.${DT[item]}).reshape(${base.join(", ")})<br>b = ${esc(expr(ops))}</code>
+                ${rows}<div class="nd-row"><span class="nd-l">b (보이는 모양)</span><div class="nd-view">${grid(R)}</div></div>
+                ${errMsg ? `<div class="nd-err">${esc(errMsg)} · 이 연산은 적용 안 됨</div>` : ""}</div>`;
+            const hl = (a, on) => st.querySelectorAll(`[data-a="${a}"]`).forEach((el) => el.classList.toggle("hl", on));
+            st.querySelectorAll("[data-a]").forEach((el) => { el.onmouseenter = () => hl(el.dataset.a, true); el.onmouseleave = () => hl(el.dataset.a, false); });
+            const tup = (xs) => `(${xs.join(", ")}${xs.length === 1 ? "," : ""})`;
+            const c = ndFlag(v.shape, v.strides, "C");
+            out([
+                ["shape", tup(v.shape)],
+                ["strides", `${tup(v.strides.map((s) => s * item))} B`],
+                ["offset", `${v.offset * item} B`],
+                ["C 연속", c ? "예" : "아니오", c ? "good" : ""],
+                ["F 연속", ndFlag(v.shape, v.strides, "F") ? "예" : "아니오"],
+                ["np.shares_memory(a, b)", v.buf === 0 ? "True (view)" : "False (copy)", v.buf === 0 ? "good" : "bad"],
+                ...(R.lastCopy ? [["마지막 연산", "새 버퍼로 복사", "bad"]] : [])
+            ]);
+        };
+        seg(bar, "dtype", [[1, "int8 · 1 B"], [4, "int32 · 4 B"], [8, "float64 · 8 B"]], item, (x) => { item = +x; draw(); });
+        button(bar, "↺ 처음부터", () => { ops = []; errMsg = ""; draw(); });
+        button(bar, "⌫ 한 단계 취소", () => { ops = ops.slice(0, -1); errMsg = ""; draw(); });
+        ND_OPS.forEach((o) => button(bar2, o[1], () => { const T = run([...ops, o]); if (T.err) errMsg = T.err; else { ops = [...ops, o]; errMsg = ""; } draw(); }));
+        draw();
+    };
+
+    // broadcasting: align two shapes from the right, stretch size-1 axes (stride 0, no copy)
+    const BC_PRESETS = {
+        row: [[3, 4], [4], "행마다 같은 벡터 더하기"],
+        col: [[3, 4], [3], "열 방향으로 더하려다 오류"],
+        colfix: [[3, 4], [3, 1], "(3, 1) 로 고치면 열 방향"],
+        outer: [[3, 1], [1, 4], "바깥 합(outer) — 둘 다 늘어남"],
+        trap: [[3], [3, 1], "(3,) 와 (3, 1) 의 함정 → (3, 3)"],
+        doc: [[8, 1, 6, 1], [7, 1, 5], "NumPy 문서 예"],
+        img: [[32, 3, 224, 224], [3, 1, 1], "이미지 배치 채널별 정규화"]
+    };
+    SIMS.broadcast = (host, spec) => {
+        let [A, B] = BC_PRESETS[spec.preset || "row"];
+        const bar = ctlBar(host);
+        const bar2 = ctlBar(host);
+        const st = stage(host);
+        const out = readout(host);
+        const sh = (s) => `(${s.join(", ")}${s.length === 1 ? "," : ""})`;
+        const parse = (s) => { const p = String(s).replace(/[()\s]/g, "").split(",").filter(Boolean).map(Number); return p.length && p.length <= 5 && p.every((d) => Number.isInteger(d) && d >= 0 && d <= 9999) ? p : null; };
+        const draw = () => {
+            const R = bcast(A, B);
+            const n = R.dims.length;
+            const CL = { same: "", "a-new": "na", "b-new": "nb", "a-stretch": "sa", "b-stretch": "sb", bad: "bad" };
+            const cell = (v, cls) => `<td class="${cls}">${v === undefined ? "·" : v}</td>`;
+            const table = `<table class="bc-t"><tr><th>A ${sh(A)}</th>${R.dims.map((d) => cell(d.a, /a-|bad/.test(d.how) ? CL[d.how] : "")).join("")}</tr>
+                <tr><th>B ${sh(B)}</th>${R.dims.map((d) => cell(d.b, /b-|bad/.test(d.how) ? CL[d.how] : "")).join("")}</tr>
+                <tr class="o"><th>A + B</th>${R.dims.map((d) => cell(d.o === null ? "✗" : d.o, d.how === "bad" ? "bad" : "")).join("")}</tr></table>`;
+            // ≤ 2-D and small: draw the stretched grids with real values (A = arange, B = 10, 20, …)
+            let pics = "";
+            if (R.ok && n <= 2 && R.out.every((d) => d >= 1 && d <= 6)) {
+                const pad = (s) => [...Array(2 - s.length).fill(1), ...s];
+                const [r, c] = pad(R.out);
+                const g = (s, val, label) => {
+                    const [sr, sc] = pad(s);
+                    return `<div class="bc-p"><small>${label}</small><div class="nd-g" style="grid-template-columns:repeat(${c},auto)">${range(r * c).map((k) => {
+                        const i = Math.floor(k / c), j = k % c;
+                        const real = (sr !== 1 || i === 0) && (sc !== 1 || j === 0);
+                        return `<span class="nd-c${real ? "" : " ghost"}">${val(sr === 1 ? 0 : i, sc === 1 ? 0 : j, sc)}</span>`;
+                    }).join("")}</div></div>`;
+                };
+                const va = (i, j, sc) => i * sc + j;
+                const vb = (i, j, sc) => 10 * (i * sc + j + 1);
+                pics = `<div class="bc-pics">${g(A, va, "A (점선 = 늘린 복사, 메모리 없음)")}<b>+</b>${g(B, vb, "B")}<b>=</b>${g(R.out, (i, j) => { const [ar, ac] = pad(A); const [br, bc] = pad(B); return va(ar === 1 ? 0 : i, ac === 1 ? 0 : j, ac) + vb(br === 1 ? 0 : i, bc === 1 ? 0 : j, bc); }, "결과")}</div>`;
+            }
+            const why = R.dims.map((d, i) => {
+                const k = i - n;
+                if (d.how === "bad") return `축 ${k}: ${d.a} 과 ${d.b} — 같지도 않고 1도 아님 → 오류`;
+                if (d.how === "a-new" || d.how === "b-new") return `축 ${k}: ${d.how === "a-new" ? "A" : "B"} 에 없는 축 → 1 로 보고 ${d.o} 로 늘림`;
+                if (d.how === "a-stretch" || d.how === "b-stretch") return `축 ${k}: ${d.how === "a-stretch" ? "A" : "B"} 의 1 → ${d.o} 로 늘림 (stride 0)`;
+                return `축 ${k}: 둘 다 ${d.o}`;
+            });
+            st.innerHTML = `<div class="bc">${table}<ul class="bc-why">${why.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>${R.ok ? pics : `<div class="nd-err">${esc(R.err)}</div>`}</div>`;
+            const total = R.ok ? ndSize(R.out) : 0;
+            const sz = (k) => (k >= 1048576 ? `${(k / 1048576).toFixed(1)} MiB` : k >= 1024 ? `${(k / 1024).toFixed(1)} KiB` : `${k} B`);
+            out(R.ok ? [
+                ["결과 shape", sh(R.out), "good"],
+                ["원소 수", total.toLocaleString()],
+                ["입력 메모리 (float32)", `${sz(4 * ndSize(A))} + ${sz(4 * ndSize(B))}`],
+                ["결과 메모리", sz(4 * total)],
+                ["np.tile 로 B 를 미리 늘리면 추가", sz(4 * Math.max(0, total - ndSize(B))), "bad"]
+            ] : [["결과", "오류", "bad"], ["고칠 곳", "작은 쪽에 None(새 축)을 끼워 축을 맞추기"]]);
+        };
+        const aIn = textIn(bar, "A", A.join(", "), (s) => { const p = parse(s); if (!p) LAB.toast("예: 3, 4 · 축 최대 5개"); else A = p; draw(); }, true);
+        const bIn = textIn(bar, "B", B.join(", "), (s) => { const p = parse(s); if (!p) LAB.toast("예: 4 또는 3, 1"); else B = p; draw(); }, true);
+        const sel = document.createElement("select");
+        sel.innerHTML = Object.entries(BC_PRESETS).map(([k, p]) => `<option value="${k}">${sh(p[0])} + ${sh(p[1])} · ${p[2]}</option>`).join("");
+        sel.value = spec.preset || "row";
+        sel.onchange = () => { [A, B] = BC_PRESETS[sel.value]; aIn.value = A.join(", "); bIn.value = B.join(", "); draw(); };
+        const l = document.createElement("label");
+        l.append("예제 ", sel);
+        bar2.append(l);
+        draw();
+    };
+
+    // autograd: forward values, backward one node at a time, .grad accumulation, zero_grad, optimizer step
+    SIMS.autograd = (host, spec) => {
+        const o = { x: spec.x ?? 2, w: spec.w ?? 0.5, b: spec.b ?? 0.1, t: spec.t ?? 1, act: spec.act || "tanh", xGrad: false };
+        const lr = spec.lr ?? 0.1;
+        let k = -1; // backward frames revealed in this pass
+        const NONE = { w: null, b: null, x: null }; // .grad starts as None; zero_grad() sets it back to None (set_to_none=True)
+        let acc = { ...NONE };
+        let nBack = 0;
+        let nStep = 0;
+        let log = "";
+        const bar = ctlBar(host);
+        const st = stage(host);
+        const bar2 = ctlBar(host);
+        const bar3 = ctlBar(host);
+        const out = readout(host);
+        const P = { x: [56, 40], w: [56, 128], t: [470, 40], u: [196, 84], b: [196, 182], z: [326, 132], y: [446, 132], e: [566, 84], L: [690, 84] };
+        const f4 = (v) => (v === null || v === undefined ? "None" : String(+v.toFixed(4)));
+        const draw = () => {
+            const R = agRun(o);
+            const N = R.nodes;
+            if (o.act === "none") { P.e = [446, 84]; P.L = [586, 84]; P.t = [356, 30]; } else { P.e = [566, 84]; P.L = [690, 84]; P.t = [470, 40]; }
+            const shown = new Set(R.back.slice(0, k + 1).flatMap((f) => f.on));
+            const cur = k >= 0 ? R.back[k] : null;
+            const curE = new Set(cur ? cur.edges : []);
+            const edges = Object.entries(N).flatMap(([id, n]) => (n.ins || []).map((s) => [s, id]));
+            const local = { "w>u": `× x = ${f4(o.x)}`, "x>u": `× w = ${f4(o.w)}`, "u>z": "× 1", "b>z": "× 1", "z>y": o.act === "tanh" ? `× (1 − y²) = ${f4(1 - R.y * R.y)}` : `× ${R.z > 0 ? 1 : 0}`, "y>e": "× 1", "z>e": "× 1", "e>L": `× 2e = ${f4(2 * N.e.v)}` };
+            const svg = `<svg viewBox="0 0 760 220">${edges.map(([s, d]) => { const [x1, y1] = P[s]; const [x2, y2] = P[d]; const on = curE.has(`${s}>${d}`); return `<line class="${on ? "on" : ""}" x1="${x1 + 44}" y1="${y1}" x2="${x2 - 44}" y2="${y2}"/>${on ? `<text class="lc" x="${(x1 + x2) / 2}" y="${(y1 + y2) / 2 - 8}">${esc(local[`${s}>${d}`] || "")}</text>` : ""}`; }).join("")}
+                ${Object.entries(N).map(([id, n]) => {
+                    const [x, y] = P[id];
+                    const leaf = n.leaf;
+                    const g = leaf ? (n.rg ? acc[id] : null) : shown.has(id) ? n.g : undefined;
+                    const gl = leaf ? `.grad ${f4(g)}` : g === undefined ? (n.fn || "") : `∂L = ${f4(g)}`;
+                    const cls = `${leaf ? "leaf" : "op"}${leaf && n.rg ? " rg" : ""}${cur && cur.on.includes(id) ? " cur" : ""}${shown.has(id) ? " done" : ""}`;
+                    return `<g class="${cls}"><rect x="${x - 44}" y="${y - 26}" width="88" height="52" rx="9"/><text class="h" x="${x}" y="${y - 11}">${esc(n.label)} = ${f4(n.v)}</text><text class="gd" x="${x}" y="${y + 10}">${esc(gl)}</text></g>`;
+                }).join("")}</svg>`;
+            st.innerHTML = `<div class="ag">${svg}<div class="ag-cap">${esc(cur ? cur.text : log || "forward 끝: 값이 채워졌고 각 연산은 grad_fn 을 남김 · backward ▶ 로 한 칸씩")}</div></div>`;
+            out([
+                ["L", f4(R.L)],
+                ["w.grad", f4(acc.w), nBack > 1 ? "bad" : ""],
+                ["b.grad", f4(acc.b), nBack > 1 ? "bad" : ""],
+                ["x.grad", o.xGrad ? f4(acc.x) : "None"],
+                ["zero_grad 이후 backward", `${nBack}회${nBack > 1 ? " → 누적됨" : ""}`, nBack > 1 ? "bad" : ""],
+                ["step", nStep]
+            ]);
+        };
+        const add = (a, g) => (g === null ? a : (a ?? 0) + g);
+        const finish = () => { const R = agRun(o); acc = { w: add(acc.w, R.nodes.w.g), b: add(acc.b, R.nodes.b.g), x: add(acc.x, R.nodes.x.g) }; nBack++; };
+        const step = () => { if (acc.w !== null) o.w -= lr * acc.w; if (acc.b !== null) o.b -= lr * acc.b; nStep++; }; // params with grad None are skipped
+        button(bar, "backward ▶", () => { const n = agRun(o).back.length; if (k >= n - 1) { k = -1; log = "새 backward: 같은 그래프로 다시 → .grad 에 더해짐"; } k++; if (k === n - 1) finish(); draw(); }, true);
+        button(bar, "backward 전체", () => { const n = agRun(o).back.length; if (k < n - 1) { k = n - 1; finish(); } else { finish(); log = "한 번 더 backward: zero_grad 없이 → 같은 값이 더해짐"; k = -1; } draw(); });
+        button(bar, "zero_grad()", () => { acc = { ...NONE }; nBack = 0; k = -1; log = "zero_grad(): .grad 를 None 으로 (set_to_none=True 기본) · 다음 backward 부터 새로 쌓임"; draw(); });
+        button(bar, `step() lr=${lr}`, () => { step(); k = -1; wIn.set(+o.w.toFixed(3)); bIn.set(+o.b.toFixed(3)); log = `w ← w − lr·w.grad, b ← b − lr·b.grad · 새 forward 로 L = ${f4(agRun(o).L)}`; draw(); });
+        button(bar, "학습 ×10", () => {
+            for (let i = 0; i < 10; i++) { if (!skipZero) { acc = { ...NONE }; nBack = 0; } finish(); step(); }
+            k = -1; wIn.set(+o.w.toFixed(3)); bIn.set(+o.b.toFixed(3));
+            log = `zero_grad → forward → backward → step 을 10번${skipZero ? " (zero_grad 빼먹음: grad 가 계속 쌓여 보폭이 커짐)" : ""} · L = ${f4(agRun(o).L)}`;
+            draw();
+        });
+        let skipZero = false;
+        const reset = () => { acc = { ...NONE }; nBack = 0; k = -1; log = ""; draw(); };
+        const wIn = slider(bar2, "w", -2, 2, 0.05, o.w, (v) => v.toFixed(2), (v) => { o.w = v; reset(); });
+        const bIn = slider(bar2, "b", -2, 2, 0.05, o.b, (v) => v.toFixed(2), (v) => { o.b = v; reset(); });
+        slider(bar2, "x", -2, 2, 0.1, o.x, (v) => v.toFixed(1), (v) => { o.x = v; reset(); });
+        seg(bar3, "활성", [["none", "없음"], ["tanh", "tanh"], ["relu", "ReLU"]], o.act, (v) => { o.act = v; reset(); });
+        seg(bar3, "x.requires_grad", [["0", "False"], ["1", "True"]], "0", (v) => { o.xGrad = v === "1"; reset(); });
+        seg(bar3, "학습 루프", [["0", "zero_grad 매번"], ["1", "zero_grad 빼먹기"]], "0", (v) => { skipZero = v === "1"; });
+        draw();
+    };
+
     LAB.SIM_INFO = {
         reg: ["레지스터 비트", "MASK·결과 미리보기 · set/clear/toggle · 필드 읽기·쓰기", "비트"],
         bitops: ["비트 연산 ALU", "AND·OR·XOR·시프트·회전 · 2의 보수 · NZCV 플래그", "비트"],
@@ -4455,9 +4831,12 @@
         nvic: ["NVIC 우선순위", "선점 · tail-chaining · late arrival · 그룹/서브 우선순위", "시스템"],
         race: ["경쟁 조건", "count++ 끼어들기 · lost update · 뮤텍스 vs 원자 연산", "시스템"],
         quant: ["INT8 양자화", "scale·zero-point · 대칭 vs 비대칭 · 채널별 스케일 · 이상치", "AI"],
-        graph: ["그래프 탐색", "BFS · DFS · Dijkstra · 위상 정렬 · 큐/스택 상태", "자료구조"]
+        graph: ["그래프 탐색", "BFS · DFS · Dijkstra · 위상 정렬 · 큐/스택 상태", "자료구조"],
+        strides: ["ndarray 메모리", "버퍼 하나, view 여러 개 · shape·strides·offset · view vs 복사", "텐서"],
+        broadcast: ["브로드캐스팅", "두 shape 오른쪽 정렬 · 1 늘리기 · 오류와 (3,) vs (3,1) 함정", "텐서"],
+        autograd: ["autograd 계산 그래프", "forward 값 · backward 한 칸씩 · .grad 누적 · zero_grad · step", "텐서"]
     };
-    LAB.SIM_TAGS = ["비트", "CPU·메모리", "자료구조", "통신", "신호", "제어·로봇", "시스템", "AI"];
+    LAB.SIM_TAGS = ["비트", "CPU·메모리", "자료구조", "통신", "신호", "제어·로봇", "시스템", "AI", "텐서"];
 
     const TYPES = { steps, wave, seq, sim: (host, spec) => SIMS[spec.name](host, spec) };
     LAB.SIM_NAMES = Object.keys(SIMS);

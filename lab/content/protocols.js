@@ -9,9 +9,9 @@ LAB.track({
             title: "CAN XL · 10BASE-T1S 멀티드롭(multidrop)",
             when: "2024–2026",
             points: [
-                "CAN XL: `ISO 11898-1:2024` 에 포함 · 데이터 필드 1–2048 B · 11bit 우선순위 ID 를 따로 둠",
+                "CAN XL: `ISO 11898-1:2024`에 포함 · 데이터 필드 1–2048 B · 11bit 우선순위 ID를 따로 둠",
                 "20 Mbit/s 이상 데이터 구간(data phase)은 CAN SIC XL 트랜시버(CiA 610-3) 필요",
-                "10BASE-T1S(802.3cg): 단일 페어(single pair) 10 Mbit/s 버스 · PLCA 로 충돌 없는 차례 송신",
+                "10BASE-T1S(802.3cg): 단일 페어(single pair) 10 Mbit/s 버스 · PLCA로 충돌 없는 차례 송신",
                 "IEEE 802.3da-2026 (2026-02 승인): 멀티드롭 확장 · 한 세그먼트에서 여러 장치 급전(power delivery)"
             ],
             refs: [
@@ -54,7 +54,7 @@ LAB.track({
             when: "2023–2026",
             points: [
                 "Sparkplug 3.0 → 국제 표준(international standard) `ISO/IEC 20237` (2023) · 산업용 토픽 구조·페이로드",
-                "NBIRTH/NDEATH 로 장치 상태 관리 · NDEATH 는 MQTT Will 로 등록",
+                "NBIRTH/NDEATH로 장치 상태 관리 · NDEATH는 MQTT Will로 등록",
                 "MQTT 5: reason code · user property · 공유 구독(shared subscription) `$share/그룹/토픽`"
             ],
             refs: [
@@ -73,13 +73,13 @@ LAB.track({
             pre: ["embedded/gpio", "data-structures/ds-ring"],
             checked: "2026-11-16",
             key: [
-                "클럭선 없는 비동기 직렬(asynchronous serial) · 양쪽이 **같은 baud** 를 약속",
+                "클럭선 없는 비동기 직렬(asynchronous serial) · 양쪽이 **같은 baud**를 약속",
                 "프레임: Start(0) + 데이터(**LSB 먼저**) + [패리티(parity)] + Stop(1)",
                 "8N1 → 1 바이트 = 10 비트 · 115200 bps ≈ 11.5 KB/s",
                 "TX↔RX 교차 연결(crossover) · **GND 공통**(common ground) 필수"
             ],
             concepts: [
-                { term: "Baud rate", def: "초당 심볼 수 · UART 는 1 심볼 = 1 비트라 bps 와 같음" },
+                { term: "Baud rate", def: "초당 심볼 수 · UART는 1 심볼 = 1 비트라 bps와 같음" },
                 { term: "오버샘플링", en: "Oversampling", def: "비트당 16×(또는 8×) 샘플 · start 에지 기준 비트 **중앙**에서 판정" },
                 { term: "클럭 오차 허용", en: "Clock deviation tolerance", def: "stop 중앙(start 에지 뒤 9.5 비트)까지 누적 오차 < ½ 비트 · 각자 ±2% 이내 권장" },
                 { term: "RS-232 / RS-485", en: "Recommended Standard 232 / Recommended Standard 485", def: "전기 규격만 다름 · ±전압(반전 논리) / 차동 멀티드롭 · 프레임은 동일" }
@@ -109,7 +109,7 @@ int uart_getc(void) {
     if (!(USART2->SR & USART_SR_RXNE)) return -1;   // 받은 것 없음
     return USART2->DR & 0xFF;                      // DR 읽으면 RXNE 클리어
 }`,
-                    note: "BRR 반올림(rounding) 안 하면 오차가 커짐 · 실제 baud 와 오차를 꼭 계산"
+                    note: "BRR 반올림(rounding) 안 하면 오차가 커짐 · 실제 baud와 오차를 꼭 계산"
                 },
                 {
                     lang: "python",
@@ -130,7 +130,7 @@ def query(cmd: str) -> str:
 
 print(query("AT"))                          # 예: 'OK'
 ser.close()`,
-                    note: "UART 는 메시지 경계(message boundary)가 없음 · 줄바꿈·길이·구분자(delimiter)로 직접 정해야 함"
+                    note: "UART는 메시지 경계(message boundary)가 없음 · 줄바꿈·길이·구분자(delimiter)로 직접 정해야 함"
                 }
             ],
             optimize: [
@@ -143,7 +143,7 @@ UBRR0 = F_CPU / (16UL * BAUD) - 1;
 UBRR0 = (F_CPU + 4UL * BAUD) / (8UL * BAUD) - 1;  // 반올림 → 16
 // 실제 16e6 / (8 × 17) = 117647 bps · 오차 +2.1%` },
                     gain: "오차 +8.5% → +2.1%",
-                    note: "오차가 0 이 되려면 11.0592 MHz 같은 'UART 크리스털' 사용"
+                    note: "오차가 0이 되려면 11.0592 MHz 같은 'UART 크리스털' 사용"
                 },
                 {
                     title: "바이트마다 write() → 한 번에 쓰기",
@@ -155,23 +155,23 @@ UBRR0 = (F_CPU + 4UL * BAUD) / (8UL * BAUD) - 1;  // 반올림 → 16
             ],
             glossary: [
                 { term: "UART", en: "Universal Asynchronous Receiver/Transmitter", def: "클럭선 없이 start/stop 비트로 동기하는 직렬 통신 하드웨어" },
-                { term: "Baud", en: "Baud rate", def: "초당 심볼 수 · UART 에선 bps 와 같음 (9600, 115200 …)" },
+                { term: "Baud", en: "Baud rate", def: "초당 심볼 수 · UART에선 bps와 같음 (9600, 115200 …)" },
                 { term: "8N1", en: "8 data, No parity, 1 stop", def: "가장 흔한 프레임 설정 · 바이트당 10 비트" },
-                { term: "패리티 비트", en: "Parity bit", def: "1 의 개수를 짝/홀수로 맞추는 1 비트 오류 검출 · 2 비트 오류는 못 잡음" },
-                { term: "프레이밍 에러", en: "Framing error", def: "stop 비트 자리에서 0 을 읽음 · baud 불일치·노이즈 의심" },
+                { term: "패리티 비트", en: "Parity bit", def: "1의 개수를 짝/홀수로 맞추는 1 비트 오류 검출 · 2 비트 오류는 못 잡음" },
+                { term: "프레이밍 에러", en: "Framing error", def: "stop 비트 자리에서 0을 읽음 · baud 불일치·노이즈 의심" },
                 { term: "RS-485", en: "TIA/EIA-485", def: "차동 2선 · 멀티드롭 · 긴 거리 · UART 프레임을 실어 나르는 물리층" }
             ],
             quiz: [
-                { q: "115200 bps, 8N1 에서 초당 최대 바이트 수는?", options: ["14400", "11520", "12800", "10473"], a: 1, why: "8N1 = 바이트당 10 비트 → 115200 / 10 · 10473 은 11 비트 프레임(8E1)일 때" },
-                { q: "`0x41` 을 보낼 때 start 비트 다음 첫 데이터 비트는?", options: ["0 (bit7, MSB)", "1 (bit6)", "0 (패리티)", "1 (bit0, LSB)"], a: 3, why: "UART 는 LSB 먼저 · 0x41 의 bit0 = 1 · MSB 먼저는 I2C·SPI 쪽 습관" },
-                { q: "유휴 상태 TX 라인의 레벨은?", options: ["Low (0)", "Hi-Z (떠 있음)", "High (1)", "매 비트 토글"], a: 2, why: "유휴 High → start 비트의 하강 에지가 프레임 시작 · Low 유휴면 끊긴 선·break 와 구분이 안 됨" },
-                { q: "짝수(even) 패리티로 `0x41` 을 보낼 때 패리티 비트는?", options: ["0", "1", "2", "보내지 않음"], a: 0, why: "1 이 2 개(bit0, bit6) → 이미 짝수라 0 · 홀수 패리티면 1" },
-                { q: "글자가 깨지고 framing error 가 잦다. 먼저 볼 것은?", options: ["패리티 설정 차이", "TX 버퍼 크기 부족", "흐름 제어 미사용", "baud·클럭 오차"], a: 3, why: "비트 타이밍이 어긋나면 stop 자리에서 0 을 읽음 · 패리티 차이는 parity error 로 따로 잡힘" },
-                { type: "num", q: "실험실 모델(분주 = round(fclk / baud))로 16 MHz 에서 921600 bps 를 내면 baud 오차는 몇 %?", answer: 2.12, tol: 0.05, unit: "%", why: "16e6 / 921600 = 17.36 → 17 → 941176 bps · 48 MHz 면 52 분주로 +0.16%" },
+                { q: "115200 bps, 8N1에서 초당 최대 바이트 수는?", options: ["14400", "11520", "12800", "10473"], a: 1, why: "8N1 = 바이트당 10 비트 → 115200 / 10 · 10473은 11 비트 프레임(8E1)일 때" },
+                { q: "`0x41`을 보낼 때 start 비트 다음 첫 데이터 비트는?", options: ["0 (bit7, MSB)", "1 (bit6)", "0 (패리티)", "1 (bit0, LSB)"], a: 3, why: "UART는 LSB 먼저 · 0x41의 bit0 = 1 · MSB 먼저는 I2C·SPI 쪽 습관" },
+                { q: "유휴 상태 TX 라인의 레벨은?", options: ["Low (0)", "Hi-Z (떠 있음)", "High (1)", "매 비트 토글"], a: 2, why: "유휴 High → start 비트의 하강 에지가 프레임 시작 · Low 유휴면 끊긴 선·break와 구분이 안 됨" },
+                { q: "짝수(even) 패리티로 `0x41`을 보낼 때 패리티 비트는?", options: ["0", "1", "2", "보내지 않음"], a: 0, why: "1이 2 개(bit0, bit6) → 이미 짝수라 0 · 홀수 패리티면 1" },
+                { q: "글자가 깨지고 framing error가 잦다. 먼저 볼 것은?", options: ["패리티 설정 차이", "TX 버퍼 크기 부족", "흐름 제어 미사용", "baud·클럭 오차"], a: 3, why: "비트 타이밍이 어긋나면 stop 자리에서 0을 읽음 · 패리티 차이는 parity error로 따로 잡힘" },
+                { type: "num", q: "실험실 모델(분주 = round(fclk / baud))로 16 MHz에서 921600 bps를 내면 baud 오차는 몇 %?", answer: 2.12, tol: 0.05, unit: "%", why: "16e6 / 921600 = 17.36 → 17 → 941176 bps · 48 MHz면 52 분주로 +0.16%" },
                 { type: "num", q: "115200 bps, 8E1 한 문자의 전송 시간은 몇 µs?", answer: 95.49, tol: 0.1, unit: "µs", why: "start 1 + 데이터 8 + 패리티 1 + stop 1 = 11 비트 × 8.68 µs" },
-                { type: "num", q: "8N1 · 에지 검출 오차를 무시하면 송수신 클럭 오차 합의 한계는 몇 %?", answer: 5.26, tol: 0.05, unit: "%", why: "stop 중앙 = start 에지 뒤 9.5 비트 · 어긋남 < ½ 비트 → 0.5 / 9.5 · 16× 에지 오차 1/16 을 빼면 4.6%" },
-                { type: "text", q: "8N1 로 받은 파형(시간 순)이다. 바이트 값은? (16진)", code: { lang: "txt", src: "idle start d0 d1 d2 d3 d4 d5 d6 d7 stop\n 1     0    0  1  1  0  0  0  1  0   1" }, answer: ["0x46", "46", "70"], why: "LSB 먼저 → bit7..0 = 0100 0110 = 0x46 ('F') · 왼쪽부터 읽으면 0x62 로 착각" },
-                { type: "order", q: "수신기가 한 프레임을 받는 순서", items: ["하강 에지 감지", "반 비트 뒤 0 재확인 (start 확정)", "비트마다 중앙에서 데이터 샘플", "stop 자리에서 1 확인", "수신 레지스터로 옮기고 RXNE set"], why: "에지로 기준점 → 반 비트 뒤 글리치를 거름 → 비트 중앙 샘플 · stop 이 0 이면 framing error" }
+                { type: "num", q: "8N1 · 에지 검출 오차를 무시하면 송수신 클럭 오차 합의 한계는 몇 %?", answer: 5.26, tol: 0.05, unit: "%", why: "stop 중앙 = start 에지 뒤 9.5 비트 · 어긋남 < ½ 비트 → 0.5 / 9.5 · 16× 에지 오차 1/16을 빼면 4.6%" },
+                { type: "text", q: "8N1로 받은 파형(시간 순)이다. 바이트 값은? (16진)", code: { lang: "txt", src: "idle start d0 d1 d2 d3 d4 d5 d6 d7 stop\n 1     0    0  1  1  0  0  0  1  0   1" }, answer: ["0x46", "46", "70"], why: "LSB 먼저 → bit7..0 = 0100 0110 = 0x46 ('F') · 왼쪽부터 읽으면 0x62로 착각" },
+                { type: "order", q: "수신기가 한 프레임을 받는 순서", items: ["하강 에지 감지", "반 비트 뒤 0 재확인 (start 확정)", "비트마다 중앙에서 데이터 샘플", "stop 자리에서 1 확인", "수신 레지스터로 옮기고 RXNE set"], why: "에지로 기준점 → 반 비트 뒤 글리치를 거름 → 비트 중앙 샘플 · stop이 0이면 framing error" }
             ],
             refs: [
                 { title: "The RS-485 Design Guide", by: "T. Kugelstadt", year: 2021, url: "https://www.ti.com/lit/an/slla272d/slla272d.pdf", kind: "doc" },
@@ -193,9 +193,9 @@ UBRR0 = (F_CPU + 4UL * BAUD) / (8UL * BAUD) - 1;  // 반올림 → 16
                 "9번째 클럭에 수신 측(receiver)이 SDA Low = **ACK**, High = NACK"
             ],
             concepts: [
-                { term: "START / STOP", def: "SCL High 에서 SDA ↓ / ↑ · 데이터 중엔 나올 수 없는 변화" },
+                { term: "START / STOP", def: "SCL High에서 SDA ↓ / ↑ · 데이터 중엔 나올 수 없는 변화" },
                 { term: "Repeated START", def: "STOP 없이 다시 START · 레지스터 주소 쓰고 바로 읽기" },
-                { term: "클럭 스트레칭", en: "Clock stretching", def: "슬레이브가 SCL 을 Low 로 붙잡아 마스터를 기다리게 함" },
+                { term: "클럭 스트레칭", en: "Clock stretching", def: "슬레이브가 SCL을 Low로 붙잡아 마스터를 기다리게 함" },
                 { term: "속도 모드", en: "Bus speed modes", def: "Standard 100 kHz · Fast 400 kHz · Fast-mode Plus 1 MHz" },
                 { term: "풀업 크기", en: "Pull-up resistor sizing", def: "버스 용량·속도로 결정 · 클수록 상승 느림, 작을수록 전류↑" }
             ],
@@ -262,29 +262,29 @@ with SMBus(1) as bus:
 hi2c1.Init.DutyCycle  = I2C_DUTYCYCLE_2;
 // 상승 시간 ≤ 300 ns: 풀업을 더 작게(예: 2.2 kΩ), 배선 짧게` },
                     gain: "전송 시간 약 1/4",
-                    note: "버스의 모든 장치가 400 kHz 를 지원해야 함"
+                    note: "버스의 모든 장치가 400 kHz를 지원해야 함"
                 }
             ],
             glossary: [
                 { term: "I2C", en: "Inter-Integrated Circuit", def: "2선 동기 직렬 버스 · 주소로 장치 선택 · 보드 내 센서/EEPROM 용" },
                 { term: "ACK / NACK", en: "Acknowledge / Not acknowledge", def: "9번째 비트 · Low = 받았음, High = 없음/거부/읽기 끝" },
-                { term: "Wired-AND", en: "Wired-AND", def: "누구든 Low 를 당기면 선 전체가 Low · ACK·중재·스트레칭의 기반" },
-                { term: "클럭 스트레칭", en: "Clock stretching", def: "슬레이브가 SCL 을 Low 로 유지해 처리 시간을 버는 것" },
+                { term: "Wired-AND", en: "Wired-AND", def: "누구든 Low를 당기면 선 전체가 Low · ACK·중재·스트레칭의 기반" },
+                { term: "클럭 스트레칭", en: "Clock stretching", def: "슬레이브가 SCL을 Low로 유지해 처리 시간을 버는 것" },
                 { term: "Repeated START", en: "Repeated start (Sr)", def: "버스를 놓지 않고 방향(W→R)을 바꾸는 START" },
-                { term: "7bit 주소", en: "7-bit address", def: "0x08–0x77 사용 · R/W 를 붙이면 8bit 주소 바이트" }
+                { term: "7bit 주소", en: "7-bit address", def: "0x08–0x77 사용 · R/W를 붙이면 8bit 주소 바이트" }
             ],
             quiz: [
-                { q: "7bit 주소 `0x68` 장치를 **읽을 때** 보내는 주소 바이트는?", options: ["0x68", "0xD0", "0xD1", "0x69"], a: 2, why: "(0x68 << 1) | 1 = 0xD1 · 0xD0 은 쓰기, 0x69 는 시프트를 빼먹은 값" },
-                { q: "9번째 클럭에서 SDA 가 High 로 남았다면?", options: ["NACK", "ACK", "클럭 스트레칭", "STOP 조건"], a: 0, why: "아무도 Low 로 당기지 않음 = NACK · 스트레칭은 SCL 을 붙잡는 것이라 SDA 와 무관" },
-                { q: "데이터 전송 중 SCL High 구간에 SDA 가 바뀌면?", options: ["다음 데이터 비트로 처리", "글리치로 보고 무시", "START·STOP 신호", "버스 중재 패배로 처리"], a: 2, why: "SCL High 중 SDA ↓ = START, ↑ = STOP · 데이터는 SCL Low 일 때만 바뀜" },
-                { q: "400 kHz 에서 상승 시간이 너무 길다. 조치는?", options: ["풀업 저항을 더 크게", "풀업 저항을 더 작게", "SDA 를 푸시풀로", "SCL 듀티를 1:1 로"], a: 1, why: "tr = 0.8473 · Rp · Cb → Rp↓ · 단 Rp(min) 전류 한계(3 mA) 안에서 · 키우면 더 느려짐" },
-                { q: "레지스터 주소를 쓰고 이어서 읽을 때 쓰는 것은?", options: ["STOP 후 새 START", "General call 주소", "클럭 스트레칭", "Repeated START"], a: 3, why: "버스를 놓지 않고 W → R 전환 · STOP 을 내면 다른 컨트롤러가 끼어들 수 있음" },
-                { type: "num", q: "Fast mode(tr ≤ 300 ns), 버스 용량 200 pF 에서 풀업 Rp 최대값은 몇 Ω?", answer: 1770, tol: 10, unit: "Ω", why: "Rp(max) = tr / (0.8473 × Cb) = 300 ns / (0.8473 × 200 pF)" },
-                { type: "num", q: "VDD 5 V, Fast mode(VOL 0.4 V @ 3 mA) 에서 풀업 Rp 최소값은 몇 Ω?", answer: 1533, tol: 5, unit: "Ω", why: "Rp(min) = (VDD − VOL) / IOL = 4.6 V / 3 mA · 더 작으면 Low 가 0.4 V 까지 안 내려감" },
-                { type: "text", q: "7bit 주소 `0x3C` 장치에 **쓰기** 할 때 버스에 나가는 첫 바이트는? (16진)", answer: ["0x78", "78", "120"], why: "(0x3C << 1) | 0 = 0x78 · 데이터시트의 0x78 과 0x3C 는 같은 장치" },
-                { type: "num", q: "400 kHz 에서 주소W + 레지스터 + 주소R + 데이터 6 B (9 B × 9 클럭)의 클럭 시간은 몇 µs? (START·STOP 제외)", answer: 202.5, tol: 1, unit: "µs", why: "81 클럭 × 2.5 µs · 1 바이트씩 6 번이면 216 클럭으로 2.7 배" },
-                { type: "order", q: "레지스터 1 바이트 읽기의 버스 순서", items: ["START", "주소+W → ACK", "레지스터 주소 → ACK", "Repeated START", "주소+R → ACK", "데이터 → 컨트롤러 NACK", "STOP"], why: "쓰기로 레지스터 포인터를 놓고 Sr 로 방향 전환 · 마지막 바이트는 NACK 로 끝을 알림" },
-                { type: "text", q: "레지스터 2 바이트 읽기(주소+W · 레지스터 · 주소+R · 데이터 1 · 데이터 2)에서 각 바이트 뒤 9번째 클럭의 SDA 를 순서대로 쓰면? (ACK=0, NACK=1)", answer: ["00001"], why: "앞 세 바이트는 슬레이브가, 데이터 1 은 마스터가 ACK(0) · 마지막 데이터는 마스터가 NACK(1) 로 끝을 알림 · 실험에서 레지스터 읽기 + 데이터 2 바이트로 확인" }
+                { q: "7bit 주소 `0x68` 장치를 **읽을 때** 보내는 주소 바이트는?", options: ["0x68", "0xD0", "0xD1", "0x69"], a: 2, why: "(0x68 << 1) | 1 = 0xD1 · 0xD0은 쓰기, 0x69는 시프트를 빼먹은 값" },
+                { q: "9번째 클럭에서 SDA가 High로 남았다면?", options: ["NACK", "ACK", "클럭 스트레칭", "STOP 조건"], a: 0, why: "아무도 Low로 당기지 않음 = NACK · 스트레칭은 SCL을 붙잡는 것이라 SDA와 무관" },
+                { q: "데이터 전송 중 SCL High 구간에 SDA가 바뀌면?", options: ["다음 데이터 비트로 처리", "글리치로 보고 무시", "START·STOP 신호", "버스 중재 패배로 처리"], a: 2, why: "SCL High 중 SDA ↓ = START, ↑ = STOP · 데이터는 SCL Low일 때만 바뀜" },
+                { q: "400 kHz에서 상승 시간이 너무 길다. 조치는?", options: ["풀업 저항을 더 크게", "풀업 저항을 더 작게", "SDA를 푸시풀로", "SCL 듀티를 1:1로"], a: 1, why: "tr = 0.8473 · Rp · Cb → Rp↓ · 단 Rp(min) 전류 한계(3 mA) 안에서 · 키우면 더 느려짐" },
+                { q: "레지스터 주소를 쓰고 이어서 읽을 때 쓰는 것은?", options: ["STOP 후 새 START", "General call 주소", "클럭 스트레칭", "Repeated START"], a: 3, why: "버스를 놓지 않고 W → R 전환 · STOP을 내면 다른 컨트롤러가 끼어들 수 있음" },
+                { type: "num", q: "Fast mode(tr ≤ 300 ns), 버스 용량 200 pF에서 풀업 Rp 최대값은 몇 Ω?", answer: 1770, tol: 10, unit: "Ω", why: "Rp(max) = tr / (0.8473 × Cb) = 300 ns / (0.8473 × 200 pF)" },
+                { type: "num", q: "VDD 5 V, Fast mode(VOL 0.4 V @ 3 mA)에서 풀업 Rp 최소값은 몇 Ω?", answer: 1533, tol: 5, unit: "Ω", why: "Rp(min) = (VDD − VOL) / IOL = 4.6 V / 3 mA · 더 작으면 Low가 0.4 V까지 안 내려감" },
+                { type: "text", q: "7bit 주소 `0x3C` 장치에 **쓰기** 할 때 버스에 나가는 첫 바이트는? (16진)", answer: ["0x78", "78", "120"], why: "(0x3C << 1) | 0 = 0x78 · 데이터시트의 0x78과 0x3C는 같은 장치" },
+                { type: "num", q: "400 kHz에서 주소W + 레지스터 + 주소R + 데이터 6 B (9 B × 9 클럭)의 클럭 시간은 몇 µs? (START·STOP 제외)", answer: 202.5, tol: 1, unit: "µs", why: "81 클럭 × 2.5 µs · 1 바이트씩 6번이면 216 클럭으로 2.7배" },
+                { type: "order", q: "레지스터 1 바이트 읽기의 버스 순서", items: ["START", "주소+W → ACK", "레지스터 주소 → ACK", "Repeated START", "주소+R → ACK", "데이터 → 컨트롤러 NACK", "STOP"], why: "쓰기로 레지스터 포인터를 놓고 Sr로 방향 전환 · 마지막 바이트는 NACK로 끝을 알림" },
+                { type: "text", q: "레지스터 2 바이트 읽기(주소+W · 레지스터 · 주소+R · 데이터 1 · 데이터 2)에서 각 바이트 뒤 9번째 클럭의 SDA를 순서대로 쓰면? (ACK=0, NACK=1)", answer: ["00001"], why: "앞 세 바이트는 슬레이브가, 데이터 1은 마스터가 ACK(0) · 마지막 데이터는 마스터가 NACK(1)로 끝을 알림 · 실험에서 레지스터 읽기 + 데이터 2 바이트로 확인" }
             ],
             refs: [
                 { title: "UM10204 I2C-bus specification and user manual (Rev. 7.0)", by: "NXP Semiconductors", year: 2021, url: "https://www.nxp.com/docs/en/user-guide/UM10204.pdf", kind: "spec" },
@@ -309,7 +309,7 @@ hi2c1.Init.DutyCycle  = I2C_DUTYCYCLE_2;
                 { term: "CPOL", en: "Clock Polarity", def: "유휴 클럭 레벨 · 0 = Low, 1 = High" },
                 { term: "CPHA", en: "Clock Phase", def: "0 = 첫 에지에서 샘플 · 1 = 두 번째 에지에서 샘플" },
                 { term: "시프트 레지스터 교환", en: "Shift register exchange", def: "마스터·슬레이브 레지스터가 링으로 연결 · 8 클럭 후 내용이 서로 바뀜" },
-                { term: "더미 바이트", en: "Dummy byte", def: "읽으려면 뭔가 보내야 함 → 0x00/0xFF 를 보내며 수신" }
+                { term: "더미 바이트", en: "Dummy byte", def: "읽으려면 뭔가 보내야 함 → 0x00/0xFF를 보내며 수신" }
             ],
             demo: { type: "sim", name: "spi", byte: 0x96, master: 0, slave: 0 },
             code: [
@@ -329,7 +329,7 @@ uint32_t flash_read_id(void) {
     return ((uint32_t)rx[1] << 16) | ((uint32_t)rx[2] << 8) | rx[3];
     // 예: 0xEF4017 = Winbond W25Q64
 }`,
-                    note: "명령 바이트 동안의 MISO 는 의미 없음 · 응답은 더미를 보내야 나옴"
+                    note: "명령 바이트 동안의 MISO는 의미 없음 · 응답은 더미를 보내야 나옴"
                 },
                 {
                     lang: "python",
@@ -369,25 +369,25 @@ HAL_SPI_Transmit_DMA(&hspi1, buf, n);  // 클럭 연속 · CPU 는 다른 일
                 }
             ],
             glossary: [
-                { term: "SPI", en: "Serial Peripheral Interface", def: "클럭 동기 · 전이중 · 4선 직렬 버스 · 수십 MHz 까지" },
-                { term: "MOSI / MISO", en: "Master Out Slave In / Master In Slave Out", def: "마스터 출력 / 마스터 입력 데이터선 · SDO/SDI 로도 표기" },
-                { term: "CS", en: "Chip Select (SS, NSS)", def: "Low 로 슬레이브 선택 · 선택 안 된 슬레이브는 MISO Hi-Z" },
+                { term: "SPI", en: "Serial Peripheral Interface", def: "클럭 동기 · 전이중 · 4선 직렬 버스 · 수십 MHz까지" },
+                { term: "MOSI / MISO", en: "Master Out Slave In / Master In Slave Out", def: "마스터 출력 / 마스터 입력 데이터선 · SDO/SDI로도 표기" },
+                { term: "CS", en: "Chip Select (SS, NSS)", def: "Low로 슬레이브 선택 · 선택 안 된 슬레이브는 MISO Hi-Z" },
                 { term: "전이중", en: "Full duplex", def: "송신과 수신이 같은 시간에 일어남" },
                 { term: "SPI 모드", en: "SPI mode 0–3", def: "CPOL·CPHA 조합 · 장치 데이터시트와 반드시 일치" },
                 { term: "QSPI", en: "Quad SPI", def: "데이터선 4개로 클럭당 4 비트 · 플래시에서 코드 직접 실행(XIP)" }
             ],
             quiz: [
-                { q: "SPI mode 0 의 (CPOL, CPHA) 는?", options: ["(0, 1)", "(1, 0)", "(0, 0)", "(1, 1)"], a: 2, why: "유휴 Low, 첫(상승) 에지 샘플 · mode 3 (1, 1) 도 상승 에지 샘플이라 헷갈림" },
-                { q: "슬레이브에서 3 바이트를 읽으려면 마스터는?", options: ["더미 3 바이트를 보내며 클럭", "MISO 를 켜고 기다림", "슬레이브 주소 1 바이트 전송", "슬레이브가 클럭을 낼 때까지 대기"], a: 0, why: "클럭은 마스터만 만들고 클럭 = 송수신 동시 · SPI 엔 주소가 없음" },
-                { q: "슬레이브 4개를 각자 CS 로 연결(데이지 체인·디코더 없음)하면 CS 선 수는?", options: ["1", "2", "8", "4"], a: 3, why: "주소가 없어 슬레이브마다 CS 하나 · 2 개는 2→4 디코더를 붙일 때" },
-                { q: "I2C 대비 SPI 의 특징은?", options: ["선 수가 더 적음", "주소로 장치를 선택", "ACK 비트가 내장됨", "푸시풀이라 빠름"], a: 3, why: "오픈드레인 상승 시간 제약이 없어 수십 MHz · 선 수가 적고 주소·ACK 가 있는 건 I2C 쪽" },
-                { q: "mode 0 에서 데이터가 바뀌는(시프트) 시점은?", options: ["SCLK 상승 에지", "SCLK 하강 에지", "CS 상승 에지", "클럭과 무관"], a: 1, why: "상승 에지에 샘플 · 반대인 하강 에지에서 시프트 · 첫 비트만 CS↓ 직후에 나옴" },
-                { type: "num", q: "APB 84 MHz, SPI 분주 8 이면 SCLK 는 몇 MHz?", answer: 10.5, tol: 0.01, unit: "MHz", why: "84 / 8 · 레슨 예의 분주 4 면 21 MHz" },
-                { type: "num", q: "SCLK 20 MHz 로 Read Data(명령 + 주소 4 B) 뒤 4096 B 를 읽는 순수 전송 시간은 몇 µs? (바이트 간 공백 0)", answer: 1640, tol: 1, unit: "µs", why: "(4 + 4096) × 8 비트 / 20 MHz · 바이트마다 호출하면 공백이 더해짐" },
-                { type: "text", q: "`flash_read_id()` 가 이 4 바이트를 받으면 반환값은? (16진)", code: { lang: "c", src: "uint8_t rx[4] = { 0xFF, 0xEF, 0x40, 0x17 };\nreturn ((uint32_t)rx[1] << 16) | ((uint32_t)rx[2] << 8) | rx[3];" }, answer: ["0xEF4017", "EF4017", "15679511"], why: "rx[0] 은 명령을 보내는 동안 들어온 값이라 버림 · EF = Winbond, 4017 = W25Q64" },
-                { type: "order", q: "SPI NOR 플래시 한 페이지 쓰기 순서", items: ["CS↓ · 0x06 Write Enable · CS↑", "CS↓ · 0x02 + 주소 3 B + 데이터", "CS↑ → 내부 프로그램 시작", "0x05 로 상태 읽기 반복", "BUSY = 0 → 완료"], why: "WEL 래치가 먼저 · 명령은 CS↑ 에서 확정 · BUSY 폴링으로 끝을 확인" },
-                { type: "num", q: "mode 0 마스터와 CPOL 은 다르지만 **같은 상승 엣지**에서 샘플하는 슬레이브 모드 번호는?", answer: 3, why: "mode 0 은 CPOL 0 의 첫(상승) 엣지, mode 3 은 CPOL 1 의 둘째(상승) 엣지에서 샘플 · 그래서 많은 장치가 0 과 3 을 함께 지원 · 1 과 2 는 하강 엣지" },
-                { type: "text", q: "마스터 mode 1, 슬레이브 mode 0, MSB 먼저 `0xA5`. 슬레이브가 데이터가 바뀌기 **직전** 값을 읽는다면 받는 8비트는? (모르는 비트는 ?)", answer: ["?1010010"], why: "mode 1 마스터는 상승 엣지에서 MOSI 를 바꾸는데 mode 0 슬레이브도 상승 엣지에서 샘플 → 매번 경합 · 직전 값이면 한 비트씩 늦어 첫 비트는 알 수 없음, 직후 값이면 우연히 맞음" }
+                { q: "SPI mode 0의 (CPOL, CPHA)는?", options: ["(0, 1)", "(1, 0)", "(0, 0)", "(1, 1)"], a: 2, why: "유휴 Low, 첫(상승) 에지 샘플 · mode 3 (1, 1)도 상승 에지 샘플이라 헷갈림" },
+                { q: "슬레이브에서 3 바이트를 읽으려면 마스터는?", options: ["더미 3 바이트를 보내며 클럭", "MISO를 켜고 기다림", "슬레이브 주소 1 바이트 전송", "슬레이브가 클럭을 낼 때까지 대기"], a: 0, why: "클럭은 마스터만 만들고 클럭 = 송수신 동시 · SPI엔 주소가 없음" },
+                { q: "슬레이브 4개를 각자 CS로 연결(데이지 체인·디코더 없음)하면 CS 선 수는?", options: ["1", "2", "8", "4"], a: 3, why: "주소가 없어 슬레이브마다 CS 하나 · 2개는 2→4 디코더를 붙일 때" },
+                { q: "I2C 대비 SPI의 특징은?", options: ["선 수가 더 적음", "주소로 장치를 선택", "ACK 비트가 내장됨", "푸시풀이라 빠름"], a: 3, why: "오픈드레인 상승 시간 제약이 없어 수십 MHz · 선 수가 적고 주소·ACK가 있는 건 I2C 쪽" },
+                { q: "mode 0에서 데이터가 바뀌는(시프트) 시점은?", options: ["SCLK 상승 에지", "SCLK 하강 에지", "CS 상승 에지", "클럭과 무관"], a: 1, why: "상승 에지에 샘플 · 반대인 하강 에지에서 시프트 · 첫 비트만 CS↓ 직후에 나옴" },
+                { type: "num", q: "APB 84 MHz, SPI 분주 8이면 SCLK는 몇 MHz?", answer: 10.5, tol: 0.01, unit: "MHz", why: "84 / 8 · 레슨 예의 분주 4면 21 MHz" },
+                { type: "num", q: "SCLK 20 MHz로 Read Data(명령 + 주소 4 B) 뒤 4096 B를 읽는 순수 전송 시간은 몇 µs? (바이트 간 공백 0)", answer: 1640, tol: 1, unit: "µs", why: "(4 + 4096) × 8 비트 / 20 MHz · 바이트마다 호출하면 공백이 더해짐" },
+                { type: "text", q: "`flash_read_id()`가 이 4 바이트를 받으면 반환값은? (16진)", code: { lang: "c", src: "uint8_t rx[4] = { 0xFF, 0xEF, 0x40, 0x17 };\nreturn ((uint32_t)rx[1] << 16) | ((uint32_t)rx[2] << 8) | rx[3];" }, answer: ["0xEF4017", "EF4017", "15679511"], why: "rx[0]은 명령을 보내는 동안 들어온 값이라 버림 · EF = Winbond, 4017 = W25Q64" },
+                { type: "order", q: "SPI NOR 플래시 한 페이지 쓰기 순서", items: ["CS↓ · 0x06 Write Enable · CS↑", "CS↓ · 0x02 + 주소 3 B + 데이터", "CS↑ → 내부 프로그램 시작", "0x05로 상태 읽기 반복", "BUSY = 0 → 완료"], why: "WEL 래치가 먼저 · 명령은 CS↑ 에서 확정 · BUSY 폴링으로 끝을 확인" },
+                { type: "num", q: "mode 0 마스터와 CPOL은 다르지만 **같은 상승 엣지**에서 샘플하는 슬레이브 모드 번호는?", answer: 3, why: "mode 0은 CPOL 0의 첫(상승) 엣지, mode 3은 CPOL 1의 둘째(상승) 엣지에서 샘플 · 그래서 많은 장치가 0과 3을 함께 지원 · 1과 2는 하강 엣지" },
+                { type: "text", q: "마스터 mode 1, 슬레이브 mode 0, MSB 먼저 `0xA5`. 슬레이브가 데이터가 바뀌기 **직전** 값을 읽는다면 받는 8비트는? (모르는 비트는 ?)", answer: ["?1010010"], why: "mode 1 마스터는 상승 엣지에서 MOSI를 바꾸는데 mode 0 슬레이브도 상승 엣지에서 샘플 → 매번 경합 · 직전 값이면 한 비트씩 늦어 첫 비트는 알 수 없음, 직후 값이면 우연히 맞음" }
             ],
             refs: [
                 { title: "Understanding the SPI Bus", by: "Y. Pan", year: 2025, url: "https://www.ti.com/lit/pdf/sboa621", kind: "doc" },
@@ -405,14 +405,14 @@ HAL_SPI_Transmit_DMA(&hspi1, buf, n);  // 클럭 연속 · CPU 는 다른 일
             key: [
                 "CRC = 메시지를 **생성 다항식(generator polynomial)**으로 나눈 나머지",
                 "나눗셈은 자리올림 없는 XOR · 하드웨어는 **LFSR(linear-feedback shift register)** 하나",
-                "수신측: 메시지 + CRC 를 같은 다항식으로 나누면 나머지 0 → 오류 없음",
-                "이름이 같아도 init·reflect·xorout 이 다르면 값이 다름 (MODBUS vs XMODEM)"
+                "수신측: 메시지 + CRC를 같은 다항식으로 나누면 나머지 0 → 오류 없음",
+                "이름이 같아도 init·reflect·xorout이 다르면 값이 다름 (MODBUS vs XMODEM)"
             ],
             concepts: [
                 { term: "생성 다항식", en: "Generator polynomial", def: "x⁸+x²+x+1 → `0x07` (최고차 항 생략 표기) · 차수 r = CRC 비트 수" },
                 { term: "LFSR", en: "Linear-Feedback Shift Register", def: "시프트 레지스터 + XOR 탭 · 비트당 1클럭으로 CRC 계산" },
-                { term: "해밍 거리", en: "Hamming distance (HD)", def: "검출 못 하는 최소 오류 비트 수 · HD = 4 면 3비트 이하 오류는 전부 검출 (길이 조건 내)" },
-                { term: "버스트 오류", en: "Burst error", def: "연속 구간이 함께 깨지는 오류 · r비트 CRC 는 길이 ≤ r 버스트를 모두 검출" }
+                { term: "해밍 거리", en: "Hamming distance (HD)", def: "검출 못 하는 최소 오류 비트 수 · HD = 4면 3비트 이하 오류는 전부 검출 (길이 조건 내)" },
+                { term: "버스트 오류", en: "Burst error", def: "연속 구간이 함께 깨지는 오류 · r비트 CRC는 길이 ≤ r 버스트를 모두 검출" }
             ],
             demo: { type: "sim", name: "crc", poly: "crc3" },
             code: [
@@ -433,7 +433,7 @@ uint8_t crc8(const uint8_t *p, size_t n) {
     }
     return crc;
 }`,
-                    note: "시뮬레이터의 XOR 단계와 같은 연산 · 맨 앞 비트가 1 이면 다항식을 XOR"
+                    note: "시뮬레이터의 XOR 단계와 같은 연산 · 맨 앞 비트가 1이면 다항식을 XOR"
                 },
                 {
                     lang: "py",
@@ -452,7 +452,7 @@ data = b"123456789"
 print(hex(crc16_modbus(data)))            # 0x4b37
 print(hex(binascii.crc_hqx(data, 0)))     # 0x31c3      CRC-16/XMODEM
 print(hex(zlib.crc32(data)))              # 0xcbf43926  CRC-32`,
-                    note: "같은 16bit 라도 init·**반사(reflection)** 가 다르면 값이 다름 · 카탈로그의 check 값(\"123456789\")으로 검증"
+                    note: "같은 16bit라도 init·**반사(reflection)**가 다르면 값이 다름 · 카탈로그의 check 값(\"123456789\")으로 검증"
                 }
             ],
             optimize: [
@@ -464,7 +464,7 @@ print(hex(zlib.crc32(data)))              # 0xcbf43926  CRC-32`,
 static const uint8_t T[256] = { 0x00, 0x07, 0x0E, 0x09, /* … */ };
 crc = T[crc ^ *p++];                  /* 바이트당 조회 1번 */` },
                     gain: "분기 8 → 조회 1",
-                    note: "플래시 256 B · CRC-16 은 512 B, CRC-32 는 1 KB · 16 엔트리(니블) 테이블로 절충 가능"
+                    note: "플래시 256 B · CRC-16은 512 B, CRC-32는 1 KB · 16 엔트리(니블) 테이블로 절충 가능"
                 },
                 {
                     title: "소프트웨어 → MCU CRC 주변장치",
@@ -472,26 +472,26 @@ crc = T[crc ^ *p++];                  /* 바이트당 조회 1번 */` },
                     after: { lang: "c", src: `/* STM32 HAL: 하드웨어 CRC 유닛 (F4: 0x04C11DB7, 반사 없음 = CRC-32/MPEG-2) */
 uint32_t c = HAL_CRC_Calculate(&hcrc, (uint32_t *)buf, len / 4);` },
                     gain: "CPU 부하 ↓",
-                    note: "하드웨어 설정(다항식·반사·init)이 상대 장치와 같은지 먼저 확인 · 이더넷 CRC-32 와는 반사·xorout 이 달라 값이 다름"
+                    note: "하드웨어 설정(다항식·반사·init)이 상대 장치와 같은지 먼저 확인 · 이더넷 CRC-32와는 반사·xorout이 달라 값이 다름"
                 }
             ],
             glossary: [
                 { term: "체크섬", en: "Checksum", def: "바이트를 더한 값 · 간단하지만 순서 바뀜이나 서로 상쇄되는 오류를 못 잡음" },
-                { term: "반사", en: "Reflection (bit-reversed input/output)", def: "바이트를 LSB 먼저 처리 · UART 처럼 LSB 먼저 보내는 링크에서 유래" },
+                { term: "반사", en: "Reflection (bit-reversed input/output)", def: "바이트를 LSB 먼저 처리 · UART처럼 LSB 먼저 보내는 링크에서 유래" },
                 { term: "CRC-32", en: "Cyclic Redundancy Check, 32-bit (IEEE 802.3)", def: "이더넷·ZIP·PNG · 다항식 0x04C11DB7, 반사, init·xorout 0xFFFFFFFF" },
-                { term: "잔여값", en: "Residue", def: "정상 프레임 전체(메시지 + CRC)를 다시 계산했을 때 나오는 고정값 · xorout 이 없으면 0" },
-                { term: "미검출 오류 확률", en: "Undetected error probability", def: "무작위 오류일 때 대략 2⁻ʳ · r = 16 이면 약 1/65536" }
+                { term: "잔여값", en: "Residue", def: "정상 프레임 전체(메시지 + CRC)를 다시 계산했을 때 나오는 고정값 · xorout이 없으면 0" },
+                { term: "미검출 오류 확률", en: "Undetected error probability", def: "무작위 오류일 때 대략 2⁻ʳ · r = 16이면 약 1/65536" }
             ],
             quiz: [
-                { q: "생성 다항식이 x³+x+1 이면 CRC 는 몇 비트?", options: ["2", "3", "4", "8"], a: 1, why: "차수 r = 3 → 나머지 3 비트 · 이진 표기 `1011` 이 4 비트라 4 로 착각하기 쉬움" },
+                { q: "생성 다항식이 x³+x+1이면 CRC는 몇 비트?", options: ["2", "3", "4", "8"], a: 1, why: "차수 r = 3 → 나머지 3 비트 · 이진 표기 `1011`이 4 비트라 4로 착각하기 쉬움" },
                 { q: "CRC 나눗셈에서 '빼기'에 해당하는 연산은?", options: ["산술 뺄셈", "XOR", "AND", "OR"], a: 1, why: "GF(2): 자리올림·빌림이 없어 덧셈 = 뺄셈 = XOR" },
-                { q: "init·xorout 없는 CRC 에서, 수신측이 메시지 + CRC 전체를 나눴더니 나머지가 0 이 아니다.", options: ["정상 수신", "오류 검출", "CRC 길이 부족", "다항식 무관"], a: 1, why: "정상 프레임은 G 로 나누어떨어짐 → 0 이 아니면 어딘가 비트가 바뀜" },
-                { q: "16bit CRC 가 **반드시** 검출하는 것은?", options: ["모든 오류 패턴 전부", "길이 ≤ 16 버스트", "길이 32 인 버스트", "짝수 개의 비트 오류"], a: 1, why: "r 비트 CRC 는 길이 ≤ r 버스트를 모두 검출 · 더 긴 버스트는 약 2⁻ʳ 확률로 놓칠 수 있음" },
-                { q: "둘 다 'CRC-16' 인데 장치 간 값이 다르다. 가장 흔한 원인은?", options: ["다항식 차수 차이", "init·반사 파라미터", "테이블 vs 비트 구현", "CPU 엔디언 차이"], a: 1, why: "MODBUS(init 0xFFFF, 반사) vs XMODEM(init 0, 반사 없음) · 파라미터가 같으면 테이블·비트 구현 결과는 같음" },
-                { type: "text", q: "메시지 `1101`, 생성 다항식 `1011`(x³+x+1)의 CRC-3 나머지는? (3 비트)", answer: ["001"], why: "`1101 000` 을 `1011` 로 XOR 나눗셈 → 나머지 `001` · 전송 프레임 = `1101 001`" },
-                { type: "text", q: "레슨의 `crc8()`(poly 0x07, init 0)에 1 바이트 `0x01` 만 넣으면 결과는? (16진)", answer: ["0x07", "07", "7"], why: "1 이 7 번 밀려 0x80 → 8 번째 시프트에서 넘쳐 poly XOR → 0x07 · x⁸ mod G = 0x07" },
-                { type: "num", q: "x¹⁶ + x¹² + x⁵ + 1 을 최고차 생략 16진 표기로 쓰면? (0x 입력 가능)", answer: 0x1021, why: "비트 12, 5, 0 → `0001 0000 0010 0001` = 0x1021 (CRC-16/XMODEM 의 다항식)" },
-                { type: "order", q: "수신측 CRC 검사 순서 (init·xorout 없는 CRC)", items: ["메시지 + 받은 CRC 를 이어 붙임", "같은 생성 다항식으로 나눔", "나머지를 확인", "0 이면 수용 · 아니면 폐기"], why: "정상 프레임은 G 로 나누어떨어짐 · xorout 이 있으면 0 대신 고정 잔여값이 나옴" }
+                { q: "init·xorout 없는 CRC에서, 수신측이 메시지 + CRC 전체를 나눴더니 나머지가 0이 아니다.", options: ["정상 수신", "오류 검출", "CRC 길이 부족", "다항식 무관"], a: 1, why: "정상 프레임은 G로 나누어떨어짐 → 0이 아니면 어딘가 비트가 바뀜" },
+                { q: "16bit CRC가 **반드시** 검출하는 것은?", options: ["모든 오류 패턴 전부", "길이 ≤ 16 버스트", "길이 32인 버스트", "짝수 개의 비트 오류"], a: 1, why: "r 비트 CRC는 길이 ≤ r 버스트를 모두 검출 · 더 긴 버스트는 약 2⁻ʳ 확률로 놓칠 수 있음" },
+                { q: "둘 다 'CRC-16'인데 장치 간 값이 다르다. 가장 흔한 원인은?", options: ["다항식 차수 차이", "init·반사 파라미터", "테이블 vs 비트 구현", "CPU 엔디언 차이"], a: 1, why: "MODBUS(init 0xFFFF, 반사) vs XMODEM(init 0, 반사 없음) · 파라미터가 같으면 테이블·비트 구현 결과는 같음" },
+                { type: "text", q: "메시지 `1101`, 생성 다항식 `1011`(x³+x+1)의 CRC-3 나머지는? (3 비트)", answer: ["001"], why: "`1101 000`을 `1011`로 XOR 나눗셈 → 나머지 `001` · 전송 프레임 = `1101 001`" },
+                { type: "text", q: "레슨의 `crc8()`(poly 0x07, init 0)에 1 바이트 `0x01`만 넣으면 결과는? (16진)", answer: ["0x07", "07", "7"], why: "1이 7번 밀려 0x80 → 8 번째 시프트에서 넘쳐 poly XOR → 0x07 · x⁸ mod G = 0x07" },
+                { type: "num", q: "x¹⁶ + x¹² + x⁵ + 1을 최고차 생략 16진 표기로 쓰면? (0x 입력 가능)", answer: 0x1021, why: "비트 12, 5, 0 → `0001 0000 0010 0001` = 0x1021 (CRC-16/XMODEM의 다항식)" },
+                { type: "order", q: "수신측 CRC 검사 순서 (init·xorout 없는 CRC)", items: ["메시지 + 받은 CRC를 이어 붙임", "같은 생성 다항식으로 나눔", "나머지를 확인", "0이면 수용 · 아니면 폐기"], why: "정상 프레임은 G로 나누어떨어짐 · xorout이 있으면 0 대신 고정 잔여값이 나옴" }
             ],
             refs: [
                 { title: "Cyclic Redundancy Code (CRC) Polynomial Selection for Embedded Networks", by: "Philip Koopman et al.", year: 2004, url: "https://users.ece.cmu.edu/~koopman/roses/dsn04/koopman04_crc_poly_embedded.pdf", kind: "paper" },
@@ -508,7 +508,7 @@ uint32_t c = HAL_CRC_Calculate(&hcrc, (uint32_t *)buf, len / 4);` },
             checked: "2026-11-16",
             key: [
                 "2선 차동(differential, CAN_H/CAN_L) 멀티마스터 버스 · 양 끝 120 Ω 종단(termination)",
-                "**우성(dominant) 0 이 열성(recessive) 1 을 이김** → ID 가 작을수록 우선",
+                "**우성(dominant) 0이 열성(recessive) 1을 이김** → ID가 작을수록 우선",
                 "비파괴 중재(non-destructive arbitration): 진 노드는 물러나고 승자 프레임은 그대로",
                 "같은 비트 5개 뒤 반대 비트 1개 = **비트 스터핑(bit stuffing)** · 재동기용 에지",
                 "CAN FD: 데이터 구간(data phase)만 고속 · 최대 **64 바이트**"
@@ -518,7 +518,7 @@ uint32_t c = HAL_CRC_Calculate(&hcrc, (uint32_t *)buf, len / 4);` },
                 { term: "비트 스터핑", en: "Bit stuffing", def: "같은 비트 5개 연속 → 반대 비트 1개 삽입 · 에지로 재동기" },
                 { term: "CRC + ACK 슬롯", en: "Cyclic Redundancy Check + Acknowledge slot", def: "클래식 15bit CRC · 정상 수신한 노드가 ACK 슬롯을 우성으로" },
                 { term: "에러 상태", en: "Error states (fault confinement)", def: "TEC/REC 카운터 · Error Active → Passive(>127) → Bus-off(TEC>255)" },
-                { term: "CAN FD", en: "Controller Area Network with Flexible Data-rate", def: "BRS 로 데이터 구간 bit rate 전환 · CRC 17/21bit · DLC 최대 64 B" }
+                { term: "CAN FD", en: "Controller Area Network with Flexible Data-rate", def: "BRS로 데이터 구간 bit rate 전환 · CRC 17/21bit · DLC 최대 64 B" }
             ],
             demo: { type: "sim", name: "can", ids: [0x256, 0x259, 0x300], data: [0x00, 0xff] },
             code: [
@@ -550,7 +550,7 @@ void can_send(void) {
     if (HAL_CAN_GetTxMailboxesFreeLevel(&hcan1) > 0)
         HAL_CAN_AddTxMessage(&hcan1, &h, data, &mailbox);  // 중재·재전송은 하드웨어
 }`,
-                    note: "ID = 우선순위(priority) · 안전 관련 메시지에 작은 ID 를 배정"
+                    note: "ID = 우선순위(priority) · 안전 관련 메시지에 작은 ID를 배정"
                 },
                 {
                     lang: "python",
@@ -598,23 +598,23 @@ can_tx(0x101, d, 8);       // 47 + 64 = 111 bit` },
             ],
             glossary: [
                 { term: "CAN", en: "Controller Area Network", def: "차량·산업용 멀티마스터 차동 버스 · ISO 11898" },
-                { term: "우성 / 열성", en: "Dominant / Recessive", def: "0 은 구동, 1 은 비구동 · 동시에 쓰면 우성이 이김" },
-                { term: "중재", en: "Arbitration", def: "ID 를 비트 단위로 비교해 송신권을 정함 · 비파괴" },
+                { term: "우성 / 열성", en: "Dominant / Recessive", def: "0은 구동, 1은 비구동 · 동시에 쓰면 우성이 이김" },
+                { term: "중재", en: "Arbitration", def: "ID를 비트 단위로 비교해 송신권을 정함 · 비파괴" },
                 { term: "비트 스터핑", en: "Bit stuffing", def: "같은 비트 5개 뒤 반대 비트 삽입 · 수신 측이 자동 제거" },
                 { term: "Bus-off", en: "Bus-off", def: "송신 에러 카운터 255 초과 → 노드가 버스에서 스스로 이탈" },
                 { term: "CAN FD", en: "CAN with Flexible Data-rate", def: "데이터 최대 64 B · 데이터 구간 고속 전환(BRS)" }
             ],
             quiz: [
-                { q: "ID `0x100` 과 `0x0FF` 가 동시에 송신하면 승자는?", options: ["0x100", "충돌 후 둘 다 재전송", "0x0FF", "먼저 SOF 보낸 쪽"], a: 2, why: "ID8: 0x0FF 는 0(우성), 0x100 은 1(열성) → 작은 ID 승 · SOF 는 동시에 나가 '먼저'가 없음" },
-                { q: "중재에서 진 노드는?", options: ["에러 프레임을 송신", "수신으로 바꾸고 재시도", "Bus-off 로 즉시 이탈", "승자 프레임을 덮어씀"], a: 1, why: "비파괴 중재 · 진 쪽 프레임만 미뤄짐 · 중재 패배는 에러가 아니라 TEC 도 그대로" },
-                { q: "클래식 CAN / CAN FD 의 최대 데이터 길이는?", options: ["8 / 64 B", "8 / 32 B", "16 / 64 B", "64 / 2048 B"], a: 0, why: "DLC 9–15 가 12–64 B 를 뜻함 · 2048 B 는 CAN XL" },
+                { q: "ID `0x100`과 `0x0FF`가 동시에 송신하면 승자는?", options: ["0x100", "충돌 후 둘 다 재전송", "0x0FF", "먼저 SOF 보낸 쪽"], a: 2, why: "ID8: 0x0FF는 0(우성), 0x100은 1(열성) → 작은 ID 승 · SOF는 동시에 나가 '먼저'가 없음" },
+                { q: "중재에서 진 노드는?", options: ["에러 프레임을 송신", "수신으로 바꾸고 재시도", "Bus-off로 즉시 이탈", "승자 프레임을 덮어씀"], a: 1, why: "비파괴 중재 · 진 쪽 프레임만 미뤄짐 · 중재 패배는 에러가 아니라 TEC도 그대로" },
+                { q: "클래식 CAN / CAN FD의 최대 데이터 길이는?", options: ["8 / 64 B", "8 / 32 B", "16 / 64 B", "64 / 2048 B"], a: 0, why: "DLC 9–15가 12–64 B를 뜻함 · 2048 B는 CAN XL" },
                 { q: "전원 끈 정상 버스에서 CAN_H–CAN_L 저항을 재면?", options: ["약 120 Ω", "약 240 Ω", "약 60 Ω", "수 kΩ 이상"], a: 2, why: "양 끝 120 Ω 병렬 = 60 Ω · 120 Ω 이면 종단 하나 누락" },
-                { q: "같은 비트가 5개 연속되면 송신기는?", options: ["에러 플래그를 송신", "반대 비트 삽입", "그 프레임을 종료", "패리티 비트를 추가"], a: 1, why: "비트 스터핑 · 재동기용 에지 보장 · 같은 비트 6 개는 오히려 에러 신호" },
-                { type: "num", q: "500 kbit/s 에서 8 B 표준 데이터 프레임(IFS 포함 111 bit, 스터핑 없음)은 몇 µs?", answer: 222, tol: 0.5, unit: "µs", why: "111 × 2 µs · 최악 스터핑 24 bit 를 더하면 135 bit = 270 µs" },
-                { type: "num", q: "CAN 클럭 40 MHz, 분주 5, 비트당 16 TQ (Sync 1 + TSEG1 13 + TSEG2 2) 의 샘플 포인트는 몇 %?", answer: 87.5, tol: 0.1, unit: "%", why: "(1 + 13) / 16 · TQ = 125 ns → 비트 2 µs = 500 kbit/s" },
-                { type: "num", q: "ID `0x0F0`, DLC 0 데이터 프레임의 SOF~DLC (19 bit)에 들어가는 스터프 비트는 몇 개? (실험실로 확인)", answer: 2, why: "`0 000 1111 0000 000 0000` · 끝의 0 열한 개에서 5 개마다 1 삽입 → 2 개" },
-                { type: "text", q: "ID `0x65A` 와 `0x659` 가 경쟁한다. 몇 번 ID 비트에서 승부가 갈리나? (ID10~ID0)", answer: ["ID1", "1", "bit1", "비트1"], why: "끝 4 비트 `1010` vs `1001` → ID1 에서 0x659 가 0(우성) → 0x659 승" },
-                { type: "order", q: "클래식 CAN 표준 데이터 프레임의 필드 순서", items: ["SOF", "ID (11 bit)", "RTR · IDE · r0", "DLC", "데이터 0–8 B", "CRC 15 bit + 구분자", "ACK 슬롯", "EOF 7 bit"], why: "ID 가 맨 앞이라 우선순위가 먼저 결정 · CRC 는 SOF~데이터를 보호 · ACK 는 수신 노드가 우성으로 덮음" }
+                { q: "같은 비트가 5개 연속되면 송신기는?", options: ["에러 플래그를 송신", "반대 비트 삽입", "그 프레임을 종료", "패리티 비트를 추가"], a: 1, why: "비트 스터핑 · 재동기용 에지 보장 · 같은 비트 6개는 오히려 에러 신호" },
+                { type: "num", q: "500 kbit/s에서 8 B 표준 데이터 프레임(IFS 포함 111 bit, 스터핑 없음)은 몇 µs?", answer: 222, tol: 0.5, unit: "µs", why: "111 × 2 µs · 최악 스터핑 24 bit를 더하면 135 bit = 270 µs" },
+                { type: "num", q: "CAN 클럭 40 MHz, 분주 5, 비트당 16 TQ (Sync 1 + TSEG1 13 + TSEG2 2)의 샘플 포인트는 몇 %?", answer: 87.5, tol: 0.1, unit: "%", why: "(1 + 13) / 16 · TQ = 125 ns → 비트 2 µs = 500 kbit/s" },
+                { type: "num", q: "ID `0x0F0`, DLC 0 데이터 프레임의 SOF~DLC (19 bit)에 들어가는 스터프 비트는 몇 개? (실험실로 확인)", answer: 2, why: "`0 000 1111 0000 000 0000` · 끝의 0 열한 개에서 5개마다 1 삽입 → 2개" },
+                { type: "text", q: "ID `0x65A`와 `0x659`가 경쟁한다. 몇 번 ID 비트에서 승부가 갈리나? (ID10~ID0)", answer: ["ID1", "1", "bit1", "비트1"], why: "끝 4 비트 `1010` vs `1001` → ID1에서 0x659가 0(우성) → 0x659 승" },
+                { type: "order", q: "클래식 CAN 표준 데이터 프레임의 필드 순서", items: ["SOF", "ID (11 bit)", "RTR · IDE · r0", "DLC", "데이터 0–8 B", "CRC 15 bit + 구분자", "ACK 슬롯", "EOF 7 bit"], why: "ID가 맨 앞이라 우선순위가 먼저 결정 · CRC는 SOF~데이터를 보호 · ACK는 수신 노드가 우성으로 덮음" }
             ],
             refs: [
                 { title: "CAN CC (classical CAN, ISO 11898-1)", by: "CAN in Automation (CiA)", url: "https://www.can-cia.org/can-knowledge/can-cc", kind: "doc" },
@@ -632,7 +632,7 @@ can_tx(0x101, d, 8);       // 47 + 64 = 111 bit` },
             key: [
                 "마스터가 묻고 슬레이브가 답함 · 슬레이브는 먼저 말하지 않음",
                 "RTU: 주소 + 기능코드(function code) + 데이터 + **CRC-16 (Low 바이트 먼저)**",
-                "레지스터 값은 **빅엔디언** · CRC 만 리틀엔디언",
+                "레지스터 값은 **빅엔디언** · CRC만 리틀엔디언",
                 "TCP: CRC 대신 MBAP 헤더 · 포트 502 · Unit ID"
             ],
             concepts: [
@@ -646,10 +646,10 @@ can_tx(0x101, d, 8);       // 47 + 64 = 111 bit` },
                 actors: ["Client", "Gateway", "Slave 0x11"],
                 msgs: [
                     { from: 0, to: 1, label: "MBAP 0001 0000 0006 11 | 03 006B 0003", text: "Modbus TCP(502) · MBAP: 트랜잭션 ID · 프로토콜 0 · 길이 6 · **Unit ID 0x11**" },
-                    { from: 1, to: 2, label: "11 03 00 6B 00 03 | 76 87", text: "RTU 로 변환 · FC 03 홀딩 레지스터(holding register) 0x006B 부터 3개 · CRC `0x8776` 은 **Low 먼저**" },
+                    { from: 1, to: 2, label: "11 03 00 6B 00 03 | 76 87", text: "RTU로 변환 · FC 03 홀딩 레지스터(holding register) 0x006B부터 3개 · CRC `0x8776`은 **Low 먼저**" },
                     { from: 2, to: 2, label: "주소·CRC 확인", text: "주소 불일치·CRC 오류면 **응답 안 함** → 마스터는 타임아웃" },
                     { from: 2, to: 1, label: "11 03 06 AE41 5652 4340 | 49 AD", text: "바이트 수 6 = 레지스터 3개 · 값은 **빅엔디언** (0xAE41, 0x5652, 0x4340)" },
-                    { from: 1, to: 0, label: "MBAP 0001 0000 0009 11 | 03 06 …", text: "CRC 떼고 MBAP 붙여 회신 · 같은 트랜잭션 ID 로 요청과 짝 맞춤" },
+                    { from: 1, to: 0, label: "MBAP 0001 0000 0009 11 | 03 06 …", text: "CRC 떼고 MBAP 붙여 회신 · 같은 트랜잭션 ID로 요청과 짝 맞춤" },
                     { from: 1, to: 2, label: "11 03 04 00 00 01 | 87 AA", text: "없는 주소 0x0400 요청" },
                     { from: 2, to: 1, label: "11 83 02 | C1 34", text: "예외 응답(exception response): FC | **0x80** = 0x83 · 코드 02 = Illegal Data Address" }
                 ]
@@ -678,7 +678,7 @@ size_t build_read_hr(uint8_t *f, uint8_t slave, uint16_t start, uint16_t qty) {
     f[6] = crc & 0xFF;  f[7] = crc >> 8;       // CRC: Low 바이트 먼저
     return 8;
 }`,
-                    note: "수신 검증: 프레임 전체(CRC 포함)의 CRC 를 계산하면 0 이 나와야 함"
+                    note: "수신 검증: 프레임 전체(CRC 포함)의 CRC를 계산하면 0이 나와야 함"
                 },
                 {
                     lang: "python",
@@ -707,7 +707,7 @@ def read_holding(host, unit, start, qty, tid=1):
     return struct.unpack(f">{n}H", body[2:2 + 2 * n])
 
 print(read_holding("192.168.0.10", 0x11, 0x006B, 3))`,
-                    note: "TCP 는 바이트 스트림 · 길이 필드(length field)만큼 정확히 읽어야 함"
+                    note: "TCP는 바이트 스트림 · 길이 필드(length field)만큼 정확히 읽어야 함"
                 }
             ],
             optimize: [
@@ -732,7 +732,7 @@ crc = (crc >> 8) ^ T[(crc ^ *p++) & 0xFF];   // 바이트당 조회 1번` },
                 }
             ],
             glossary: [
-                { term: "Modbus", en: "Modbus", def: "Modicon 이 만든 산업용 요청/응답 프로토콜 · RTU(시리얼), TCP" },
+                { term: "Modbus", en: "Modbus", def: "Modicon이 만든 산업용 요청/응답 프로토콜 · RTU(시리얼), TCP" },
                 { term: "홀딩 레지스터", en: "Holding register", def: "읽기/쓰기 16bit 레지스터 · FC 03/06/16" },
                 { term: "기능 코드", en: "Function code", def: "요청 종류를 나타내는 1 바이트 · 예외 시 최상위 비트 set" },
                 { term: "CRC-16/MODBUS", en: "CRC-16/MODBUS", def: "다항식 0x8005(반사 0xA001) · 초기값 0xFFFF · Low 바이트 먼저 전송" },
@@ -740,16 +740,16 @@ crc = (crc >> 8) ^ T[(crc ^ *p++) & 0xFF];   // 바이트당 조회 1번` },
                 { term: "예외 응답", en: "Exception response", def: "FC | 0x80 + 예외코드 · 01 기능, 02 주소, 03 값 오류" }
             ],
             quiz: [
-                { q: "요청 `11 03 00 6B 00 03` 이 읽는 레지스터 수는?", options: ["107", "17", "6", "3"], a: 3, why: "마지막 두 바이트 `00 03` = 수량 3 · `00 6B`(107)는 시작 주소" },
-                { q: "RTU 프레임에서 CRC 바이트 순서는?", options: ["Low 바이트 먼저", "High 바이트 먼저", "ASCII 두 글자", "데이터와 같은 빅엔디언"], a: 0, why: "데이터는 빅엔디언이지만 CRC 만 Low 먼저 · `0x8776` → `76 87`" },
-                { q: "FC 03 요청의 예외 응답 기능코드는?", options: ["0x03", "0x80", "0x83", "0xFF"], a: 2, why: "0x03 | 0x80 = 0x83 · 0x80 만 보내면 어느 기능의 예외인지 사라짐" },
-                { q: "슬레이브가 CRC 가 틀린 프레임을 받으면?", options: ["예외 코드 03 응답", "NACK 프레임 송신", "재전송 요청", "응답 안 함"], a: 3, why: "손상 프레임엔 무응답 → 마스터 타임아웃 · 예외 응답은 정상 수신했지만 처리 못 할 때" },
-                { q: "Modbus TCP 에 RTU 의 CRC 가 없는 이유는?", options: ["MBAP 안에 CRC 포함", "TCP/이더넷이 검사", "Unit ID 가 대신함", "속도 때문에 생략"], a: 1, why: "이더넷 FCS(CRC-32)·TCP 체크섬이 이미 검사 · MBAP 에는 CRC 필드가 없음" },
-                { type: "num", q: "9600 bps, 8E1(문자 11 bit)에서 t3.5 는 몇 ms?", answer: 4.01, tol: 0.02, unit: "ms", why: "3.5 × 11 / 9600 · 19200 bps 초과는 1.75 ms 고정값 권장" },
-                { type: "text", q: "이 응답의 **두 번째** 레지스터 값은? (16진)", code: { lang: "txt", src: "11 03 06 AE 41 56 52 43 40 49 AD" }, answer: ["0x5652", "5652", "22098"], why: "바이트 수 06 뒤 2 B 씩 빅엔디언: AE41 · 5652 · 4340 · 끝 `49 AD` 는 CRC" },
-                { type: "text", q: "이 요청 뒤에 붙는 CRC 두 바이트를 **전송 순서대로** 쓰면?", code: { lang: "py", src: "crc16_modbus(bytes.fromhex(\"01 03 00 00 00 01\"))   # → 0x0A84" }, answer: ["84 0A", "840A", "0x84 0x0A"], why: "Low 바이트 먼저 → `84 0A` · `0A 84` 로 붙이면 슬레이브는 무응답" },
-                { type: "num", q: "매뉴얼의 `40108` 은 FC 03 PDU 주소로 얼마? (10진 또는 0x)", answer: 107, why: "4xxxx = 홀딩 레지스터 표 · 40001 → 0 이므로 40108 → 107 = 0x6B" },
-                { type: "order", q: "Modbus TCP → RTU 게이트웨이 한 번의 왕복", items: ["클라이언트: MBAP + PDU → TCP 502", "게이트웨이: MBAP 떼고 주소 + CRC 붙임", "RS-485 로 RTU 요청 송신", "슬레이브: CRC 확인 후 응답", "게이트웨이: CRC 떼고 MBAP 붙여 회신"], why: "PDU 는 그대로 · 껍데기만 MBAP ↔ 주소 + CRC 로 교체 · Transaction ID 로 요청과 짝 맞춤" }
+                { q: "요청 `11 03 00 6B 00 03`이 읽는 레지스터 수는?", options: ["107", "17", "6", "3"], a: 3, why: "마지막 두 바이트 `00 03` = 수량 3 · `00 6B`(107)는 시작 주소" },
+                { q: "RTU 프레임에서 CRC 바이트 순서는?", options: ["Low 바이트 먼저", "High 바이트 먼저", "ASCII 두 글자", "데이터와 같은 빅엔디언"], a: 0, why: "데이터는 빅엔디언이지만 CRC만 Low 먼저 · `0x8776` → `76 87`" },
+                { q: "FC 03 요청의 예외 응답 기능코드는?", options: ["0x03", "0x80", "0x83", "0xFF"], a: 2, why: "0x03 | 0x80 = 0x83 · 0x80만 보내면 어느 기능의 예외인지 사라짐" },
+                { q: "슬레이브가 CRC가 틀린 프레임을 받으면?", options: ["예외 코드 03 응답", "NACK 프레임 송신", "재전송 요청", "응답 안 함"], a: 3, why: "손상 프레임엔 무응답 → 마스터 타임아웃 · 예외 응답은 정상 수신했지만 처리 못 할 때" },
+                { q: "Modbus TCP에 RTU의 CRC가 없는 이유는?", options: ["MBAP 안에 CRC 포함", "TCP/이더넷이 검사", "Unit ID가 대신함", "속도 때문에 생략"], a: 1, why: "이더넷 FCS(CRC-32)·TCP 체크섬이 이미 검사 · MBAP에는 CRC 필드가 없음" },
+                { type: "num", q: "9600 bps, 8E1(문자 11 bit)에서 t3.5는 몇 ms?", answer: 4.01, tol: 0.02, unit: "ms", why: "3.5 × 11 / 9600 · 19200 bps 초과는 1.75 ms 고정값 권장" },
+                { type: "text", q: "이 응답의 **두 번째** 레지스터 값은? (16진)", code: { lang: "txt", src: "11 03 06 AE 41 56 52 43 40 49 AD" }, answer: ["0x5652", "5652", "22098"], why: "바이트 수 06 뒤 2 B 씩 빅엔디언: AE41 · 5652 · 4340 · 끝 `49 AD`는 CRC" },
+                { type: "text", q: "이 요청 뒤에 붙는 CRC 두 바이트를 **전송 순서대로** 쓰면?", code: { lang: "py", src: "crc16_modbus(bytes.fromhex(\"01 03 00 00 00 01\"))   # → 0x0A84" }, answer: ["84 0A", "840A", "0x84 0x0A"], why: "Low 바이트 먼저 → `84 0A` · `0A 84`로 붙이면 슬레이브는 무응답" },
+                { type: "num", q: "매뉴얼의 `40108`은 FC 03 PDU 주소로 얼마? (10진 또는 0x)", answer: 107, why: "4xxxx = 홀딩 레지스터 표 · 40001 → 0이므로 40108 → 107 = 0x6B" },
+                { type: "order", q: "Modbus TCP → RTU 게이트웨이 한 번의 왕복", items: ["클라이언트: MBAP + PDU → TCP 502", "게이트웨이: MBAP 떼고 주소 + CRC 붙임", "RS-485로 RTU 요청 송신", "슬레이브: CRC 확인 후 응답", "게이트웨이: CRC 떼고 MBAP 붙여 회신"], why: "PDU는 그대로 · 껍데기만 MBAP ↔ 주소 + CRC로 교체 · Transaction ID로 요청과 짝 맞춤" }
             ],
             refs: [
                 { title: "MODBUS Application Protocol Specification V1.1b3", by: "Modbus Organization", year: 2012, url: "https://www.modbus.org/file/secure/modbusprotocolspecification.pdf", kind: "spec" },
@@ -764,9 +764,9 @@ crc = (crc >> 8) ^ T[(crc ^ *p++) & 0xFF];   // 바이트당 조회 1번` },
             mins: 14,
             checked: "2026-11-16",
             key: [
-                "IP 는 주소로 **배달만** · 최선 노력(best effort) · TCP 가 순서·재전송(retransmission)·흐름 제어(flow control)",
+                "IP는 주소로 **배달만** · 최선 노력(best effort) · TCP가 순서·재전송(retransmission)·흐름 제어(flow control)",
                 "연결: SYN → SYN-ACK → ACK (3-way handshake)",
-                "seq/ack 는 **바이트 번호** · ack = 다음에 받을 바이트",
+                "seq/ack는 **바이트 번호** · ack = 다음에 받을 바이트",
                 "종료는 방향별 FIN + ACK · 먼저 닫은 쪽이 TIME_WAIT"
             ],
             concepts: [
@@ -781,10 +781,10 @@ crc = (crc >> 8) ^ T[(crc ^ *p++) & 0xFF];   // 바이트당 조회 1번` },
                 actors: ["Client", "Server"],
                 msgs: [
                     { from: 0, to: 1, label: "SYN seq=100", text: "연결 요청 · 초기 순서번호(initial sequence number, ISN) 100 · MSS 등 옵션 제시" },
-                    { from: 1, to: 0, label: "SYN-ACK seq=300 ack=101", text: "SYN 도 1 바이트로 침 → ack = 101 · 서버 ISN 300" },
+                    { from: 1, to: 0, label: "SYN-ACK seq=300 ack=101", text: "SYN도 1 바이트로 침 → ack = 101 · 서버 ISN 300" },
                     { from: 0, to: 1, label: "ACK seq=101 ack=301", text: "3-way handshake 완료 · 양쪽 **ESTABLISHED**" },
                     { from: 0, to: 1, label: "PSH seq=101 len=100", text: "데이터 100 바이트 = 바이트 101~200" },
-                    { from: 1, to: 0, label: "ACK ack=201", text: "누적 ACK(cumulative ACK): 200 까지 받음, 다음은 201" },
+                    { from: 1, to: 0, label: "ACK ack=201", text: "누적 ACK(cumulative ACK): 200까지 받음, 다음은 201" },
                     { from: 0, to: 1, label: "FIN seq=201", text: "클라이언트 송신 끝 (FIN_WAIT_1)" },
                     { from: 1, to: 0, label: "ACK ack=202", text: "반쯤 닫힘(half-close) · 서버는 아직 보낼 수 있음 (CLOSE_WAIT)" },
                     { from: 1, to: 0, label: "FIN seq=301", text: "서버도 송신 끝 (LAST_ACK)" },
@@ -833,7 +833,7 @@ def recv_msg(s):
 with socket.create_connection(("127.0.0.1", 5000), timeout=3) as s:
     send_msg(s, b"temp?")
     print(recv_msg(s))                    # 에코 서버라 그대로 돌아옴`,
-                    note: "TCP 는 바이트 스트림 · send 1번 ≠ recv 1번"
+                    note: "TCP는 바이트 스트림 · send 1번 ≠ recv 1번"
                 }
             ],
             optimize: [
@@ -859,22 +859,22 @@ s.send(body)     # Nagle: 앞의 ACK 올 때까지 보류
             ],
             glossary: [
                 { term: "TCP", en: "Transmission Control Protocol", def: "연결형 · 순서 보장 · 재전송하는 바이트 스트림" },
-                { term: "3-way handshake", en: "Three-way handshake", def: "SYN / SYN-ACK / ACK 로 양쪽 ISN 교환 후 연결 성립" },
+                { term: "3-way handshake", en: "Three-way handshake", def: "SYN / SYN-ACK / ACK로 양쪽 ISN 교환 후 연결 성립" },
                 { term: "MSS", en: "Maximum Segment Size", def: "세그먼트 하나의 최대 데이터 · 이더넷 보통 1460 B (1500 − 20 − 20)" },
                 { term: "TIME_WAIT", en: "TIME_WAIT", def: "먼저 닫은 쪽이 2×MSL 대기 · 늦게 온 패킷·마지막 ACK 유실 대비" },
-                { term: "Nagle 알고리즘", en: "Nagle's algorithm", def: "ACK 대기 중 작은 데이터를 모아 보냄 · `TCP_NODELAY` 로 끔" },
+                { term: "Nagle 알고리즘", en: "Nagle's algorithm", def: "ACK 대기 중 작은 데이터를 모아 보냄 · `TCP_NODELAY`로 끔" },
                 { term: "슬라이딩 윈도우", en: "Sliding window", def: "ACK 없이 보낼 수 있는 바이트 범위 · ACK 오면 앞으로 이동" }
             ],
             quiz: [
-                { q: "클라이언트가 `SYN seq=100` 을 보냈다. SYN-ACK 의 ack 값은?", options: ["100", "101", "300", "0"], a: 1, why: "SYN 이 순서번호 1 을 소비 → 다음 기대 바이트 101 · 300 은 서버 자신의 ISN 예" },
-                { q: "seq=101 로 100 바이트를 받은 쪽의 ACK 번호는?", options: ["101", "200", "100", "201"], a: 3, why: "101~200 수신 → 다음에 받을 201 · 200 은 마지막으로 받은 바이트 번호" },
-                { q: "`recv(4096)` 한 번이 상대의 `send()` 한 번과 같다?", options: ["항상 같다", "Nagle 을 끄면 같다", "보장 없음", "LAN 안에선 같다"], a: 2, why: "TCP 는 바이트 스트림 · `TCP_NODELAY` 도 경계를 만들어 주진 않음 → 길이 접두·구분자" },
-                { q: "TIME_WAIT 에 들어가는 쪽은?", options: ["먼저 FIN 을 보낸 쪽", "항상 서버", "항상 클라이언트", "나중에 FIN 을 보낸 쪽"], a: 0, why: "능동 종료 측이 마지막 ACK 후 2×MSL 대기 · 서버가 먼저 닫으면 서버가 TIME_WAIT" },
-                { q: "작은 명령을 즉시 보내야 할 때 쓰는 소켓 옵션은?", options: ["SO_REUSEADDR", "SO_KEEPALIVE", "TCP_NODELAY", "SO_LINGER"], a: 2, why: "Nagle 끄기 → 작은 세그먼트도 바로 송신 · REUSEADDR 은 TIME_WAIT 중 재시작용" },
-                { type: "num", q: "수신 윈도우 64 KB(65535 B), RTT 20 ms 면 TCP 처리량 상한은 몇 Mbit/s?", answer: 26.2, tol: 0.1, unit: "Mbit/s", why: "윈도우 / RTT = 65535 × 8 / 0.02 s · 윈도우 스케일이 없으면 이게 한계" },
-                { type: "num", q: "100 Mbit/s 링크, RTT 40 ms 를 꽉 채우려면 윈도우가 몇 KB 필요한가? (1 KB = 1000 B)", answer: 500, tol: 1, unit: "KB", why: "대역폭-지연 곱 = 100e6 / 8 × 0.04 s · 16 비트 윈도우(64 KB)로는 부족" },
+                { q: "클라이언트가 `SYN seq=100`을 보냈다. SYN-ACK의 ack 값은?", options: ["100", "101", "300", "0"], a: 1, why: "SYN이 순서번호 1을 소비 → 다음 기대 바이트 101 · 300은 서버 자신의 ISN 예" },
+                { q: "seq=101로 100 바이트를 받은 쪽의 ACK 번호는?", options: ["101", "200", "100", "201"], a: 3, why: "101~200 수신 → 다음에 받을 201 · 200은 마지막으로 받은 바이트 번호" },
+                { q: "`recv(4096)` 한 번이 상대의 `send()` 한 번과 같다?", options: ["항상 같다", "Nagle을 끄면 같다", "보장 없음", "LAN 안에선 같다"], a: 2, why: "TCP는 바이트 스트림 · `TCP_NODELAY`도 경계를 만들어 주진 않음 → 길이 접두·구분자" },
+                { q: "TIME_WAIT에 들어가는 쪽은?", options: ["먼저 FIN을 보낸 쪽", "항상 서버", "항상 클라이언트", "나중에 FIN을 보낸 쪽"], a: 0, why: "능동 종료 측이 마지막 ACK 후 2×MSL 대기 · 서버가 먼저 닫으면 서버가 TIME_WAIT" },
+                { q: "작은 명령을 즉시 보내야 할 때 쓰는 소켓 옵션은?", options: ["SO_REUSEADDR", "SO_KEEPALIVE", "TCP_NODELAY", "SO_LINGER"], a: 2, why: "Nagle 끄기 → 작은 세그먼트도 바로 송신 · REUSEADDR은 TIME_WAIT 중 재시작용" },
+                { type: "num", q: "수신 윈도우 64 KB(65535 B), RTT 20 ms면 TCP 처리량 상한은 몇 Mbit/s?", answer: 26.2, tol: 0.1, unit: "Mbit/s", why: "윈도우 / RTT = 65535 × 8 / 0.02 s · 윈도우 스케일이 없으면 이게 한계" },
+                { type: "num", q: "100 Mbit/s 링크, RTT 40 ms를 꽉 채우려면 윈도우가 몇 KB 필요한가? (1 KB = 1000 B)", answer: 500, tol: 1, unit: "KB", why: "대역폭-지연 곱 = 100e6 / 8 × 0.04 s · 16 비트 윈도우(64 KB)로는 부족" },
                 { type: "num", q: "MSS 1460 B 세그먼트 하나가 이더넷 선 위에서 차지하는 바이트는? (프리앰블 8 · IFG 12 포함)", answer: 1538, unit: "B", why: "1460 + TCP 20 + IP 20 + 이더넷 헤더 14 + FCS 4 + 8 + 12 · 효율 약 95%" },
-                { type: "order", q: "연결부터 종료까지 (클라이언트가 먼저 닫음)", items: ["SYN", "SYN-ACK", "ACK (ESTABLISHED)", "데이터 · 누적 ACK", "클라이언트 FIN", "서버 ACK (CLOSE_WAIT)", "서버 FIN", "클라이언트 ACK → TIME_WAIT"], why: "연결은 3 번, 종료는 방향별 FIN + ACK 로 4 번 · 먼저 닫은 쪽이 TIME_WAIT" }
+                { type: "order", q: "연결부터 종료까지 (클라이언트가 먼저 닫음)", items: ["SYN", "SYN-ACK", "ACK (ESTABLISHED)", "데이터 · 누적 ACK", "클라이언트 FIN", "서버 ACK (CLOSE_WAIT)", "서버 FIN", "클라이언트 ACK → TIME_WAIT"], why: "연결은 3번, 종료는 방향별 FIN + ACK로 4번 · 먼저 닫은 쪽이 TIME_WAIT" }
             ],
             refs: [
                 { title: "RFC 9293 Transmission Control Protocol (TCP)", by: "W. Eddy", year: 2022, url: "https://www.rfc-editor.org/rfc/rfc9293", kind: "spec" },
@@ -919,7 +919,7 @@ s.send(body)     # Nagle: 앞의 ACK 올 때까지 보류
                     { from: 1, to: 2, label: "PUBLISH l1/temp 23.5 QoS1", text: "구간마다 별도 · 전달 QoS(delivered QoS) = min(1, 1) = 1" },
                     { from: 2, to: 1, label: "PUBACK", text: "구독자 → 브로커 구간도 따로 확인" },
                     { from: 1, to: 1, label: "센서 무응답 > 1.5×keepalive", text: "DISCONNECT 없이 끊김 = 비정상 종료" },
-                    { from: 1, to: 2, label: "PUBLISH l1/status \"offline\" (Will)", text: "브로커가 Will 을 대신 발행 · 정상 DISCONNECT 면 발행 안 함" }
+                    { from: 1, to: 2, label: "PUBLISH l1/status \"offline\" (Will)", text: "브로커가 Will을 대신 발행 · 정상 DISCONNECT면 발행 안 함" }
                 ]
             },
             code: [
@@ -962,7 +962,7 @@ c.on_connect = on_connect
 c.on_message = on_message
 c.connect("broker.local", 1883, keepalive=60)
 c.loop_forever()                           # 끊기면 자동 재접속`,
-                    note: "QoS1 은 중복이 올 수 있음 → 처리 로직을 멱등(idempotent)하게"
+                    note: "QoS1은 중복이 올 수 있음 → 처리 로직을 멱등(idempotent)하게"
                 }
             ],
             optimize: [
@@ -998,16 +998,16 @@ for v in readings():
                 { term: "토픽 와일드카드", en: "Topic wildcard", def: "`+` 한 단계, `#` 하위 전부 · 구독에만 사용" }
             ],
             quiz: [
-                { q: "구독 `factory/+/temp` 와 매칭되는 토픽은?", options: ["factory/temp", "factory/l1/a/temp", "factory/l1/temp", "plant/l1/temp"], a: 2, why: "`+` 는 정확히 한 단계 · 0 단계(factory/temp)나 두 단계(l1/a)는 안 맞음" },
-                { q: "QoS 1 구독자가 반드시 대비해야 할 것은?", options: ["중복 수신", "메시지 유실", "순서 뒤바뀜", "토픽 변경"], a: 0, why: "PUBACK 이 사라지면 재접속 때 재전송 → 같은 메시지 두 번 · 유실은 QoS 0 쪽 위험" },
-                { q: "발행 QoS 2, 구독 QoS 1 이면 구독자가 받는 QoS 는?", options: ["0", "2", "브로커 기본값", "1"], a: 3, why: "전달 QoS = min(발행, 구독) · 발행 QoS 가 구독자 구간까지 올라가지 않음" },
-                { q: "LWT 가 발행되는 경우는?", options: ["정상 DISCONNECT 때", "keepalive 초과 시", "새 구독자 접속 시", "retain 값 변경 시"], a: 1, why: "비정상 끊김(keepalive 초과·네트워크 오류)에서만 · 정상 DISCONNECT 면 Will 은 폐기" },
-                { q: "새 구독자가 접속 즉시 장치의 마지막 상태를 받으려면?", options: ["QoS 2 로 발행", "keepalive 를 0 으로", "Clean Start = 1", "retain 플래그로 발행"], a: 3, why: "브로커가 토픽별 마지막 retained 값을 바로 전달 · QoS 는 전달 보장이지 보관이 아님" },
-                { type: "text", q: "Remaining Length 200 을 가변 길이 정수로 인코딩하면? (16진 바이트)", answer: ["C8 01", "C801", "0xC8 0x01"], why: "200 = 1 × 128 + 72 → 72 | 0x80 = 0xC8, 다음 바이트 0x01 · 127 이하만 1 바이트" },
-                { type: "text", q: "QoS 1, retain = 1 인 PUBLISH 의 고정 헤더 첫 바이트는? (16진)", answer: ["0x33", "33", "51"], why: "타입 3 << 4 = 0x30 · QoS 1 << 1 = 0x02 · RETAIN = 0x01" },
-                { type: "num", q: "3.1.1 PUBLISH, 토픽 `l1/temp`(7 B), QoS 1, 페이로드 4 B 의 Remaining Length 는?", answer: 15, unit: "B", why: "토픽 길이 2 + 토픽 7 + Packet ID 2 + 페이로드 4 · QoS 0 이면 Packet ID 가 없어 13" },
-                { type: "num", q: "keepalive 60 s 인 클라이언트가 조용해지면 브로커는 최대 몇 초 뒤 연결을 끊나?", answer: 90, unit: "s", why: "1.5 × keepalive · 끊으면서 Will 을 발행" },
-                { type: "order", q: "한 클라이언트가 접속해 QoS 1 로 주고받는 순서", items: ["TCP 연결 (1883)", "CONNECT → CONNACK", "SUBSCRIBE → SUBACK", "PUBLISH (QoS 1) → PUBACK", "DISCONNECT"], why: "MQTT 는 TCP 위에서 CONNECT 로 시작 · 구독은 SUBACK 으로 허용 QoS 확인 · 정상 DISCONNECT 면 Will 폐기" }
+                { q: "구독 `factory/+/temp`와 매칭되는 토픽은?", options: ["factory/temp", "factory/l1/a/temp", "factory/l1/temp", "plant/l1/temp"], a: 2, why: "`+`는 정확히 한 단계 · 0 단계(factory/temp)나 두 단계(l1/a)는 안 맞음" },
+                { q: "QoS 1 구독자가 반드시 대비해야 할 것은?", options: ["중복 수신", "메시지 유실", "순서 뒤바뀜", "토픽 변경"], a: 0, why: "PUBACK이 사라지면 재접속 때 재전송 → 같은 메시지 두 번 · 유실은 QoS 0 쪽 위험" },
+                { q: "발행 QoS 2, 구독 QoS 1이면 구독자가 받는 QoS는?", options: ["0", "2", "브로커 기본값", "1"], a: 3, why: "전달 QoS = min(발행, 구독) · 발행 QoS가 구독자 구간까지 올라가지 않음" },
+                { q: "LWT가 발행되는 경우는?", options: ["정상 DISCONNECT 때", "keepalive 초과 시", "새 구독자 접속 시", "retain 값 변경 시"], a: 1, why: "비정상 끊김(keepalive 초과·네트워크 오류)에서만 · 정상 DISCONNECT면 Will은 폐기" },
+                { q: "새 구독자가 접속 즉시 장치의 마지막 상태를 받으려면?", options: ["QoS 2로 발행", "keepalive를 0으로", "Clean Start = 1", "retain 플래그로 발행"], a: 3, why: "브로커가 토픽별 마지막 retained 값을 바로 전달 · QoS는 전달 보장이지 보관이 아님" },
+                { type: "text", q: "Remaining Length 200을 가변 길이 정수로 인코딩하면? (16진 바이트)", answer: ["C8 01", "C801", "0xC8 0x01"], why: "200 = 1 × 128 + 72 → 72 | 0x80 = 0xC8, 다음 바이트 0x01 · 127 이하만 1 바이트" },
+                { type: "text", q: "QoS 1, retain = 1인 PUBLISH의 고정 헤더 첫 바이트는? (16진)", answer: ["0x33", "33", "51"], why: "타입 3 << 4 = 0x30 · QoS 1 << 1 = 0x02 · RETAIN = 0x01" },
+                { type: "num", q: "3.1.1 PUBLISH, 토픽 `l1/temp`(7 B), QoS 1, 페이로드 4 B의 Remaining Length는?", answer: 15, unit: "B", why: "토픽 길이 2 + 토픽 7 + Packet ID 2 + 페이로드 4 · QoS 0이면 Packet ID가 없어 13" },
+                { type: "num", q: "keepalive 60 s인 클라이언트가 조용해지면 브로커는 최대 몇 초 뒤 연결을 끊나?", answer: 90, unit: "s", why: "1.5 × keepalive · 끊으면서 Will을 발행" },
+                { type: "order", q: "한 클라이언트가 접속해 QoS 1로 주고받는 순서", items: ["TCP 연결 (1883)", "CONNECT → CONNACK", "SUBSCRIBE → SUBACK", "PUBLISH (QoS 1) → PUBACK", "DISCONNECT"], why: "MQTT는 TCP 위에서 CONNECT로 시작 · 구독은 SUBACK으로 허용 QoS 확인 · 정상 DISCONNECT면 Will 폐기" }
             ],
             refs: [
                 { title: "MQTT Version 5.0", by: "A. Banks et al.", year: 2019, url: "https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html", kind: "spec" },
@@ -1022,16 +1022,16 @@ for v in readings():
             mins: 16,
             checked: "2026-11-16",
             key: [
-                "광고(advertising) → 연결 → **GATT** 로 데이터 교환",
+                "광고(advertising) → 연결 → **GATT**로 데이터 교환",
                 "40 채널: 광고 3개(37·38·39) + 데이터 37개 호핑",
                 "GATT: 서비스 ⊃ 특성(characteristic) · 모든 항목은 **핸들**로 접근",
-                "Notify 는 CCCD 에 `0x0001` 써서 켬 · 폴링보다 저전력"
+                "Notify는 CCCD에 `0x0001` 써서 켬 · 폴링보다 저전력"
             ],
             concepts: [
                 { term: "GAP 역할", en: "Generic Access Profile (GAP) roles", def: "Peripheral(광고·연결 수락) / Central(스캔·연결 시작)" },
                 { term: "ATT / GATT", en: "Attribute Protocol / Generic Attribute Profile", def: "ATT = 핸들·UUID·값 테이블 · GATT = 그 위의 서비스/특성 구조" },
-                { term: "연결 파라미터", en: "Connection parameters", def: "간격 7.5 ms~4 s (1.25 ms 단위 · 6.2 SCI 는 최소 375 µs) · peripheral latency · 감독 타임아웃" },
-                { term: "MTU / DLE", en: "Maximum Transmission Unit / Data Length Extension", def: "ATT MTU 기본 23 B → 교환으로 확대 · DLE 로 링크 페이로드 27 → 251 B" },
+                { term: "연결 파라미터", en: "Connection parameters", def: "간격 7.5 ms~4 s (1.25 ms 단위 · 6.2 SCI는 최소 375 µs) · peripheral latency · 감독 타임아웃" },
+                { term: "MTU / DLE", en: "Maximum Transmission Unit / Data Length Extension", def: "ATT MTU 기본 23 B → 교환으로 확대 · DLE로 링크 페이로드 27 → 251 B" },
                 { term: "Notify / Indicate", def: "확인 응답 없음 / ATT Confirmation 필요 (느리지만 확실)" }
             ],
             demo: {
@@ -1043,12 +1043,12 @@ for v in readings():
                     { from: 0, to: 1, label: "SCAN_RSP", text: "스캔 응답 · 31 B 더 (예: 전체 이름)" },
                     { from: 1, to: 0, label: "CONNECT_IND", text: "연결 간격(connection interval)·latency·타임아웃·채널 맵 지정 · 이후 데이터 채널 호핑" },
                     { from: 1, to: 0, label: "Read By Group Type (서비스)", text: "GATT 1차 서비스(primary service) 탐색(discovery)" },
-                    { from: 0, to: 1, label: "0x180F Battery · 0x0010–0x0013", text: "서비스 UUID 와 핸들 범위" },
+                    { from: 0, to: 1, label: "0x180F Battery · 0x0010–0x0013", text: "서비스 UUID와 핸들 범위" },
                     { from: 1, to: 0, label: "Read By Type (특성)", text: "그 범위 안 특성 탐색" },
-                    { from: 0, to: 1, label: "0x2A19 Level · 값 핸들 0x0012", text: "속성(properties): Read, Notify · CCCD 는 0x0013" },
+                    { from: 0, to: 1, label: "0x2A19 Level · 값 핸들 0x0012", text: "속성(properties): Read, Notify · CCCD는 0x0013" },
                     { from: 1, to: 0, label: "Read Request 0x0012", text: "ATT Read (opcode 0x0A)" },
                     { from: 0, to: 1, label: "Read Response 0x5A", text: "0x5A = 90 %" },
-                    { from: 1, to: 0, label: "Write Request 0x0013 = 01 00", text: "CCCD 에 `0x0001` (리틀엔디언) = Notify 켜기 · Indicate 는 `0x0002`" },
+                    { from: 1, to: 0, label: "Write Request 0x0013 = 01 00", text: "CCCD에 `0x0001` (리틀엔디언) = Notify 켜기 · Indicate는 `0x0002`" },
                     { from: 0, to: 1, label: "Notification 0x0012 = 0x59", text: "값이 바뀔 때마다 **푸시** · 응답 없음 (89 %)" }
                 ]
             },
@@ -1076,7 +1076,7 @@ async def main():
         await client.stop_notify(BATTERY_LEVEL)
 
 asyncio.run(main())`,
-                    note: "16bit UUID 는 Bluetooth 기본 UUID(Base UUID) `0000xxxx-0000-1000-8000-00805f9b34fb` 에 끼운 것"
+                    note: "16bit UUID는 Bluetooth 기본 UUID(Base UUID) `0000xxxx-0000-1000-8000-00805f9b34fb`에 끼운 것"
                 },
                 {
                     lang: "python",
@@ -1114,29 +1114,29 @@ bt_conn_le_param_update(conn, BT_LE_CONN_PARAM(6, 6, 0, 400));` },
                     after: { lang: "c", src: `// 100 ms, latency 4 → 보낼 게 없으면 500 ms 마다만 응답
 bt_conn_le_param_update(conn, BT_LE_CONN_PARAM(80, 80, 4, 400));
 // 단위: 간격 1.25 ms · 타임아웃 10 ms (400 = 4 s)` },
-                    gain: "유휴 시 깨어남 ~133 → ~2 회/s",
-                    note: "Zephyr 예시 · 최종 값은 Central 이 결정 (요청은 거절될 수 있음)"
+                    gain: "유휴 시 깨어남 ~133 → ~2회/s",
+                    note: "Zephyr 예시 · 최종 값은 Central이 결정 (요청은 거절될 수 있음)"
                 }
             ],
             glossary: [
                 { term: "BLE", en: "Bluetooth Low Energy", def: "2.4 GHz 저전력 무선 · 2 MHz 간격 40 채널" },
                 { term: "GATT", en: "Generic Attribute Profile", def: "서비스·특성·디스크립터로 데이터를 구조화하는 규칙" },
-                { term: "특성", en: "Characteristic", def: "값 + 속성(Read/Write/Notify) · UUID 로 식별 (예: 0x2A19)" },
+                { term: "특성", en: "Characteristic", def: "값 + 속성(Read/Write/Notify) · UUID로 식별 (예: 0x2A19)" },
                 { term: "CCCD", en: "Client Characteristic Configuration Descriptor", def: "UUID 0x2902 · Notify/Indicate 켜기 스위치" },
                 { term: "연결 간격", en: "Connection interval", def: "연결 이벤트 주기 · 짧을수록 빠르고 전력↑" },
-                { term: "ATT MTU", en: "ATT Maximum Transmission Unit", def: "ATT PDU 최대 크기 · 기본 23 B, Exchange MTU 로 확대 · 속성 값은 최대 512 B" }
+                { term: "ATT MTU", en: "ATT Maximum Transmission Unit", def: "ATT PDU 최대 크기 · 기본 23 B, Exchange MTU로 확대 · 속성 값은 최대 512 B" }
             ],
             quiz: [
-                { q: "BLE 광고 전용(primary) 채널 수는?", options: ["1", "37", "3", "40"], a: 2, why: "37·38·39 세 채널 · 37 은 데이터 채널 수라 헷갈림" },
-                { q: "Central 이 Notify 를 켜는 방법은?", options: ["특성 값 핸들에 1 쓰기", "광고를 다시 시작", "MTU 교환 요청", "CCCD 에 0x0001"], a: 3, why: "CCCD(0x2902) 비트0 = Notify, 비트1 = Indicate · 값 핸들에 쓰면 특성 값이 바뀔 뿐" },
-                { q: "ATT MTU 23 일 때 Notification 한 번의 최대 값 크기는?", options: ["20 B", "23 B", "27 B", "251 B"], a: 0, why: "23 − opcode 1 − 핸들 2 = 20 B · 27 B 는 링크 계층 기본 페이로드" },
-                { q: "Notify 와 Indicate 의 차이는?", options: ["Indicate 쪽이 더 빠름", "Indicate 만 확인 필요", "Notify 는 C→P 방향", "둘 다 확인 응답 필요"], a: 1, why: "Indicate 는 Confirmation(0x1E)을 받아야 다음 전송 → 느리지만 확실 · 방향은 둘 다 서버 → 클라이언트" },
+                { q: "BLE 광고 전용(primary) 채널 수는?", options: ["1", "37", "3", "40"], a: 2, why: "37·38·39 세 채널 · 37은 데이터 채널 수라 헷갈림" },
+                { q: "Central이 Notify를 켜는 방법은?", options: ["특성 값 핸들에 1 쓰기", "광고를 다시 시작", "MTU 교환 요청", "CCCD에 0x0001"], a: 3, why: "CCCD(0x2902) 비트0 = Notify, 비트1 = Indicate · 값 핸들에 쓰면 특성 값이 바뀔 뿐" },
+                { q: "ATT MTU 23일 때 Notification 한 번의 최대 값 크기는?", options: ["20 B", "23 B", "27 B", "251 B"], a: 0, why: "23 − opcode 1 − 핸들 2 = 20 B · 27 B는 링크 계층 기본 페이로드" },
+                { q: "Notify와 Indicate의 차이는?", options: ["Indicate 쪽이 더 빠름", "Indicate만 확인 필요", "Notify는 C→P 방향", "둘 다 확인 응답 필요"], a: 1, why: "Indicate는 Confirmation(0x1E)을 받아야 다음 전송 → 느리지만 확실 · 방향은 둘 다 서버 → 클라이언트" },
                 { q: "연결 간격을 늘리면?", options: ["지연↓ 전력↑", "처리량 증가", "지연↑ 전력↓", "광고 주기 감소"], a: 2, why: "라디오가 덜 깨어나 전력↓ · 대신 응답이 느리고 처리량도 줄어듦" },
-                { type: "num", q: "연결 간격 50 ms, peripheral latency 4 면 보낼 게 없을 때 Peripheral 은 몇 ms 마다 깨어나나?", answer: 250, unit: "ms", why: "(1 + 4) × 50 ms · 보낼 데이터가 생기면 다음 이벤트에 바로 송신" },
-                { type: "num", q: "간격 100 ms, latency 4 일 때 감독 타임아웃은 몇 ms 보다 커야 하나?", answer: 1000, unit: "ms", why: "(1 + latency) × 간격 × 2 = 5 × 100 × 2 · 규격 범위는 100 ms–32 s" },
-                { type: "num", q: "ATT MTU 247 이면 Notification 하나에 실리는 값은 최대 몇 B?", answer: 244, unit: "B", why: "247 − opcode 1 − 핸들 2 · L2CAP 4 B 를 더하면 DLE 최대 251 B 에 딱 맞음" },
-                { type: "text", q: "이 광고 데이터에 든 16bit 서비스 UUID 는? (16진)", code: { lang: "txt", src: "02 01 06  03 03 0F 18  09 09 4D 79 53 65 6E 73 6F 72" }, answer: ["0x180F", "180F"], why: "AD 구조 `03 03 0F 18`: 길이 3 · 타입 0x03(16bit UUID 목록) · 리틀엔디언 → 0x180F (Battery)" },
-                { type: "order", q: "앱이 센서 값을 Notify 로 받기까지", items: ["광고 수신 (ADV_IND)", "CONNECT_IND 로 연결", "서비스·특성 탐색", "CCCD 에 01 00 쓰기", "Notification 수신"], why: "연결 파라미터는 CONNECT_IND 에 · 핸들은 탐색으로 알아냄 · CCCD 를 써야 푸시가 시작" }
+                { type: "num", q: "연결 간격 50 ms, peripheral latency 4면 보낼 게 없을 때 Peripheral은 몇 ms마다 깨어나나?", answer: 250, unit: "ms", why: "(1 + 4) × 50 ms · 보낼 데이터가 생기면 다음 이벤트에 바로 송신" },
+                { type: "num", q: "간격 100 ms, latency 4일 때 감독 타임아웃은 몇 ms보다 커야 하나?", answer: 1000, unit: "ms", why: "(1 + latency) × 간격 × 2 = 5 × 100 × 2 · 규격 범위는 100 ms–32 s" },
+                { type: "num", q: "ATT MTU 247이면 Notification 하나에 실리는 값은 최대 몇 B?", answer: 244, unit: "B", why: "247 − opcode 1 − 핸들 2 · L2CAP 4 B를 더하면 DLE 최대 251 B에 딱 맞음" },
+                { type: "text", q: "이 광고 데이터에 든 16bit 서비스 UUID는? (16진)", code: { lang: "txt", src: "02 01 06  03 03 0F 18  09 09 4D 79 53 65 6E 73 6F 72" }, answer: ["0x180F", "180F"], why: "AD 구조 `03 03 0F 18`: 길이 3 · 타입 0x03(16bit UUID 목록) · 리틀엔디언 → 0x180F (Battery)" },
+                { type: "order", q: "앱이 센서 값을 Notify로 받기까지", items: ["광고 수신 (ADV_IND)", "CONNECT_IND로 연결", "서비스·특성 탐색", "CCCD에 01 00 쓰기", "Notification 수신"], why: "연결 파라미터는 CONNECT_IND에 · 핸들은 탐색으로 알아냄 · CCCD를 써야 푸시가 시작" }
             ],
             refs: [
                 { title: "Core Specification 6.0", by: "Bluetooth SIG", year: 2024, url: "https://www.bluetooth.com/specifications/specs/core-specification-6-0/", kind: "spec" },

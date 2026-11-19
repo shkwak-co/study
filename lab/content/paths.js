@@ -51,7 +51,7 @@ LAB.path({
 LAB.path({
     id: "lang-ai",
     name: "AI 시대의 언어론",
-    desc: "구문·타입·평가에서 Python 위·커널 아래의 AI 스택, LLM 이 코드를 쓸 때의 검증까지",
+    desc: "구문·타입·평가에서 Python 위·커널 아래의 AI 스택, LLM이 코드를 쓸 때의 검증까지",
     lessons: [
         "languages/plt-basics", "languages/build", "languages/python-internals", "numpy-torch/torch-tensor",
         "languages/lang-ai-stack", "ai/assistant", "languages/lang-llm"
